@@ -1,0 +1,29 @@
+{
+  "name": "Breeze HC",
+  "fullName": "Breeze Heating & Cooling",
+  "legalName": "Breeze Heating and Cooling LLC",
+  "tagline": "1st Class Service With A Smile",
+  "serviceArea": "Proudly Serving Nashville Tennessee and Surrounding Areas",
+  "phone": "615-523-9898",
+  "email": "breezehc@gmail.com",
+  "owner": "Kam Heidari",
+  "address": {
+    "street": "7175 Nolensville Road",
+    "city": "Nolensville",
+    "state": "TN",
+    "zip": "37135",
+    "country": "USA"
+  },
+  "socials": [
+    {
+      "platform": "facebook",
+      "label": "Facebook",
+      "href": "https://www.facebook.com/"
+    },
+    {
+      "platform": "instagram",
+      "label": "Instagram",
+      "href": "https://www.instagram.com/"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "slug": "winter-promotions",
+      "title": "Winter promotions",
+      "tagline": "keeping you warm and oh-so-cozy",
+      "offer": "10% Discount",
+      "code": "10% Discount",
+      "image": "/images/winter-promotions.jpg",
+      "icon": "flame",
+      "blurb": "A regular tune-up keeps your system in top condition, lowers your operating costs, and helps avoid costly repairs and breakdowns. Book your heating service this season and take 10% off — whether it's a furnace repair, a heat pump retrofit, or a full installation.",
+      "otherHref": "/heating",
+      "otherLabel": "Heating services",
+      "metaDescription": "10% discount on winter heating service from Breeze Heating & Cooling — keeping you warm and oh-so-cozy."
+    },
+    {
+      "slug": "summer-promotions",
+      "title": "Summer promotions",
+      "tagline": "drink in that cool, breeze air",
+      "offer": "Breeze10%",
+      "code": "Breeze10%",
+      "image": "/images/summer-promotions.jpg",
+      "icon": "snowflake",
+      "blurb": "Beat the Tennessee heat before it beats you. Book your cooling maintenance, A/C repair or new installation this season and mention the code below to save. A seasonal safety inspection keeps your system efficient all summer long.",
+      "otherHref": "/cooling",
+      "otherLabel": "Cooling services",
+      "metaDescription": "Summer savings on cooling service from Breeze Heating & Cooling — drink in that cool, Breeze air."
+    }
+  ]
+}
