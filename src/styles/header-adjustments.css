@@ -1,0 +1,174 @@
+/* A compact contact strip above the Template 2 main navigation. */
+.site-header {
+  --header-topbar-height: 34.5px;
+}
+
+.header-topbar {
+  height: var(--header-topbar-height);
+  border-bottom: 1px solid #ffffff16;
+  background: #0b2a40;
+}
+
+.header-secondary-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 100%;
+}
+
+.header-tagline {
+  color: #c5dbe1;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .015em;
+  white-space: nowrap;
+}
+
+.header-tagline-smile {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--orange);
+  font-family: Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1;
+  vertical-align: -2px;
+}
+
+.header-topbar .header-call {
+  gap: 5px;
+  font-size: 12px;
+}
+
+.header-topbar .call-symbol {
+  width: 18px;
+  height: 18px;
+  border: 0;
+}
+
+.header-topbar .call-symbol svg {
+  width: 14px;
+  height: 14px;
+}
+
+.header-topbar .call-text {
+  display: inline;
+}
+
+.header-inner {
+  min-height: 64px;
+}
+
+.brand img {
+  width: 167px;
+}
+
+.site-nav {
+  top: calc(var(--header-topbar-height) + 32px);
+  transform: translate(-50%, -50%);
+}
+
+.header-request {
+  padding: 8px 2rem;
+}
+
+@media (max-width: 1150px) {
+  .brand img {
+    width: 145px;
+  }
+}
+
+@media (max-width: 930px) {
+  .header-inner {
+    min-height: 62px;
+  }
+
+  .site-nav {
+    top: 100%;
+    height: calc(100vh - var(--header-topbar-height) - 62px);
+    height: calc(100dvh - var(--header-topbar-height) - 62px);
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .site-header .brand img {
+    width: 132px;
+  }
+
+  .header-request {
+    width: auto;
+    height: auto;
+    min-height: 40px;
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+
+  .header-request span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-tagline {
+    font-size: 9px;
+  }
+
+  .header-tagline-smile {
+    font-size: 14px;
+  }
+
+  .header-topbar .header-call {
+    font-size: 11px;
+  }
+
+  .header-request {
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .site-header .brand img {
+    width: 115px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-secondary-nav,
+  .header-inner,
+  .header-actions {
+    gap: 4px;
+  }
+
+  .header-tagline {
+    font-size: 8px;
+  }
+
+  .header-tagline-smile {
+    font-size: 12px;
+  }
+
+  .header-topbar .header-call {
+    font-size: 10px;
+  }
+
+  .header-topbar .call-symbol {
+    width: 14px;
+    height: 14px;
+  }
+
+  .site-header .brand img {
+    width: 95px;
+  }
+
+  .header-request {
+    min-height: 36px;
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .menu-toggle {
+    width: 38px;
+    height: 38px;
+    padding: 8px;
+  }
+}

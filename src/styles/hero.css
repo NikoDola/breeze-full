@@ -1,0 +1,128 @@
+/* The desktop scene shares one crop so the room and transparent family align. */
+.hero-photo {
+  background: none;
+}
+
+.hero-photo::before,
+.hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.hero-photo::before {
+  z-index: 0;
+  background-image: url("/images/hero-bg.webp");
+}
+
+.hero-photo::after {
+  z-index: 2;
+  background-image: url("/images/hero-family.webp");
+}
+
+.hero-breeze {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  transform: translateY(-20%);
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+}
+
+.hero-breeze-line {
+  --wind-duration: 20s;
+  --wind-delay: 0s;
+  --wind-width: 6px;
+  --wind-opacity: .72;
+  --wind-dashes: 300 40 110 50 190 40;
+  stroke: #fff;
+  stroke-linecap: round;
+  opacity: var(--wind-opacity);
+}
+
+/* Move the rounded dashes along their curves in a seamless 730-unit cycle. */
+.hero-breeze-stroke {
+  stroke-width: var(--wind-width);
+  stroke-dasharray: var(--wind-dashes);
+  animation: hero-wind-flow var(--wind-duration) linear var(--wind-delay) infinite;
+}
+
+.hero-breeze-line-1 {
+  --wind-duration: 4s;
+  --wind-delay: -1s;
+  --wind-width: 2px;
+  --wind-dashes: 200 50 100 50 280 50;
+  --wind-opacity: .44;
+}
+
+.hero-breeze-line-2 {
+  --wind-duration: 9s;
+  --wind-delay: -4s;
+  --wind-width: 4px;
+  --wind-dashes: 150 50 250 30 200 50;
+  --wind-opacity: .58;
+}
+
+.hero-breeze-line-4 {
+  --wind-duration: 9s;
+  --wind-delay: -3s;
+  --wind-width: 4px;
+  --wind-dashes: 230 50 170 50 200 30;
+  --wind-opacity: .76;
+}
+
+.hero-breeze-line-5 {
+  --wind-duration: 4s;
+  --wind-delay: -2.5s;
+  --wind-width: 2px;
+  --wind-dashes: 100 50 300 30 200 50;
+  --wind-opacity: .52;
+}
+
+@keyframes hero-wind-flow {
+  to {
+    stroke-dashoffset: -730;
+  }
+}
+
+.hero-shade {
+  background: linear-gradient(90deg, rgba(1, 8, 23, .97) 0%, rgba(1, 8, 23, .9) 18%, rgba(1, 8, 23, .66) 44%, transparent 76%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* This brand effect is explicitly requested, even when motion is reduced. */
+  .hero-breeze-stroke {
+    animation-duration: var(--wind-duration) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero h1 {
+    font-size: clamp(48px, 14vw, 62px);
+  }
+
+  .hero-title-line {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .hero-photo::before {
+    background-image: url("/images/hero-full.webp");
+    background-position: 66% center;
+  }
+
+  .hero-photo::after,
+  .hero-breeze {
+    display: none;
+  }
+
+  .hero-shade {
+    background: linear-gradient(180deg, rgba(5, 25, 42, .82) 0%, rgba(5, 25, 42, .65) 46%, rgba(5, 25, 42, .08) 100%);
+  }
+}
