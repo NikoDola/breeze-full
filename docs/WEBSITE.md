@@ -12,7 +12,7 @@ Read this file before editing the site. The project is a Next.js 16 App Router s
 | `src/featured/seo/` | Sitemap and robots responses. |
 | `src/featured/admin/` | Admin page and API implementation. |
 | `src/components/sections/` | Complete visual sections or larger page blocks, such as `PageHero`, `ServicePage`, `CtaBand`, and the request form. |
-| `src/components/sections/home/` | The nine landing-page sections, assembled in `src/featured/home/page.tsx`. |
+| `src/components/sections/home/` | Landing-page section components, assembled in `src/featured/home/page.tsx` and `src/featured/why-choose-breeze/page.tsx`. |
 | `src/components/ui/` | Reusable controls: `Button`, `Input`, `Select`, `Textarea`, and `Icon`. Controls preserve any CSS class passed by their parent. |
 | `src/styles/` | All global vanilla CSS. Import order is listed in `src/app/layout.tsx`. |
 | `src/lib/` and `src/content/` | Site data and derived helpers. Business contact details come from `src/content/site.json` through `src/lib/site.ts`; promotions come from `src/content/promotions.json` and `src/lib/promotions.ts`. |
@@ -27,12 +27,10 @@ Read this file before editing the site. The project is a Next.js 16 App Router s
 | `HeroSection` | Hero |
 | `SeasonsSection` | Heating and cooling / `#heating-cooling` |
 | `ContactSection` | Service request / `#contact` |
-| `SmileSection` | Brand introduction / `#smile` |
-| `ServicesSection` | Featured services / `#services` |
-| `BestSection` | Why Breeze / `#why-breeze` |
-| `StorySection` | Company story / `#about` |
-| `AreaSection` | Service area / `#area` |
 | `ReviewsSection` | Testimonials / `#reviews` |
+| `AreaSection` | Service area / `#area` |
+
+The `/why-choose-breeze` page renders `SmileSection`, `ServicesSection`, `BestSection`, and `StorySection` in that order beneath its hero, followed by `ExpertsContent`.
 
 The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer is `src/components/sections/SiteFooter.tsx`. The header owns the navigation links and the mobile menu state.
 
@@ -41,7 +39,8 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 - Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`.
 - Company and client routes, including `/about-us`, `/reviews`, `/gallery`, `/careers`, and `/contact-us`, have matching feature pages. Shared page blocks live in `src/components/sections/`.
 - Promotions use `src/featured/promotions/`, `src/featured/summer-promotions/`, and `src/featured/winter-promotions/`, with data in `src/lib/promotions.ts` and `src/content/promotions.json`.
-- `/admin` is implemented in `src/featured/admin/page.tsx`. Its API reads and writes the JSON files in `src/content/` and uploads images to `public/images/`. Set `ADMIN_PASSWORD` for the admin API.
+- `/admin-test` is the protected, test-only CMS proof editor in `src/featured/admin-test/`. `/admin` redirects there after authorization. The legacy JSON-write and filesystem-upload APIs return `410`; `ADMIN_PASSWORD` is no longer used.
+- `/cms-proof` is an isolated, cached publication page. It does not replace any existing page or the custom homepage hero. The CMS is disabled by default and rejects production Vercel environments. See `docs/CMS-MILESTONE-1.md` for setup, migrations, security boundaries, and test commands.
 - The service and careers forms prepare an email in the visitor's mail application. Their behavior is in `src/components/sections/ServiceRequestForm.tsx` and `CareersForm.tsx`.
 
 ## Styling and DevTools

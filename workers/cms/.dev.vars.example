@@ -1,0 +1,6 @@
+CMS_ENVIRONMENT=test
+CMS_WRITES_ENABLED=true
+CMS_SITE_ORIGIN=http://localhost:3000
+# Must match the server-only Next.js values. No default credentials exist.
+CMS_WRITE_TOKEN=
+CMS_REVALIDATE_SECRET=

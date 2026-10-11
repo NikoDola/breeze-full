@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "breeze-test-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "vars": { "CMS_ENVIRONMENT": "test", "CMS_WRITES_ENABLED": "false" },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "breeze-test-db",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations",
+    "migrations_table": "cms_schema_migrations"
+  }],
+  "triggers": { "crons": ["*/5 * * * *"] }
+}

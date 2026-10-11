@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import PageHero from "@/components/sections/PageHero";
 import ExpertsContent from "@/components/sections/ExpertsContent";
 import CtaBand from "@/components/sections/CtaBand";
+import SmileSection from "@/components/sections/home/SmileSection";
+import ServicesSection from "@/components/sections/home/ServicesSection";
+import BestSection from "@/components/sections/home/BestSection";
+import StorySection from "@/components/sections/home/StorySection";
 
 export const metadata: Metadata = {
   title: "Why Choose Breeze",
@@ -19,6 +23,10 @@ export default function Page() {
         icon="star"
         image="/images/Why-We-Should-At-Home.jpg"
       />
+      <SmileSection />
+      <ServicesSection />
+      <BestSection />
+      <StorySection />
       <ExpertsContent
         related={[
           { label: "Meet the HVAC experts", href: "/meet-the-hvac-experts" },

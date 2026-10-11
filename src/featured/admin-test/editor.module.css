@@ -1,0 +1,25 @@
+.editor { max-width: 1400px; margin: auto; padding: 48px 24px 80px; color: var(--navy); }
+.header { display: flex; gap: 24px; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.header h1 { font-size: clamp(36px, 5vw, 56px); margin: 4px 0 12px; }
+.header a { color: var(--navy); text-decoration: underline; }
+.eyebrow { color: #a94300; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+.status { display: flex; flex-wrap: wrap; gap: 12px 28px; padding: 18px; background: #e9f1f2; border-radius: 14px; font-size: 14px; }
+.grid { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr); gap: 32px; margin-top: 24px; align-items: start; }
+.editor fieldset { border: 1px solid #cedadd; border-radius: 18px; padding: 24px; margin: 0; }
+.editor legend { font-weight: 800; padding-inline: 8px; }
+.editor label { display: grid; gap: 7px; font-size: 14px; font-weight: 700; margin-bottom: 18px; }
+.editor input, .editor textarea { width: 100%; padding: 12px 14px; background: white; color: var(--navy); border: 1px solid #bcccd0; border-radius: 10px; font: inherit; font-weight: 400; }
+.editor input:focus, .editor textarea:focus, .editor button:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 18px; }
+.editor button { background: var(--navy); color: white; padding: 11px 16px; border: 0; border-radius: 12px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.editor button.publish { background: var(--orange); color: var(--navy); }
+.editor button:disabled { opacity: .5; cursor: not-allowed; }
+.preview { overflow: hidden; border: 1px solid #cedadd; border-radius: 18px; }
+.preview h2 { padding: 18px 24px; margin: 0; font-size: 22px; }
+.preview :global(.inner-hero) { padding: 48px 12px; }
+.preview :global(.inner-hero h1) { font-size: clamp(30px, 4vw, 48px); }
+.preview :global(.wrap) { width: calc(100% - 32px); }
+.error { padding: 14px; background: #fff0ec; color: #8f271a; border-radius: 10px; }
+.note { font-size: 13px; color: #51666f; }
+.editor summary { cursor: pointer; margin-bottom: 16px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .header { align-items: flex-start; flex-direction: column; } }
