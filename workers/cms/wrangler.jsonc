@@ -6,8 +6,7 @@
   "workers_dev": true,
   "vars": {
     "CMS_ENVIRONMENT": "test",
-    "CMS_WRITES_ENABLED": "false",
-    "CMS_SITE_ORIGIN": "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app"
+    "CMS_WRITES_ENABLED": "false"
   },
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "d1_databases": [{
@@ -17,5 +16,5 @@
     "migrations_dir": "migrations",
     "migrations_table": "cms_schema_migrations"
   }],
-  "triggers": { "crons": ["*/5 * * * *"] }
+  "triggers": { "crons": [] }
 }

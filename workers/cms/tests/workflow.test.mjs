@@ -1,21 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
-import { admin, createWorker, legacy, migrate, revalidationSecret } from "./helpers.mjs";
+import { admin, createWorker, legacy, migrate } from "./helpers.mjs";
 
 test("D1 workflow: migration, authorization, drafts, atomic immutable publication and retries", async t => {
-  let callbackWorks = false, db;
-  const mf = await createWorker({ outboundService: async request => {
-    if (new URL(request.url).pathname === "/api/cms/revalidate") {
-      const body = await request.text();
-      assert.equal(request.headers.get("x-cms-signature"), createHmac("sha256", revalidationSecret).update(`${request.headers.get("x-cms-timestamp")}.${body}`).digest("hex"));
-      return Response.json(callbackWorks ? { eventId: JSON.parse(body).eventId } : { error: "test outage" }, { status: callbackWorks ? 200 : 503 });
-    }
-    const row = await db.prepare("SELECT r.id, r.draft_version FROM cms_pages p JOIN cms_revisions r ON r.id = p.published_revision_id").first();
-    return new Response(`<div data-cms-revision="${row.id}" data-cms-version="${row.draft_version}"></div>`);
-  } });
+  let outbound = 0;
+  const mf = await createWorker({ outboundService: async () => { outbound++; throw new Error("Worker must never call Vercel"); } });
   t.after(() => mf.dispose());
-  db = await mf.getD1Database("DB");
+  const db = await mf.getD1Database("DB");
   await db.prepare("CREATE TABLE page_sections (id TEXT PRIMARY KEY, headline TEXT)").run();
   await db.prepare("INSERT INTO page_sections VALUES (?, ?)").bind("home-hero", "Keep this original").run();
   await migrate(db);
@@ -37,12 +28,13 @@ test("D1 workflow: migration, authorization, drafts, atomic immutable publicatio
     assert.deepEqual(JSON.parse(source.source_json), legacy);
     assert.equal((await mf.dispatchFetch("https://worker.test/api/public/pages/cms-proof")).status, 404);
   });
-  await t.test("callback outage preserves publication with a durable retry; duplicate publish is idempotent", async () => {
+  await t.test("D1 publication stays pending for Next delivery; duplicate publish is idempotent", async () => {
     state = await (await admin(mf, "publish", { expectedVersion: 1 })).json();
     const id = state.publication.revisionId;
     assert.equal(state.publication.version, 1);
     assert.equal(state.delivery.confirmed_at, null);
-    assert.match(state.delivery.last_error, /503/);
+    assert.equal(state.delivery.attempts, 0);
+    assert.equal(outbound, 0);
     state = await (await admin(mf, "publish", { expectedVersion: 1 })).json();
     assert.equal(state.publication.revisionId, id);
     assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM cms_revisions").first()).n, 1);
@@ -68,13 +60,39 @@ test("D1 workflow: migration, authorization, drafts, atomic immutable publicatio
     assert.equal((await (await admin(mf)).json()).publication.version, 1);
     await db.prepare("DROP TRIGGER fail_outbox").run();
   });
-  await t.test("delivery recovers and confirms current HTML, including a superseded event", async () => {
-    callbackWorks = true;
+  await t.test("leases serialize delivery; expired callers cannot acknowledge a newer retry", async () => {
+    const [a, b] = await Promise.all([admin(mf, "delivery/claim", { force: true }), admin(mf, "delivery/claim", { force: true })]);
+    const claims = await Promise.all([a.json(), b.json()]);
+    assert.equal(claims.filter(x => x.claim).length, 1);
+    const old = claims.find(x => x.claim).claim;
+    const ack = { eventId: old.event.eventId, leaseToken: old.leaseToken };
+    assert.equal((await admin(mf, "delivery/ack", { ...ack, stage: "confirmed" })).status, 409);
+    await db.prepare("UPDATE cms_publish_outbox SET lease_until = 0").run();
+    const { claim } = await (await admin(mf, "delivery/claim", { force: true })).json();
+    assert.notEqual(claim.leaseToken, old.leaseToken);
+    assert.equal((await admin(mf, "delivery/ack", { ...ack, stage: "invalidated" })).status, 409);
+    assert.equal((await admin(mf, "delivery/ack", { ...ack, stage: "failed", reason: "invalidation" })).status, 409);
+    const nextAck = { eventId: claim.event.eventId, leaseToken: claim.leaseToken };
+    state = await (await admin(mf, "delivery/ack", { ...nextAck, stage: "failed", reason: "invalidation" })).json();
+    assert.match(state.delivery.last_error, /invalidation failed/);
+    assert.ok(state.delivery.next_attempt_at > Date.now());
+    assert.equal((await (await admin(mf, "delivery/claim", {})).json()).claim, null);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM cms_revisions").first()).n, 1);
+  });
+  await t.test("delivery confirms current publication and fulfills superseded jobs", async () => {
     state = await (await admin(mf, "publish", { expectedVersion: 2 })).json();
+    const { claim } = await (await admin(mf, "delivery/claim", { force: true })).json();
+    assert.equal(claim.event.revisionId, state.publication.revisionId);
+    const ack = { eventId: claim.event.eventId, leaseToken: claim.leaseToken };
+    assert.equal((await admin(mf, "delivery/ack", { ...ack, stage: "invalidated" })).status, 200);
+    state = await (await admin(mf, "delivery/ack", { ...ack, stage: "confirmed" })).json();
     assert.equal(state.publication.version, 2);
     assert.ok(state.delivery.invalidated_at);
     assert.ok(state.delivery.confirmed_at);
+    assert.equal((await admin(mf, "delivery/ack", { ...ack, stage: "confirmed" })).status, 409);
+    assert.equal((await (await admin(mf, "delivery/claim", { force: true })).json()).claim, null);
     assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM cms_publish_outbox WHERE confirmed_at IS NULL").first()).n, 0);
+    assert.equal(outbound, 0);
   });
   await t.test("invalid links and oversized bodies cannot become drafts", async () => {
     const document = structuredClone(state.draft.document);
@@ -91,4 +109,16 @@ test("writes fail closed when disabled or configured as production", async () =>
     try { assert.equal((await admin(mf, "import", { source: legacy })).status, 404); }
     finally { await mf.dispose(); }
   }
+});
+
+test("credential preflight is read-only and works with writes disabled", async () => {
+  const mf = await createWorker({ bindings: { CMS_WRITES_ENABLED: "false" } });
+  try {
+    await migrate(await mf.getD1Database("DB"));
+    const response = await admin(mf, "health");
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { environment: "test", writesEnabled: false, schemaReady: true, deliveryOwner: "nextjs" });
+    assert.equal((await mf.dispatchFetch("https://worker.test/api/admin/health")).status, 401);
+    assert.equal((await admin(mf, "publish", { expectedVersion: 1 })).status, 404);
+  } finally { await mf.dispose(); }
 });

@@ -1,30 +1,26 @@
 import {
   PAGE_ID, PUBLIC_PATH, InputError, expectedVersion, importLegacy,
-  readBody, record, validateDocument, type Document, type PublishEvent,
+  readBody, record, validateDocument, type Document, type DeliveryClaim,
 } from "../../../cms/shared/contract";
-import { sign } from "../../../cms/shared/signature";
 
 export interface Env {
   DB: D1Database;
   CMS_ENVIRONMENT: string;
   CMS_WRITES_ENABLED: string;
   CMS_WRITE_TOKEN?: string;
-  CMS_REVALIDATE_SECRET?: string;
-  CMS_SITE_ORIGIN?: string;
-  VERCEL_AUTOMATION_BYPASS_SECRET?: string;
 }
 class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 type Revision = { id: string; draft_version: number; document_json: string; published_at: string };
-type Job = { id: string; revision_id: string; draft_version: number; attempts: number };
+type Job = { id: string; revision_id: string; attempts: number };
 const json = (value: unknown, status = 200) => Response.json(value, {
   status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
 });
 const writesEnabled = (env: Env) => env.CMS_ENVIRONMENT === "test" && env.CMS_WRITES_ENABLED === "true" && (env.CMS_WRITE_TOKEN?.length ?? 0) >= 32;
 
-async function authorize(request: Request, env: Env) {
-  if (!writesEnabled(env)) throw new HttpError(404, "Not found.");
+async function authorize(request: Request, env: Env, health = false) {
+  if (env.CMS_ENVIRONMENT !== "test" || (env.CMS_WRITE_TOKEN?.length ?? 0) < 32 || (!health && !writesEnabled(env))) throw new HttpError(404, "Not found.");
   const authorization = request.headers.get("authorization") ?? "";
   const candidate = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   if (!candidate || candidate.length > 512) throw new HttpError(401, "Unauthorized.");
@@ -54,7 +50,7 @@ async function editorState(env: Env) {
   const results = await env.DB.withSession("first-primary").batch([
     env.DB.prepare("SELECT version, document_json, updated_at FROM cms_drafts WHERE page_id = ?").bind(PAGE_ID),
     env.DB.prepare("SELECT r.* FROM cms_pages p JOIN cms_revisions r ON r.id = p.published_revision_id WHERE p.id = ?").bind(PAGE_ID),
-    env.DB.prepare(`SELECT o.revision_id, r.draft_version, o.attempts, o.invalidated_at, o.confirmed_at, o.last_error, o.next_attempt_at
+    env.DB.prepare(`SELECT o.revision_id, r.draft_version, o.attempts, o.invalidated_at, o.confirmed_at, o.last_error, o.next_attempt_at, o.lease_until
       FROM cms_pages p JOIN cms_revisions r ON r.id = p.published_revision_id
       JOIN cms_publish_outbox o ON o.revision_id = r.id WHERE p.id = ?`).bind(PAGE_ID),
   ]);
@@ -98,57 +94,57 @@ async function publish(env: Env, version: number) {
   ]);
   if (!result[1].meta.changes) throw new HttpError(409, "The saved draft changed. Reload before publishing.");
 }
-function siteOrigin(env: Env) {
-  if (!env.CMS_SITE_ORIGIN || (env.CMS_REVALIDATE_SECRET?.length ?? 0) < 32) throw new Error("Cache delivery is not configured.");
-  const url = new URL(env.CMS_SITE_ORIGIN);
-  if (url.origin !== env.CMS_SITE_ORIGIN || url.username || url.password ||
-    (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname)))) {
-    throw new Error("Invalid test site origin.");
-  }
-  return url.origin;
+// The Worker never calls Vercel and never receives a Vercel credential.
+async function claimDelivery(env: Env, force: boolean): Promise<DeliveryClaim | null> {
+  const now = Date.now(), leaseToken = crypto.randomUUID();
+  const row = await env.DB.prepare(`UPDATE cms_publish_outbox
+    SET lease_until = ?, lease_token = ?, attempts = attempts + 1, invalidated_at = NULL
+    WHERE revision_id = (SELECT published_revision_id FROM cms_pages WHERE id = ?)
+      AND confirmed_at IS NULL AND lease_until < ? AND (? = 1 OR next_attempt_at <= ?)
+    RETURNING id, revision_id, attempts`)
+    .bind(now + 90000, leaseToken, PAGE_ID, now, force ? 1 : 0, now).first<Job>();
+  if (!row) return null;
+  const revision = await env.DB.withSession("first-primary").prepare("SELECT draft_version FROM cms_revisions WHERE id = ?")
+    .bind(row.revision_id).first<{ draft_version: number }>();
+  if (!revision) throw new Error("Revision missing.");
+  return { leaseToken, event: { eventId: row.id, revisionId: row.revision_id,
+    pageId: PAGE_ID, path: PUBLIC_PATH, version: revision.draft_version } };
 }
-async function deliver(env: Env, job: Job) {
-  const claimed = await env.DB.prepare(`UPDATE cms_publish_outbox SET lease_until = ?, attempts = attempts + 1
-    WHERE id = ? AND confirmed_at IS NULL AND lease_until < ?`).bind(Date.now() + 60000, job.id, Date.now()).run();
-  if (!claimed.meta.changes) return;
-  try {
-    const origin = siteOrigin(env);
-    const event: PublishEvent = { eventId: job.id, revisionId: job.revision_id, pageId: PAGE_ID, path: PUBLIC_PATH, version: job.draft_version };
-    const body = JSON.stringify(event), timestamp = String(Date.now());
-    const bypass: Record<string, string> = env.VERCEL_AUTOMATION_BYPASS_SECRET ? { "x-vercel-protection-bypass": env.VERCEL_AUTOMATION_BYPASS_SECRET } : {};
-    const response = await fetch(`${origin}/api/cms/revalidate`, {
-      method: "POST", redirect: "manual", signal: AbortSignal.timeout(10000), body,
-      headers: { ...bypass, "Content-Type": "application/json", "x-cms-timestamp": timestamp, "x-cms-signature": await sign(env.CMS_REVALIDATE_SECRET!, timestamp, body) },
-    });
-    if (!response.ok) throw new Error(`Cache callback returned ${response.status}.`);
-    const ack = await response.json() as { eventId?: string };
-    if (ack.eventId !== event.eventId) throw new Error("Cache callback did not acknowledge this event.");
-    await env.DB.prepare("UPDATE cms_publish_outbox SET invalidated_at = ? WHERE id = ?").bind(new Date().toISOString(), job.id).run();
-    const page = await fetch(`${origin}${PUBLIC_PATH}`, { headers: bypass, redirect: "manual", signal: AbortSignal.timeout(10000) });
-    if (!page.ok) throw new Error(`Public page returned ${page.status}.`);
-    const html = await readBody(page, 1024 * 1024);
-    const visibleVersion = Number(html.match(/data-cms-version="(\d+)"/)?.[1]);
-    const visibleId = html.match(/data-cms-revision="([a-f0-9-]+)"/)?.[1];
-    // Later revisions also satisfy an older event. Retrying an old event never restores old content.
-    if (!(visibleVersion > job.draft_version || (visibleVersion === job.draft_version && visibleId === job.revision_id))) {
-      throw new Error("Cache expired; public revision is not visible yet.");
-    }
-    await env.DB.prepare("UPDATE cms_publish_outbox SET confirmed_at = ?, last_error = NULL, lease_until = 0 WHERE id = ?").bind(new Date().toISOString(), job.id).run();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Delivery failed.";
-    // No response bodies, secrets or database exceptions are persisted here.
-    const safeMessage = /^(Cache|Public|Invalid test)/.test(message) ? message.slice(0, 160) : "Network delivery failed; retry is scheduled.";
-    const delay = Math.min(3600000, 30000 * 2 ** Math.min(job.attempts, 7));
-    await env.DB.prepare("UPDATE cms_publish_outbox SET last_error = ?, next_attempt_at = ?, lease_until = 0 WHERE id = ?").bind(safeMessage, Date.now() + delay, job.id).run();
+const deliveryErrors: Record<string, string> = {
+  identity: "Preview identity unavailable. Publication is saved; retry cache refresh.",
+  invalidation: "Cache invalidation failed. Publication is saved; retry cache refresh.",
+  verification: "Published revision is not confirmed on the public page. Retry cache refresh.",
+};
+async function acknowledge(env: Env, input: Record<string, unknown>) {
+  if (typeof input.eventId !== "string" || typeof input.leaseToken !== "string" ||
+      !/^[a-f0-9-]{36}$/.test(input.eventId) || !/^[a-f0-9-]{36}$/.test(input.leaseToken)) {
+    throw new InputError("Invalid delivery acknowledgement.");
   }
-}
-export async function drainOutbox(env: Env, force = false) {
-  if (!writesEnabled(env)) return;
-  const jobs = await env.DB.withSession("first-primary").prepare(`SELECT o.id, o.revision_id, o.attempts, r.draft_version
-    FROM cms_publish_outbox o JOIN cms_revisions r ON r.id = o.revision_id
-    WHERE o.confirmed_at IS NULL AND o.lease_until < ? AND (? = 1 OR o.next_attempt_at <= ?)
-    ORDER BY r.draft_version DESC LIMIT 5`).bind(Date.now(), force ? 1 : 0, Date.now()).all<Job>();
-  await Promise.all(jobs.results.map(job => deliver(env, job)));
+  const now = Date.now(), at = new Date(now).toISOString();
+  let statement: D1PreparedStatement;
+  const predicate = "WHERE id = ? AND lease_token = ? AND lease_until > ? AND confirmed_at IS NULL";
+  if (input.stage === "invalidated") {
+    statement = env.DB.prepare(`UPDATE cms_publish_outbox SET invalidated_at = ? ${predicate}`)
+      .bind(at, input.eventId, input.leaseToken, now);
+  } else if (input.stage === "confirmed") {
+    statement = env.DB.prepare(`UPDATE cms_publish_outbox SET confirmed_at = ?, last_error = NULL,
+      lease_until = 0, lease_token = NULL, next_attempt_at = 0 ${predicate} AND invalidated_at IS NOT NULL`)
+      .bind(at, input.eventId, input.leaseToken, now);
+  } else if (input.stage === "failed" && typeof input.reason === "string" && Object.hasOwn(deliveryErrors, input.reason)) {
+    statement = env.DB.prepare(`UPDATE cms_publish_outbox SET last_error = ?, lease_until = 0, lease_token = NULL,
+      next_attempt_at = ? + MIN(3600000, 30000 * (1 << MIN(attempts - 1, 7))) ${predicate}`)
+      .bind(deliveryErrors[input.reason], now, input.eventId, input.leaseToken, now);
+  } else throw new InputError("Invalid delivery stage.");
+  const result = await statement.run();
+  if (!result.meta.changes) throw new HttpError(409, "Delivery lease expired, already completed, or stage is out of order. Refresh status.");
+  if (input.stage === "confirmed") {
+    // A confirmed newer snapshot also fulfills older publications; never restore an old snapshot.
+    await env.DB.prepare(`UPDATE cms_publish_outbox SET confirmed_at = ?, invalidated_at = COALESCE(invalidated_at, ?),
+      last_error = NULL, lease_until = 0, lease_token = NULL, next_attempt_at = 0
+      WHERE confirmed_at IS NULL AND revision_id IN (SELECT id FROM cms_revisions WHERE page_id = ? AND draft_version < (
+        SELECT r.draft_version FROM cms_revisions r JOIN cms_publish_outbox o ON o.revision_id = r.id WHERE o.id = ?))`)
+      .bind(at, at, PAGE_ID, input.eventId).run();
+  }
 }
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -159,7 +155,12 @@ export default {
         return row ? json(publication(row)) : json({ error: "Not published." }, 404);
       }
       if (!path.startsWith("/api/admin/")) return json({ error: "Not found." }, 404);
-      await authorize(request, env);
+      await authorize(request, env, path === "/api/admin/health" && request.method === "GET");
+      if (request.method === "GET" && path === "/api/admin/health") {
+        const columns = await env.DB.prepare("PRAGMA table_info(cms_publish_outbox)").all<{ name: string }>();
+        return json({ environment: env.CMS_ENVIRONMENT, writesEnabled: writesEnabled(env),
+          schemaReady: columns.results.some(column => column.name === "lease_token"), deliveryOwner: "nextjs" });
+      }
       if (request.method === "GET" && path === "/api/admin/proof") return json(await editorState(env));
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
       if (!request.headers.get("content-type")?.startsWith("application/json")) throw new InputError("Expected JSON.");
@@ -171,8 +172,9 @@ export default {
       switch (path) {
         case "/api/admin/import": await importContent(env, input.source); break;
         case "/api/admin/draft": await saveDraft(env, input); break;
-        case "/api/admin/publish": await publish(env, expectedVersion(input.expectedVersion)); await drainOutbox(env, true); break;
-        case "/api/admin/retry": await drainOutbox(env, true); break;
+        case "/api/admin/publish": await publish(env, expectedVersion(input.expectedVersion)); break;
+        case "/api/admin/delivery/claim": return json({ claim: await claimDelivery(env, input.force === true) });
+        case "/api/admin/delivery/ack": await acknowledge(env, input); break;
         default: return json({ error: "Not found." }, 404);
       }
       return json(await editorState(env));
@@ -181,5 +183,4 @@ export default {
       return json({ error: "CMS request failed. Check the test database configuration and Worker logs." }, 500);
     }
   },
-  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) { ctx.waitUntil(drainOutbox(env)); },
 } satisfies ExportedHandler<Env>;

@@ -6,7 +6,7 @@
 
 The `cms-testing` branch has a Ready Vercel Preview in project `breeze-full`, with Node 22 and `iad1` verified in deployment resources. After explicit approval, the separate `breeze-test-db` was created (ID `bc8cb3a4-bf92-4be6-82d0-84738ec3a381`, ENAM; D1 reported primary colo EWR), exported before migration into ignored `.local/`, and migrated. `breeze-test-api` is deployed at `https://breeze-test-api.nikodola.workers.dev`, bound only to this database. Its writes remain disabled. The seven CMS variables are saved only for Vercel Preview branch `cms-testing`; subsequent Preview builds receive them.
 
-No automation bypass secret has been created. A temporary Preview-alias share credential was tested with the automation header, did not pass Vercel protection, and was revoked. Existing Vercel development OIDC access **did** reach the Preview (200) and was refused by the protected production deployment (403). See [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md) for the recommended change to Next-owned invalidation and its retry tradeoff. That change is proposed, not implemented. Deployed publishing/performance measurements remain pending this decision. The local proof below still uses the original Worker callback flow.
+No automation bypass secret has been created. A temporary Preview-alias share credential was tested with the automation header, did not pass Vercel protection, and was revoked. Existing Vercel development OIDC access **did** reach the Preview (200) and was refused by the protected production deployment (403). See [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md) for the recommended change to Next-owned invalidation and its retry tradeoff. Next-owned delivery is now implemented with OIDC verification. Remote results are recorded separately after the Preview acceptance run. No project-wide bypass credential is used.
 
 This is one complete content workflow, with `/admin-test` as the editor and `/cms-proof` as the public test page. Existing Breeze pages, the homepage hero, forms, styles, and content files remain outside this workflow. The live dashboard-managed `breeze-api` Worker and `breeze-db` have not been modified. No cloud deployment or remote migration is part of the local test commands.
 
@@ -39,19 +39,20 @@ sequenceDiagram
     E->>N: Publish saved version
     N->>W: Publish
     W->>D: Transaction: revision + public pointer + delivery job
-    W->>N: Timestamped HMAC callback
-    N->>N: Expire content tag and /cms-proof
-    W->>N: GET /cms-proof
+    W-->>N: Committed publication
+    N->>W: Claim durable delivery lease
+    N->>N: OIDC + HMAC self-request: expire fixed tag/path
+    N->>N: OIDC GET /cms-proof
     N->>W: Fetch published revision on cache miss
     W->>D: Primary read of published revision
-    N-->>W: Cached HTML with revision identity
+    N->>W: Acknowledge verified HTML revision
     W->>D: Mark delivery confirmed
     N-->>E: Published / pending / confirmed state
 ```
 
 ### Data model
 
-The migration `workers/cms/migrations/0001_cms_workflow.sql` creates new namespaced tables. It contains no DROP, DELETE, ALTER, or UPDATE against existing tables.
+Migration `0001_cms_workflow.sql` creates namespaced CMS tables without changing legacy tables. Additive migration `0002_next_delivery.sql` adds a lease token to the outbox; it retains every existing row.
 
 | Table | Purpose |
 | --- | --- |
@@ -71,31 +72,33 @@ All runtime SQL values use bound parameters. Publication uses a D1 batch transac
 | --- | --- |
 | `/admin-test` | Protected test editor, dynamic, no-store, noindex. |
 | `/admin` | Protected redirect to `/admin-test`. |
-| `/api/cms/editor` | Authenticated server bridge. GET status; POST import, draft, publish or retry. |
-| `/api/cms/revalidate` | HMAC-authenticated Worker callback with a five-minute timestamp window and fixed allowed page/tag. |
+| `/api/cms/editor` | Authenticated server bridge. GET status; POST import, draft, publish, retry, or read-only security preflight. |
+| `/api/cms/revalidate` | Next-owned HMAC endpoint with a five-minute timestamp window, fixed Preview host/page/tag, and no production access. Its secret is never provided to the Worker. |
 | `/cms-proof` | Only published revision; cached server-rendered HTML, noindex, no content loading skeleton. |
 | `/api/admin`, `/api/admin/upload` | Retired: return 410; no filesystem modifications. |
 
-Worker routes are `/api/public/pages/cms-proof` and `/api/admin/{proof,import,draft,publish,retry}`. The original Worker endpoint is not replaced or proxied by this Worker.
+Worker routes are `/api/public/pages/cms-proof` and `/api/admin/{health,proof,import,draft,publish,delivery/claim,delivery/ack}`. The original Worker endpoint is not replaced or proxied by this Worker.
 
 ### Security boundaries
 
-- Next test access requires an explicit enable flag, configured username, a random password of at least 32 characters, and a matching configured host. Requests are restricted to loopback locally or HTTPS on a Vercel **Preview** environment. `VERCEL_ENV=production` fails closed.
+- Next test access requires an explicit enable flag, configured username, a random password of at least 32 characters, and a matching configured host. Requests are restricted to loopback locally or HTTPS on a Vercel **Preview** environment. `VERCEL_ENV=production` fails closed. On Vercel, the branch must be `cms-testing`, the origin must be its pinned branch alias, and the Worker URL must be the pinned test Worker.
 - Both Proxy and the actual editor page/API check authorization. The browser uses its HTTP Basic prompt; no password is put into application storage or client bundles.
 - Browser mutations require the exact configured Origin and `x-cms-request: editor`. Bodies are capped while streaming, input is validated, and text renders through React escaping. URLs are limited to internal paths or HTTPS.
 - Next sends a separate bearer token to the Worker. Worker writes require `CMS_ENVIRONMENT=test`, `CMS_WRITES_ENABLED=true` and the token. It refuses browser-origin admin requests. CORS is not authentication.
-- Revalidation has its own HMAC secret. The signed exact body and timestamp cover a validated, fixed cache scope. Duplicate authenticated callbacks are harmless; old timestamps, tampered bodies and arbitrary paths are rejected.
-- Preview content never enters the public loader. There is no draft fallback when a page is unpublished.
+- Revalidation has its own HMAC secret. The signed exact body and timestamp cover a validated, fixed cache scope. Duplicate authenticated Next requests are harmless; old timestamps, tampered bodies and arbitrary paths are rejected.
+- Unpublished draft content never enters the public loader. There is no draft fallback when a page is unpublished.
 - The Worker configuration points exclusively to the approved `breeze-test-db`. For another client, replace its account/resource identifiers deliberately; never use the `breeze-db` production ID for this test.
 - Basic auth is only a temporary test gate. Before production editing, replace it with authenticated sessions, authorization, audit identity and rate limiting. Do not promote a test preview deployment to production.
 
 ### Caching and delivery
 
-The proof retains the current Next architecture without enabling Cache Components. Its server fetch explicitly uses `force-cache`, tag `cms:page:cms-proof`, and a one-hour fallback revalidation interval. The public route uses ISR. Draft/editor requests use `no-store`.
+The proof retains the current Next architecture without enabling Cache Components. Its server fetch explicitly uses `force-cache`, tag `cms:preview:cms-testing:page:cms-proof`, and a one-hour fallback revalidation interval. The public route uses ISR. Draft/editor requests use `no-store`.
 
-After the database commit, the Worker calls `revalidateTag(tag, { expire: 0 })` and `revalidatePath('/cms-proof')` through the signed endpoint. It then fetches the exact public URL and checks its revision ID/version. The public loader reads D1 through a `first-primary` session after a cache miss, avoiding stale replica refill.
+After committing D1, Next claims a 90-second lease through the authenticated Worker. It obtains the current request's short-lived Preview identity using `getVercelOidcToken()` and sends OIDC plus a Next-only HMAC to its fixed `/api/cms/revalidate` endpoint. That separate request calls `revalidateTag(tag, { expire: 0 })` and `revalidatePath('/cms-proof')`, allowing invalidation to finish before HTML verification. Next then warms the fixed public URL using OIDC and checks the immutable revision ID/version. Redirects are forbidden; tokens never go to the Worker. The public loader uses a `first-primary` D1 session after a cache miss.
 
-`invalidated_at` means the callback acknowledged invalidation; `confirmed_at` means the public HTML exposed that revision or a later revision. These are different outcomes. A failed callback does not undo a committed publication. The stored job survives a Worker restart, uses a lease to avoid overlapping work, and retries with bounded backoff. The Worker cron checks every five minutes; the editor can retry immediately. Local `wrangler dev` does not automatically run the deployed cron schedule, so use the retry button locally.
+`invalidated_at` records successful invalidation; `confirmed_at` records matching HTML (or a newer revision). Failure preserves the committed publication and a durable retry record. Each claim gets a unique lease token; stale or overlapping attempts cannot acknowledge another invocation. Interrupted leases expire after 90 seconds. Failures record a fixed safe message and bounded exponential backoff (30 seconds to one hour). The authenticated **Retry cache refresh** button can bypass backoff but cannot steal an active lease. Retry never inserts a revision. A newer confirmed revision fulfills older jobs.
+
+There is **no unattended retry runner in this milestone**. The Worker has no cron or outgoing Vercel requests. An editor can refresh status and retry after interruption; a future trusted Preview OIDC runner can use the same protected endpoint. Vercel Cron targets production, so it is unsuitable for this Preview. Do not describe manual recovery as automatic background delivery.
 
 There is no second Worker CDN JSON cache in this proof. The public Worker API returns `no-store`; Next's explicit server fetch cache owns content caching. A draft save never invalidates public content. Clients already holding an open page must navigate or reload to see a later publication; live push updates are outside scope.
 
@@ -132,7 +135,7 @@ The local timings are observations, not estimates of Vercel `iad1` performance. 
    node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
    ```
 
-4. Set `CMS_TEST_ENABLED=true` in `.env.local`. Keep the shared write token and revalidation secret identical in both files. Use `CMS_TEST_ORIGIN=http://localhost:3000` in Next and `CMS_SITE_ORIGIN=http://localhost:3000` in the Worker. The Worker URL is `http://127.0.0.1:8787`. Hostnames and ports must match your browser's URL exactly.
+4. Set `CMS_TEST_ENABLED=true` in `.env.local`. Keep only `CMS_WRITE_TOKEN` identical in both files. `CMS_REVALIDATE_SECRET` stays only in Next. Use `CMS_TEST_ORIGIN=http://localhost:3000` in Next. The Worker URL is `http://127.0.0.1:8787`. Hostnames and ports must match your browser's URL exactly.
 5. Apply the migration **locally** and start the Worker:
 
    ```powershell
@@ -152,7 +155,7 @@ The Wrangler local database persists under `workers/cms/.wrangler/`. No R2 crede
 
 ## Cloudflare test deployment procedure
 
-The initial resource creation, inspection/export, migration, and deployment below are complete. Do not repeat creation or overwrite the existing test database. Writes are still disabled pending the protected delivery decision described above.
+The initial resource creation, inspection/export, migration, and deployment below are complete. Do not repeat creation or overwrite the existing test database. Deploy initially with writes disabled. Enable them only after the read-only preflight described below passes.
 
 1. Reuse the tested CMS Worker in `workers/cms/src/index.ts` as a **different** Worker named `breeze-test-api`. The original `breeze-api` was edited in the dashboard and its complete source has not been imported; export/download it before any future integration with that Worker.
 2. After explicit confirmation, create a separate D1 database named `breeze-test-db` (US East location hint `enam` when available). Record its ID. Put only this ID into `workers/cms/wrangler.jsonc`. Keep the binding name `DB`; never bind this test Worker to `breeze-db`.
@@ -171,15 +174,14 @@ The initial resource creation, inspection/export, migration, and deployment belo
 
    ```powershell
    npx wrangler secret put CMS_WRITE_TOKEN
-   npx wrangler secret put CMS_REVALIDATE_SECRET
    ```
 
-5. Keep writes disabled for the first deployment. Add `CMS_SITE_ORIGIN` to Worker vars using the exact stable Vercel preview origin. Deploy with `npx wrangler deploy`. After the Next preview and its secrets are configured, set the Worker var `CMS_WRITES_ENABLED` to `true` and redeploy this **test Worker only**.
-6. Confirm the cron trigger is present. Use the editor to import the one existing public row. No cloning, editing, or deletion of production rows is required.
+5. Keep `CMS_WRITES_ENABLED=false` for the first deployment. Deploy the test Worker, then configure and deploy the Next Preview. Call authenticated `POST /api/cms/editor` with `{ "action": "preflight" }`. It verifies Worker credentials, migration, environment, and a signed dry-run Next request through Preview OIDC while writes remain off.
+6. After preflight succeeds and unauthenticated/cross-origin mutation checks fail, deploy this **test Worker only** with `--var CMS_WRITES_ENABLED:true`. Keep the checked-in default false. Confirm the deployed binding is the test database and the only Worker secret is `CMS_WRITE_TOKEN`. Use the editor to import the original public row. No production writes or R2 resources are involved.
 
 ## Vercel Preview configuration
 
-The variables below have been configured for `cms-testing`. The broad automation-secret option later in this section is **not approved** and has not been enabled. Prefer the OIDC/Next-owned approach in [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md).
+The variables below are scoped to `cms-testing`. No Vercel automation bypass secret is created or permitted in the Worker. See [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md) for the access investigation.
 
 The local directory is `breeze-web`; the connected Vercel project is **`breeze-full`**, in `nikodolas-projects`, connected to `NikoDola/breeze-full`. Use the **`cms-testing`** branch and its stable preview alias. Set the following variables for **Preview only, scoped to `cms-testing`**. No `NEXT_PUBLIC_` names:
 
@@ -191,11 +193,11 @@ The local directory is `breeze-web`; the connected Vercel project is **`breeze-f
 | `CMS_TEST_USERNAME` | Test editor username |
 | `CMS_TEST_PASSWORD` | Random test-only password, at least 32 characters |
 | `CMS_WRITE_TOKEN` | Same value as the test Worker's secret |
-| `CMS_REVALIDATE_SECRET` | Same independent value as the test Worker's secret |
+| `CMS_REVALIDATE_SECRET` | Independent Next-only HMAC value; absent from the Worker |
 
 Leave `CMS_LOCAL_PROOF_BUILD` unset on Vercel. Vercel supplies its own `VERCEL` and `VERCEL_ENV` values. Do not override them or enable CMS variables for Production. Build the preview after its configuration is set; the test page can return 404 until first publication, then on-demand revalidation refreshes it.
 
-Enable Vercel Deployment Protection for the preview as an additional gate. If it protects the callback and public proof URL, create an automation bypass secret and set `VERCEL_AUTOMATION_BYPASS_SECRET` as a **Worker secret**. The Worker passes it in a header to both requests. The bypass does not replace the app's HMAC or editor authorization. Never put the bypass in a query string or client code.
+Keep Vercel Deployment Protection and OIDC Federation enabled. Default Trusted Sources self-access allows Preview-to-Preview and development-to-Preview, without either reaching production. Do not add any Preview-to-production rule. The application additionally pins the exact `cms-testing` alias and branch. No automation bypass secret, domain exception, or broad trust rule is needed. Local test scripts load their development OIDC identity from an ignored environment file; Vercel Functions get their current Preview token from the runtime request context.
 
 The `cms-testing` branch includes `vercel.json` with `regions: ["iad1"]` for US East Node functions and ISR. It does not change `main` or the production deployment. Next.js 16.3.8 deprecates route-level `preferredRegion`, so placement uses Vercel configuration. The package pins Node 22.x. Verify actual function placement in the Preview deployment before measuring; CDN ingress location is not proof of function location. Use one exact deployment/alias for the editor, callbacks and measured page; refreshing a different deployment's cache will not prove this workflow.
 
@@ -203,10 +205,36 @@ Acceptance on Vercel: record the deployment ID, publish twice through `/admin-te
 
 ## Before extending beyond the proof
 
+### Preview acceptance and measurements
+
+Load the seven branch-specific CMS settings into ignored `.local/cms-preview.env`.
+Use Vercel CLI to obtain a development OIDC token in ignored `.env.local`; never commit it.
+
+```powershell
+# While Worker writes are still false: verifies credentials, OIDC, iad1 and guards.
+npm run cms:preview-proof
+# After the preflight and explicit test Worker enablement:
+npm run cms:preview-proof -- --allow-test-writes
+```
+
+The second command modifies only the isolated proof page. It tests draft privacy,
+duplicate publication, interrupted delivery recovery, 30 direct Worker requests,
+30 invalidated Next page requests, 50 cached requests, and 10 publication cycles.
+It restores the test document afterward. Record the Vercel deployment ID before
+and after to confirm no redeployment. An authenticated Wrangler tail records
+sanitized request counts; raw request headers and secrets are never saved.
+The direct API phase calibrates the tail against 30 actual D1 read log entries.
+Reports under `.local/` contain samples, median and nearest-rank p95, cache headers,
+and request counts. Timings are full HTTP response times from the machine running
+the test, including its network distance; uncached samples are regenerated pages,
+not measurements of every possible cold-start condition.
+
+### Next milestone
+
 - Review the actual dashboard Worker source and live D1 schema before integration. Do not infer schema from the public JSON response.
 - Confirm R2 bucket bindings, image delivery domain and access policy before enabling uploads.
 - For image tests, create a separate `breeze-test-assets` R2 bucket only after that phase is approved. Do not bind or change production storage; no R2 bucket is needed for the current text workflow.
 - Add real user identity and authorization before production administration; establish backup/export retention and a restore drill.
 - Add content types, controlled section layouts and migration mappings one page at a time. Preserve developer-controlled hero/form components.
 
-References used: [Next ISR](https://nextjs.org/docs/app/guides/incremental-static-regeneration), [revalidateTag](https://nextjs.org/docs/app/api-reference/functions/revalidateTag), [D1 transactional batches](https://developers.cloudflare.com/d1/worker-api/d1-database/), [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/), [Vercel automation bypass](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation). Framework code was checked against the locally installed Next 16.3 documentation.
+References used: [Next ISR](https://nextjs.org/docs/app/guides/incremental-static-regeneration), [revalidateTag](https://nextjs.org/docs/app/api-reference/functions/revalidateTag), [D1 transactional batches](https://developers.cloudflare.com/d1/worker-api/d1-database/), [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/), [Vercel Trusted Sources](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/trusted-sources). Framework code was checked against the locally installed Next 16.3 documentation.

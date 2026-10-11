@@ -34,8 +34,11 @@ test("Next editor gate fails closed in production, checks credentials and blocks
     process.env.CMS_TEST_PASSWORD = ""; assert.equal(editorEnabled(), false);
     process.env.CMS_TEST_PASSWORD = password;
     process.env.VERCEL_ENV = "production"; assert.equal(editorEnabled(), false); assert.equal(testOrigin(), null);
-    Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", CMS_TEST_ORIGIN: "https://test.example.com" });
+    Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing", CMS_TEST_ORIGIN: "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app" });
     assert.equal(editorEnabled(), true);
+    process.env.VERCEL_GIT_COMMIT_REF = "main"; assert.equal(editorEnabled(), false);
+    process.env.VERCEL_GIT_COMMIT_REF = "cms-testing";
+    process.env.CMS_TEST_ORIGIN = "https://breeze-full.vercel.app"; assert.equal(editorEnabled(), false);
     process.env.VERCEL_ENV = ""; assert.equal(editorEnabled(), false);
     process.env.VERCEL = ""; assert.equal(editorEnabled(), false); // Non-Vercel remote hosts require a future auth implementation.
   } finally {

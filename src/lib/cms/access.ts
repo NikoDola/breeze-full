@@ -1,9 +1,12 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { PREVIEW_ORIGIN } from "../../../cms/shared/contract";
 const equal = (a: string, b: string) => timingSafeEqual(createHash("sha256").update(a).digest(), createHash("sha256").update(b).digest());
 export function testOrigin(): string | null {
   if (process.env.CMS_TEST_ENABLED !== "true" || process.env.VERCEL_ENV === "production" ||
       (process.env.VERCEL && process.env.VERCEL_ENV !== "preview")) return null;
+  if (process.env.VERCEL && (process.env.VERCEL_GIT_COMMIT_REF !== "cms-testing" ||
+      process.env.CMS_TEST_ORIGIN !== PREVIEW_ORIGIN)) return null;
   try {
     const url = new URL(process.env.CMS_TEST_ORIGIN ?? "");
     const local = ["localhost", "127.0.0.1"].includes(url.hostname);

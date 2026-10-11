@@ -30,7 +30,7 @@ Pinning a callback URL and retaining separate HMAC secrets prevent accidental mi
 
 1. The protected Preview editor authenticates the user and validates Origin, host, body, and expected draft version.
 2. Its Next server handler publishes through the test Worker, which atomically commits the immutable revision, publication pointer, and durable delivery record in test D1.
-3. After the commit succeeds, that same Next handler invokes the fixed page's `revalidateTag(tag, { expire: 0 })` and `revalidatePath('/cms-proof')` directly.
+3. After the commit succeeds, that Next handler makes a signed, OIDC-authenticated self-request to the fixed cache endpoint. The separate request invokes `revalidateTag(tag, { expire: 0 })` and `revalidatePath('/cms-proof')`, completing invalidation before the HTML verification request. The HMAC credential stays exclusively in Next.
 4. For HTTP warming and HTML revision verification, the Next function obtains its current identity through `getVercelOidcToken()` from `@vercel/oidc`. It calls only the configured Preview origin and forwards that short-lived token in `x-vercel-trusted-oidc-idp-token`. Redirects remain disabled.
 5. Next records invalidation and confirmed HTML delivery separately through an authenticated test Worker acknowledgment endpoint. A failure leaves the durable job pending; retry is idempotent.
 

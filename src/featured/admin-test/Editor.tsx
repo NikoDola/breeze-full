@@ -66,12 +66,14 @@ export default function Editor() {
     <div className={styles.status} aria-live="polite">
       <span>Draft: {baseDraft ? `v${baseDraft.version}${dirty ? " · unsaved changes" : " · saved"}` : "not imported"}</span>
       <span>Published: {state?.publication ? `v${state.publication.version}` : "none"}</span>
-      <span>Public page: {state?.delivery?.confirmed_at ? "confirmed" : state?.publication ? "awaiting confirmation" : "not published"}</span>
+      <span>Public page: {state?.delivery?.confirmed_at ? "confirmed" : state?.delivery?.invalidated_at ? "cache refreshed; awaiting confirmation" : state?.publication ? "cache refresh pending" : "not published"}</span>
     </div>
     {error && <p className={styles.error} role="alert">{error}</p>}
     {newerDraft && <p className={styles.error} role="alert">A newer draft is available. Copy any unsaved edits, then refresh before saving or publishing.</p>}
     {message && <p role="status">{message}</p>}
     {state?.delivery?.last_error && <p className={styles.error}>Delivery: {state.delivery.last_error} Attempts: {state.delivery.attempts}.</p>}
+    {state?.delivery && !state.delivery.confirmed_at && state.delivery.lease_until > Date.now() &&
+      <p role="status">A cache refresh is in progress. If it is interrupted, retry after {new Date(state.delivery.lease_until).toLocaleTimeString()}. The publication is saved.</p>}
     <div className={styles.actions}>
       <button type="button" disabled={busy} onClick={() => { if (!dirty || window.confirm("Discard unsaved edits and reload?")) void load(); }}>Refresh status</button>
       {state && !state.draft && <button type="button" disabled={busy} onClick={() => void act("import")}>Copy existing D1 content</button>}

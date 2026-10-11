@@ -1,6 +1,6 @@
 import { build } from "esbuild";
 import { Miniflare, Log, LogLevel, convertV4MiniflareOptions } from "miniflare";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
 
@@ -22,15 +22,17 @@ export async function createWorker(options = {}) {
     modules: true, script: await bundle(new URL("../src/index.ts", import.meta.url)),
     compatibilityDate: "2026-10-01", host: "127.0.0.1", port: 0,
     d1Databases: ["DB"], log: new Log(LogLevel.ERROR),
-    bindings: { CMS_ENVIRONMENT: "test", CMS_WRITES_ENABLED: "true", CMS_WRITE_TOKEN: token, CMS_REVALIDATE_SECRET: revalidationSecret, CMS_SITE_ORIGIN: "https://preview.example.test", ...bindings },
+    bindings: { CMS_ENVIRONMENT: "test", CMS_WRITES_ENABLED: "true", CMS_WRITE_TOKEN: token, ...bindings },
     ...rest,
   }));
 }
 export async function migrate(db) {
-  const sql = await readFile(new URL("../migrations/0001_cms_workflow.sql", import.meta.url), "utf8");
+  for (const file of (await readdir(new URL("../migrations/", import.meta.url))).filter(name => name.endsWith(".sql")).sort()) {
+  const sql = await readFile(new URL(`../migrations/${file}`, import.meta.url), "utf8");
   // Split only at CREATE boundaries so trigger bodies stay intact.
-  for (const statement of sql.replace(/^--.*$/gm, "").trim().split(/;\s*(?=CREATE|$)/).filter(s => s.trim())) {
+  for (const statement of sql.replace(/^--.*$/gm, "").trim().split(/;\s*(?=CREATE|ALTER|$)/).filter(s => s.trim())) {
     await db.prepare(statement).run();
+  }
   }
 }
 export async function admin(mf, action = "proof", body, headers = {}) {

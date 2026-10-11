@@ -2,16 +2,20 @@
   "name": "breeze-hc",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "cms:check": "npm --prefix workers/cms run typecheck && npm --prefix workers/cms test",
-    "cms:proof": "node workers/cms/tests/local-proof.mjs"
+    "cms:proof": "node workers/cms/tests/local-proof.mjs",
+    "cms:preview-proof": "node --env-file=.local/cms-preview.env --env-file=.env.local workers/cms/tests/preview-proof.mjs"
   },
   "dependencies": {
+    "@vercel/oidc": "4.0.0",
     "next": "16.3.8",
     "react": "19.0.0",
     "react-dom": "19.0.0"

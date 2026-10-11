@@ -1,6 +1,8 @@
 export const PAGE_ID = "cms-proof";
 export const PUBLIC_PATH = "/cms-proof";
-export const CACHE_TAG = "cms:page:cms-proof";
+export const CACHE_TAG = "cms:preview:cms-testing:page:cms-proof";
+export const PREVIEW_ORIGIN = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app";
+export const TEST_WORKER_ORIGIN = "https://breeze-test-api.nikodola.workers.dev";
 export const LEGACY_URL = "https://breeze-api.nikodola.workers.dev/api/sections/home-hero";
 export const MAX_BODY_BYTES = 48 * 1024;
 
@@ -18,10 +20,11 @@ export type Draft = { version: number; document: Document; updatedAt: string };
 export type Delivery = {
   revision_id: string; draft_version: number; attempts: number;
   invalidated_at: string | null; confirmed_at: string | null;
-  last_error: string | null; next_attempt_at: number;
+  last_error: string | null; next_attempt_at: number; lease_until: number;
 };
 export type EditorState = { draft: Draft | null; publication: Publication | null; delivery: Delivery | null };
 export type PublishEvent = { eventId: string; pageId: typeof PAGE_ID; path: typeof PUBLIC_PATH; revisionId: string; version: number };
+export type DeliveryClaim = { event: PublishEvent; leaseToken: string };
 
 export class InputError extends Error { status = 400; }
 export function record(value: unknown): Record<string, unknown> {

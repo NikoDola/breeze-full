@@ -1,5 +1,6 @@
 import { protectEditor } from "@/lib/cms/access";
 import { workerAdmin } from "@/lib/cms/worker";
+import { deliverPublication, preflight } from "@/lib/cms/delivery";
 import { InputError, LEGACY_URL, importLegacy, readBody, record } from "../../../cms/shared/contract";
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
 export async function GET(request: Request) {
@@ -14,7 +15,9 @@ export async function POST(request: Request) {
   try {
     if (!request.headers.get("content-type")?.startsWith("application/json")) throw new InputError("Expected JSON.");
     const input = record(JSON.parse(await readBody(request)));
-    if (!["import", "draft", "publish", "retry"].includes(String(input.action))) throw new InputError("Unknown action.");
+    if (!["import", "draft", "publish", "retry", "preflight"].includes(String(input.action))) throw new InputError("Unknown action.");
+    if (input.action === "preflight") return json(await preflight());
+    if (input.action === "retry") return json(await deliverPublication());
     let body: unknown = input;
     if (input.action === "import") {
       const legacy = await fetch(LEGACY_URL, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
@@ -24,6 +27,7 @@ export async function POST(request: Request) {
       body = { source };
     }
     const response = await workerAdmin(String(input.action), body);
+    if (input.action === "publish" && response.ok) return json(await deliverPublication());
     return json(await response.json(), response.status);
   } catch (error) {
     if (error instanceof InputError || error instanceof SyntaxError) return json({ error: error instanceof InputError ? error.message : "Invalid JSON." }, 400);
