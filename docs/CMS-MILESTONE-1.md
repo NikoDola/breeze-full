@@ -92,7 +92,7 @@ Worker routes are `/api/public/pages/cms-proof` and `/api/admin/{health,proof,im
 
 ### Caching and delivery
 
-The proof retains the current Next architecture without enabling Cache Components. Its server fetch explicitly uses `force-cache`, tag `cms:preview:cms-testing:page:cms-proof`, and a one-hour fallback revalidation interval. The public route uses ISR. Draft/editor requests use `no-store`.
+The proof retains the current Next architecture without enabling Cache Components. Its server fetch explicitly uses `force-cache`, tag `cms:preview:cms-testing:page:cms-proof`, and a one-hour fallback revalidation interval. The public route uses ISR. React `cache` shares its loader between metadata and page rendering even with the fetch timeout signal. Draft/editor requests use `no-store`.
 
 After committing D1, Next claims a 90-second lease through the authenticated Worker. It obtains the current request's short-lived Preview identity using `getVercelOidcToken()` and sends OIDC plus a Next-only HMAC to its fixed `/api/cms/revalidate` endpoint. That separate request calls `revalidateTag(tag, { expire: 0 })` and `revalidatePath('/cms-proof')`, allowing invalidation to finish before HTML verification. Next then warms the fixed public URL using OIDC and checks the immutable revision ID/version. Redirects are forbidden; tokens never go to the Worker. The public loader uses a `first-primary` D1 session after a cache miss.
 
@@ -214,7 +214,7 @@ Use Vercel CLI to obtain a development OIDC token in ignored `.env.local`; never
 # While Worker writes are still false: verifies credentials, OIDC, iad1 and guards.
 npm run cms:preview-proof
 # After the preflight and explicit test Worker enablement:
-npm run cms:preview-proof -- --allow-test-writes
+npm run cms:preview-workflow
 ```
 
 The second command modifies only the isolated proof page. It tests draft privacy,
@@ -223,7 +223,7 @@ duplicate publication, interrupted delivery recovery, 30 direct Worker requests,
 It restores the test document afterward. Record the Vercel deployment ID before
 and after to confirm no redeployment. An authenticated Wrangler tail records
 sanitized request counts; raw request headers and secrets are never saved.
-The direct API phase calibrates the tail against 30 actual D1 read log entries.
+The direct API phase calibrates the tail against 30 actual D1 read log entries. Origin samples are spaced 1.2 seconds apart because the live stream dropped events during rapid requests; these waits are excluded from latency. Probe paths avoid UUIDs because Cloudflare redacts UUID-shaped URL segments in logs.
 Reports under `.local/` contain samples, median and nearest-rank p95, cache headers,
 and request counts. Timings are full HTTP response times from the machine running
 the test, including its network distance; uncached samples are regenerated pages,

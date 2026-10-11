@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "cms:check": "npm --prefix workers/cms run typecheck && npm --prefix workers/cms test",
     "cms:proof": "node workers/cms/tests/local-proof.mjs",
-    "cms:preview-proof": "node --env-file=.local/cms-preview.env --env-file=.env.local workers/cms/tests/preview-proof.mjs"
+    "cms:preview-proof": "node --env-file=.local/cms-preview.env --env-file=.env.local workers/cms/tests/preview-proof.mjs",
+    "cms:preview-workflow": "node --env-file=.local/cms-preview.env --env-file=.env.local workers/cms/tests/preview-proof.mjs --allow-test-writes"
   },
   "dependencies": {
     "@vercel/oidc": "4.0.0",
