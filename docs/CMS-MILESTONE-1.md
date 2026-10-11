@@ -2,6 +2,12 @@
 
 ## Scope and current status
 
+### Cloud test setup: 2026-10-11
+
+The `cms-testing` branch has a Ready Vercel Preview in project `breeze-full`, with Node 22 and `iad1` verified in deployment resources. After explicit approval, the separate `breeze-test-db` was created (ID `bc8cb3a4-bf92-4be6-82d0-84738ec3a381`, ENAM; D1 reported primary colo EWR), exported before migration into ignored `.local/`, and migrated. `breeze-test-api` is deployed at `https://breeze-test-api.nikodola.workers.dev`, bound only to this database. Its writes remain disabled. The seven CMS variables are saved only for Vercel Preview branch `cms-testing`; subsequent Preview builds receive them.
+
+No automation bypass secret has been created. A temporary Preview-alias share credential was tested with the automation header, did not pass Vercel protection, and was revoked. Existing Vercel development OIDC access **did** reach the Preview (200) and was refused by the protected production deployment (403). See [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md) for the recommended change to Next-owned invalidation and its retry tradeoff. That change is proposed, not implemented. Deployed publishing/performance measurements remain pending this decision. The local proof below still uses the original Worker callback flow.
+
 This is one complete content workflow, with `/admin-test` as the editor and `/cms-proof` as the public test page. Existing Breeze pages, the homepage hero, forms, styles, and content files remain outside this workflow. The live dashboard-managed `breeze-api` Worker and `breeze-db` have not been modified. No cloud deployment or remote migration is part of the local test commands.
 
 The original `home-hero` row is read through the existing public GET endpoint and copied into a separate test database. Its complete original JSON is retained in `cms_imports`; repeating the import never overwrites edits. The production schema cannot be inspected through that endpoint. Before any future live migration, inspect the real schema and export a backup with account access.
@@ -80,7 +86,7 @@ Worker routes are `/api/public/pages/cms-proof` and `/api/admin/{proof,import,dr
 - Next sends a separate bearer token to the Worker. Worker writes require `CMS_ENVIRONMENT=test`, `CMS_WRITES_ENABLED=true` and the token. It refuses browser-origin admin requests. CORS is not authentication.
 - Revalidation has its own HMAC secret. The signed exact body and timestamp cover a validated, fixed cache scope. Duplicate authenticated callbacks are harmless; old timestamps, tampered bodies and arbitrary paths are rejected.
 - Preview content never enters the public loader. There is no draft fallback when a page is unpublished.
-- The Worker configuration intentionally contains an all-zero database ID. This supports local D1 but requires deliberate replacement before a remote deployment. Never replace it with the `breeze-db` production ID for this test.
+- The Worker configuration points exclusively to the approved `breeze-test-db`. For another client, replace its account/resource identifiers deliberately; never use the `breeze-db` production ID for this test.
 - Basic auth is only a temporary test gate. Before production editing, replace it with authenticated sessions, authorization, audit identity and rate limiting. Do not promote a test preview deployment to production.
 
 ### Caching and delivery
@@ -144,7 +150,9 @@ The local timings are observations, not estimates of Vercel `iad1` performance. 
 
 The Wrangler local database persists under `workers/cms/.wrangler/`. No R2 credentials or bucket are required. To disable the editor, set `CMS_TEST_ENABLED=false` and restart Next. Basic credentials can remain in the browser's auth cache until the browser session closes; use a private window for shared test machines.
 
-## Later: Cloudflare test deployment (not performed)
+## Cloudflare test deployment procedure
+
+The initial resource creation, inspection/export, migration, and deployment below are complete. Do not repeat creation or overwrite the existing test database. Writes are still disabled pending the protected delivery decision described above.
 
 1. Reuse the tested CMS Worker in `workers/cms/src/index.ts` as a **different** Worker named `breeze-test-api`. The original `breeze-api` was edited in the dashboard and its complete source has not been imported; export/download it before any future integration with that Worker.
 2. After explicit confirmation, create a separate D1 database named `breeze-test-db` (US East location hint `enam` when available). Record its ID. Put only this ID into `workers/cms/wrangler.jsonc`. Keep the binding name `DB`; never bind this test Worker to `breeze-db`.
@@ -169,7 +177,9 @@ The Wrangler local database persists under `workers/cms/.wrangler/`. No R2 crede
 5. Keep writes disabled for the first deployment. Add `CMS_SITE_ORIGIN` to Worker vars using the exact stable Vercel preview origin. Deploy with `npx wrangler deploy`. After the Next preview and its secrets are configured, set the Worker var `CMS_WRITES_ENABLED` to `true` and redeploy this **test Worker only**.
 6. Confirm the cron trigger is present. Use the editor to import the one existing public row. No cloning, editing, or deletion of production rows is required.
 
-## Later: Vercel Preview configuration (not performed)
+## Vercel Preview configuration
+
+The variables below have been configured for `cms-testing`. The broad automation-secret option later in this section is **not approved** and has not been enabled. Prefer the OIDC/Next-owned approach in [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md).
 
 The local directory is `breeze-web`; the connected Vercel project is **`breeze-full`**, in `nikodolas-projects`, connected to `NikoDola/breeze-full`. Use the **`cms-testing`** branch and its stable preview alias. Set the following variables for **Preview only, scoped to `cms-testing`**. No `NEXT_PUBLIC_` names:
 

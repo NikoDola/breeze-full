@@ -40,10 +40,15 @@ function publication(row: Revision | null) {
 }
 async function readPublication(env: Env) {
   // Always begin at the primary: a freshly invalidated Next cache must not fill from a lagging replica.
-  return env.DB.withSession("first-primary").prepare(`
+  const started = performance.now();
+  const row = await env.DB.withSession("first-primary").prepare(`
     SELECT r.* FROM cms_pages p JOIN cms_revisions r ON r.id = p.published_revision_id
     WHERE p.id = ? AND p.slug = ?
   `).bind(PAGE_ID, PAGE_ID).first<Revision>();
+  // No content, headers or credentials: this lets preview tests verify actual origin reads.
+  console.info(JSON.stringify({ event: "cms.public.d1-read", pageId: PAGE_ID,
+    durationMs: Math.round((performance.now() - started) * 100) / 100, published: Boolean(row) }));
+  return row;
 }
 async function editorState(env: Env) {
   const results = await env.DB.withSession("first-primary").batch([
