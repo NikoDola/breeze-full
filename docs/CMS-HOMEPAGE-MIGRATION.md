@@ -117,6 +117,49 @@ Browser visual acceptance belongs to the client. The exact markup/hash checks
 verify structural preservation; no claim of a pixel-by-pixel browser comparison
 is made. Do not rerun the full remote performance benchmark for this slice.
 
+### Verified results — 2026-10-12
+
+- Root TypeScript check, Worker TypeScript check and all **26 CMS tests passed**.
+- The isolated Next production build and HTTP workflow passed. Three consecutive
+  cached homepage requests caused **zero Worker content requests**. The proof
+  page's five-request cache check also remained green.
+- Implementation commit: `90d4320913ab25eb3efc525e2dec6c2f4ca6fe48`.
+- Remote workflow deployment: `dpl_9N5VUgLfvgT7342joeuuBgWDPcQT`, Preview, `iad1`.
+  Its deployment ID was unchanged before and after the publication test.
+- Test Worker: `7ee80d2b-2109-40c5-9283-8f1a6ad77f81`. It was first deployed
+  with writes disabled; Preview OIDC/HMAC/schema/credential preflight passed
+  before the deliberate test-only write override was enabled.
+- Homepage import, edit, private draft, immutable publish, signed invalidation,
+  public HTML confirmation and same-revision retry passed remotely.
+- The temporary test edit was restored through a second immutable publication.
+  Current homepage draft/publication version **3** contains the approved seed;
+  revision `722841d5-af0f-46f6-a465-70eacc4d800f` has confirmed delivery.
+- All **11 pre-existing version-1 revision rows** are byte-for-byte unchanged.
+  Only two homepage revisions were added (test version 2 and restoration version 3).
+- Protected `/admin-test` and `/admin-test/preview` returned 200 with test access.
+  The latest read-only check confirmed a warmed homepage `x-vercel-cache: HIT`.
+
+The publish-to-visible check took **2.21 seconds** in this single run. A later
+cached homepage request took **361 ms** using curl from the local machine.
+These are individual observations, not median/p95 benchmark results. Remote
+Worker request-count measurement was not repeated; the zero-read assertion above
+is from the isolated local production server.
+
+The first remote runner stopped after successful restoration because it expected
+an immediate `HIT` but received `STALE`. The read-only follow-up passed with `HIT`;
+no republishing was necessary. The runner now allows a bounded cache warm-up and
+supports `--verify` to finish these checks without creating new revisions.
+Raw local reports and revision snapshots remain ignored under `.local/`.
+
+The focused remote runner is `workers/cms/tests/home-preview-proof.mjs`. Refresh
+the development OIDC file with `vercel env pull .local/cms-home-oidc.env
+--environment=development`, using the linked `breeze-full` project. The runner
+reads CMS credentials from `.local/cms-preview.env` and only the OIDC token from
+that separate development file, avoiding accidental use of localhost credentials.
+Modes are `--preflight` (expects writes disabled), `--publish` (explicit test
+mutations and restoration), `--restore` (safe recovery), and `--verify` (read-only).
+Do not rerun publishing merely to inspect the editor.
+
 ## Using the Preview
 
 1. Open the branch Preview's `/admin-test` with the existing test access.
