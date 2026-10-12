@@ -35,7 +35,7 @@ test("Next delivery failure preserves D1 publication, retries without duplicates
         return Response.json({ eventId: JSON.parse(init.body).eventId });
       }
       if (failure === "verification") return new Response("Unavailable", { status: 503 });
-      return new Response(`<div data-cms-version="1" data-cms-revision="${initial.publication.revisionId}"></div>`);
+      return new Response(`<div data-cms-page="cms-proof" data-cms-version="1" data-cms-revision="${initial.publication.revisionId}"></div>`);
     };
     let state = await deliverPublication();
     assert.equal(state.publication.revisionId, initial.publication.revisionId);

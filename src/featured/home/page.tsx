@@ -1,17 +1,8 @@
-import HeroSection from "@/components/sections/home/HeroSection";
-import SeasonsSection from "@/components/sections/home/SeasonsSection";
-import ContactSection from "@/components/sections/home/ContactSection";
-import AreaSection from "@/components/sections/home/AreaSection";
-import ReviewsSection from "@/components/sections/home/ReviewsSection";
+import HomeContent from "@/components/sections/home/HomeContent";
+import { getPublishedHome } from "@/lib/cms/public";
+import { homeSeed } from "../../../cms/shared/home-seed";
 
-export default function HomePage() {
-  return (
-    <>
-      <HeroSection />
-      <SeasonsSection />
-      <ContactSection />
-      <ReviewsSection />
-      <AreaSection />
-    </>
-  );
+export default async function HomePage() {
+  const publication = await getPublishedHome();
+  return <HomeContent document={publication?.document ?? homeSeed} publication={publication ?? undefined} />;
 }

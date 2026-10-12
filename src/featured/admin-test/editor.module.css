@@ -1,4 +1,15 @@
 .workspace { background: #f3f6f5; color: var(--navy); border-top: 1px solid #e4eae8; }
+.pagePicker { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; font-size: 13px; }
+.pagePicker select { max-width: 280px; }
+.sectionPicker { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
+.sectionPicker button, .itemActions button { border: 1px solid #cddbd6; border-radius: 8px; background: white; color: var(--navy); padding: 9px 11px; font-size: 12px; }
+.sectionPicker button[aria-pressed="true"] { border-color: var(--orange); background: #fff2e7; }
+.repeatedGroup h4 { font-size: 15px; }
+.repeatedItem { min-width: 0; margin: 18px 0; padding: 18px; border: 1px solid #dce7e3; border-radius: 12px; }
+.repeatedItem legend { padding: 0 6px; font-size: 13px; font-weight: 700; }
+.itemActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.homePreviewCanvas { position: relative; width: 100%; height: 720px; overflow: hidden; background: var(--navy); }
+.homePreviewFrame { display: block; border: 0; transform-origin: top left; }
 .editor { max-width: 1512px; margin: auto; padding: 42px 32px 64px; }
 .header, .identity, .toolbar, .actions, .panelHeading, .previewHeading, .previewControls, .publishingHeading, .formFooter, .groupHeading { display: flex; align-items: center; }
 .header { justify-content: space-between; gap: 24px; margin-bottom: 28px; }

@@ -1,10 +1,11 @@
-import { site } from "@/lib/site";
+import { homeSeed } from "../../../../cms/shared/home-seed";
+import { homeMapSource, type AreaContent } from "../../../../cms/shared/home";
 
-export default function AreaSection() {
+export default function AreaSection({ content = homeSeed.slots.area.content }: { content?: AreaContent }) {
   return (
     <section className="section map-section" id="area" aria-labelledby="area-title"><div className="wrap map-grid">
-      <div className="map-copy"><h2 id="area-title">Made for Middle <em>Tennessee.</em></h2><p>From Nashville to Brentwood and the communities around them, friendly comfort care is close to home.</p><a className="text-link" href={site.mapsHref} target="_blank" rel="noopener noreferrer">Explore Nashville on Google Maps <span aria-hidden="true">↗</span></a></div>
-      <div className="map-frame"><iframe title="Google Map of Nashville, Tennessee" src="https://www.google.com/maps?q=Nashville%2C%20TN&output=embed" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen /></div>
+      <div className="map-copy"><h2 id="area-title">{content.heading.trimEnd() + " "}<em>{content.headingAccent}</em></h2><p>{content.body}</p><a className="text-link" href={content.mapsHref} target="_blank" rel="noopener noreferrer">{content.linkText} <span aria-hidden="true">↗</span></a></div>
+      <div className="map-frame"><iframe title={content.mapTitle} src={homeMapSource(content.mapLocation)} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen /></div>
     </div></section>
   );
 }

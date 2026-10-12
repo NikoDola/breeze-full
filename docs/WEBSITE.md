@@ -20,7 +20,9 @@ Read this file before editing the site. The project is a Next.js 16 App Router s
 
 ## Landing page sections
 
-`src/featured/home/page.tsx` renders these in order:
+`src/featured/home/page.tsx` loads the published version-2 test document (or the
+original seed outside the enabled test environment). `HomeContent.tsx` renders
+these original components in order. See [CMS-HOMEPAGE-MIGRATION.md](CMS-HOMEPAGE-MIGRATION.md).
 
 | Component | Page area / ID |
 | --- | --- |
@@ -39,7 +41,7 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 - Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`.
 - Company and client routes, including `/about-us`, `/reviews`, `/gallery`, `/careers`, and `/contact-us`, have matching feature pages. Shared page blocks live in `src/components/sections/`.
 - Promotions use `src/featured/promotions/`, `src/featured/summer-promotions/`, and `src/featured/winter-promotions/`, with data in `src/lib/promotions.ts` and `src/content/promotions.json`.
-- `/admin-test` is the protected visual CMS editor in `src/featured/admin-test/`, with Content, Images, and Page details tabs plus responsive draft/published previews. Its CSS modules are scoped to this workspace. `/admin` redirects there after authorization. The legacy JSON-write and filesystem-upload APIs return `410`; `ADMIN_PASSWORD` is no longer used. See `docs/CMS-VISUAL-EDITOR.md` for the current editing scope.
+- `/admin-test` is the protected visual CMS editor in `src/featured/admin-test/`. Homepage editing uses component-specific fields and a protected responsive `/admin-test/preview` iframe. The CMS proof retains Content, Images, and Page details tabs. Its CSS modules are scoped to this workspace. `/admin` redirects there after authorization. The legacy JSON-write and filesystem-upload APIs return `410`; `ADMIN_PASSWORD` is no longer used. See `docs/CMS-HOMEPAGE-MIGRATION.md` and `docs/CMS-VISUAL-EDITOR.md`.
 - `/cms-proof` is an isolated, cached publication page. It does not replace any existing page or the custom homepage hero. The CMS is disabled by default and rejects production Vercel environments. See `docs/CMS-MILESTONE-1.md` for setup, migrations, security boundaries, and test commands.
 - The service and careers forms prepare an email in the visitor's mail application. Their behavior is in `src/components/sections/ServiceRequestForm.tsx` and `CareersForm.tsx`.
 

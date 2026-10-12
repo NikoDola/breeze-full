@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
   const response = NextResponse.next();
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
-  response.headers.set("Content-Security-Policy", "frame-ancestors 'none'");
+  response.headers.set("Content-Security-Policy", request.nextUrl.pathname === "/admin-test/preview" ? "frame-ancestors 'self'" : "frame-ancestors 'none'");
   return response;
 }
 export const config = { matcher: ["/admin/:path*", "/admin-test/:path*", "/api/cms/editor/:path*"] };

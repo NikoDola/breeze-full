@@ -44,10 +44,11 @@ try {
   assert.equal((await admin(mf, "import", { source })).status, 200);
   check("Existing content copied into an isolated local D1 draft");
 
-  let publicApiReads = 0;
+  let publicApiReads = 0, homeApiReads = 0;
   gateway = createServer(async (req, res) => {
     try {
       if (req.url === "/api/public/pages/cms-proof") publicApiReads++;
+      if (req.url === "/api/public/pages/home") homeApiReads++;
       const chunks = []; for await (const chunk of req) chunks.push(chunk);
       const body = Buffer.concat(chunks);
       const response = await mf.dispatchFetch(`http://worker.local${req.url}`, {
@@ -91,6 +92,10 @@ try {
   assert.equal((await fetch(`${origin}/api/admin`, { method: "POST", headers: { "x-admin-password": "breeze-admin" }, body: "{}" })).status, 410);
   assert.equal((await fetch(`${origin}/api/admin/upload`, { method: "POST" })).status, 410);
   assert.equal((await fetch(`${origin}/admin-test`, { headers: { authorization } })).status, 200);
+  assert.equal((await fetch(`${origin}/admin-test/preview`)).status, 401);
+  const frame = await fetch(`${origin}/admin-test/preview`, { headers: { authorization } });
+  assert.equal(frame.status, 200);
+  assert.equal(frame.headers.get("content-security-policy"), "frame-ancestors 'self'");
   check("Editor authentication, origin checks and retired legacy endpoints enforced over HTTP");
   assert.equal((await publicPage()).status, 404);
 
@@ -146,6 +151,34 @@ try {
   assert.equal((await fetch(webhook, { method: "POST", headers: { "x-cms-timestamp": timestamp, "x-cms-signature": signature }, body })).status, 400);
   assert.equal((await fetch(webhook, { method: "POST", headers: { "x-cms-timestamp": timestamp, "x-cms-signature": signature }, body: body + " " })).status, 401);
   check("Unsigned, tampered and out-of-scope invalidation requests are rejected");
+
+  const homePage = async () => {
+    const response = await fetch(`${origin}/`);
+    assert.equal(response.status, 200);
+    return { html: await response.text(), cache: response.headers.get("x-nextjs-cache") };
+  };
+  const originalHome = await homePage();
+  assert.ok(!originalHome.html.includes('data-cms-page="home"'));
+  let home = await editor({ action: "import", pageId: "home" });
+  const seed = structuredClone(home.draft.document);
+  const edited = structuredClone(seed); edited.slots.contact.content.intro = `Private home copy ${Date.now()}`;
+  home = await editor({ action: "draft", pageId: "home", expectedVersion: home.draft.version, document: edited });
+  assert.ok(!(await homePage()).html.includes(edited.slots.contact.content.intro));
+  home = await editor({ action: "publish", pageId: "home", expectedVersion: home.draft.version });
+  assert.ok(home.delivery?.confirmed_at, JSON.stringify(home.delivery));
+  assert.ok((await homePage()).html.includes(edited.slots.contact.content.intro));
+  const homeReadsBefore = homeApiReads;
+  for (let i = 0; i < 3; i++) assert.equal((await homePage()).cache, "HIT");
+  assert.equal(homeApiReads, homeReadsBefore);
+  results.homeWorkerReadsDuringThreeCachedRequests = homeApiReads - homeReadsBefore;
+  check("Homepage draft stays private; publication replaces cached fallback and three cache hits make zero Worker reads");
+  home = await editor({ action: "draft", pageId: "home", expectedVersion: home.draft.version, document: seed });
+  home = await editor({ action: "publish", pageId: "home", expectedVersion: home.draft.version });
+  assert.ok(home.delivery?.confirmed_at, JSON.stringify(home.delivery));
+  assert.ok(!(await homePage()).html.includes(edited.slots.contact.content.intro));
+  assert.equal((await editor()).publication.revisionId, state.publication.revisionId);
+  assert.equal(await readFile(join(root, ".next-cms-proof/BUILD_ID"), "utf8"), buildId);
+  check("Homepage original content restored by another publication without rebuild; proof revision unchanged");
   results.buildIdUnchanged = true;
   results.publishedRevision = state.publication.revisionId;
   results.status = "passed";

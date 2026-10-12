@@ -1,5 +1,10 @@
 # Sol handoff: Breeze mini CMS
 
+**Homepage follow-up:** [CMS-HOMEPAGE-MIGRATION.md](CMS-HOMEPAGE-MIGRATION.md)
+documents the approved first real migration, component-specific version-2 schemas,
+page-scoped API/caching changes and current editor. Read it before applying this
+historical handoff's suggested generic layouts or migration order.
+
 Prepared 2026-10-12. Start from **`cms-testing`**, never merge or deploy to production
 without a new user instruction. The user asked to stop refactoring and extra
 testing at this handoff. The next milestone is the visual CMS: controlled section

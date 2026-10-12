@@ -1,9 +1,9 @@
-import type { Document } from "../../../cms/shared/contract";
+import type { ProofDocument } from "../../../cms/shared/contract";
 import { safeRoute } from "../../../cms/shared/contract";
 import CmsSectionImages from "./CmsSectionImages";
 import styles from "./cms-proof.module.css";
 // Shared by the live editor and published proof. Only validated text and image references.
-export default function CmsProofContent({ document, preview = false }: { document: Document; preview?: boolean }) {
+export default function CmsProofContent({ document, preview = false }: { document: ProofDocument; preview?: boolean }) {
   const section = document.section;
   const Heading = preview ? "h3" : "h1";
   const showButton = section.button_text && section.button_route && safeRoute(section.button_route);

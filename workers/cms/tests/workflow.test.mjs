@@ -117,7 +117,7 @@ test("credential preflight is read-only and works with writes disabled", async (
     await migrate(await mf.getD1Database("DB"));
     const response = await admin(mf, "health");
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { environment: "test", writesEnabled: false, schemaReady: true, deliveryOwner: "nextjs" });
+    assert.deepEqual(await response.json(), { environment: "test", writesEnabled: false, schemaReady: true, deliveryOwner: "nextjs", pages: ["cms-proof", "home"] });
     assert.equal((await mf.dispatchFetch("https://worker.test/api/admin/health")).status, 401);
     assert.equal((await admin(mf, "publish", { expectedVersion: 1 })).status, 404);
   } finally { await mf.dispose(); }

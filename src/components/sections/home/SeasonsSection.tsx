@@ -1,20 +1,25 @@
-export default function SeasonsSection() {
+import { homeSeed } from "../../../../cms/shared/home-seed";
+import type { SeasonsContent } from "../../../../cms/shared/home";
+
+export default function SeasonsSection({ content = homeSeed.slots.seasons.content, publication }: {
+  content?: SeasonsContent; publication?: { revisionId: string; version: number };
+}) {
   return (
-    <section className="section seasons" id="heating-cooling" aria-labelledby="seasons-title">
+    <section className="section seasons" id="heating-cooling" aria-labelledby="seasons-title" data-cms-page={publication ? "home" : undefined} data-cms-revision={publication?.revisionId} data-cms-version={publication?.version}>
       <div className="wrap">
-        <div className="section-heading"><div><h2 id="seasons-title">A good day starts<br />at the <em>right temperature.</em></h2></div><p>Whatever Tennessee weather has planned, we have your comfort covered.</p></div>
+        <div className="section-heading"><div><h2 id="seasons-title">{content.headingLine1}<br />{content.headingLine2.trimEnd() + " "}<em>{content.headingAccent}</em></h2></div><p>{content.intro}</p></div>
         <div className="season-grid">
           <article className="season-card cooling">
             <div className="season-top"><span className="season-icon" aria-hidden="true">❄</span></div>
-            <h3>Keep your cool.</h3><p className="season-label">Cooling</p>
-            <p>Our expert technicians work to cool your TN home efficiently and affordably with high-quality Middle Tennessee cooling systems, maintenance and emergency repairs. Trust us with your comfort.</p>
-            <a href="#contact" data-service="Cooling">Request cooling service <span aria-hidden="true">↗</span></a>
+            <h3>{content.cards[0].title}</h3><p className="season-label">{content.cards[0].label}</p>
+            <p>{content.cards[0].body}</p>
+            <a href="#contact" data-service="Cooling">{content.cards[0].buttonText} <span aria-hidden="true">↗</span></a>
           </article>
           <article className="season-card heating">
             <div className="season-top"><span className="season-icon" aria-hidden="true">☀</span></div>
-            <h3>Bring on cozy.</h3><p className="season-label">Heating</p>
-            <p>From new installations and retrofits to emergency repairs and maintenance, Breeze delivers award-winning Middle Tennessee heating services to TN customers. Your satisfaction is our priority.</p>
-            <a href="#contact" data-service="Heating">Request heating service <span aria-hidden="true">↗</span></a>
+            <h3>{content.cards[1].title}</h3><p className="season-label">{content.cards[1].label}</p>
+            <p>{content.cards[1].body}</p>
+            <a href="#contact" data-service="Heating">{content.cards[1].buttonText} <span aria-hidden="true">↗</span></a>
           </article>
         </div>
       </div>

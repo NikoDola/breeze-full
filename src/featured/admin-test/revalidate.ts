@@ -1,6 +1,6 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { testOrigin } from "@/lib/cms/access";
-import { CACHE_TAG, InputError, readBody, validateEvent } from "../../../cms/shared/contract";
+import { pages, InputError, readBody, validateEvent } from "../../../cms/shared/contract";
 import { verify } from "../../../cms/shared/signature";
 export async function POST(request: Request) {
   const secret = process.env.CMS_REVALIDATE_SECRET;
@@ -15,8 +15,8 @@ export async function POST(request: Request) {
     const input = JSON.parse(body);
     const event = validateEvent(input);
     if (input.dryRun === true) return Response.json({ ok: true, eventId: event.eventId }, { headers });
-    // Duplicate valid events can safely expire the same cache again. Scope is fixed and validated.
-    revalidateTag(CACHE_TAG, { expire: 0 });
+    // Duplicate events are safe. Only manifest-defined paths and tags are accepted.
+    revalidateTag(pages[event.pageId].cacheTag, { expire: 0 });
     revalidatePath(event.path);
     return Response.json({ ok: true, eventId: event.eventId }, { headers });
   } catch (error) {

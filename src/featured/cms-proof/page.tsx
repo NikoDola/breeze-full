@@ -6,7 +6,7 @@ export async function generateMetadata() {
 }
 export default async function ProofPage() {
   const publication = await getPublishedProof();
-  return <div data-cms-revision={publication.revisionId} data-cms-version={publication.version}>
+  return <div data-cms-page="cms-proof" data-cms-revision={publication.revisionId} data-cms-version={publication.version}>
     <CmsProofContent document={publication.document} />
   </div>;
 }

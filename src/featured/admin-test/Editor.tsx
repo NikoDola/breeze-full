@@ -6,8 +6,10 @@ import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import { validateDocument, type Document, type Draft, type EditorState, type Section } from "../../../cms/shared/contract";
+import { pages, validatePageDocument, type PageId, type Document, type Draft, type EditorState, type Section } from "../../../cms/shared/contract";
 import ImageEditor from "./ImageEditor";
+import HomeFields from "./HomeFields";
+import HomePreviewFrame from "./HomePreviewFrame";
 import { editorStatus, type Operation } from "./editor-state";
 import styles from "./editor.module.css";
 
@@ -27,6 +29,11 @@ const errorText = (error: unknown) => error instanceof Error ? error.message : "
 const dateText = (value?: string | null) => value ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
 
 export default function Editor() {
+  const [pageId, setPageId] = useState<PageId>("home");
+  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} />;
+}
+
+function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange: (pageId: PageId) => void }) {
   const [state, setState] = useState<EditorState | null>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [baseDraft, setBaseDraft] = useState<Draft | null>(null);
@@ -44,19 +51,21 @@ export default function Editor() {
   const status = editorStatus({ state, baseVersion: baseDraft?.version, dirty, operation, now: clock });
   const publishedIsCurrent = Boolean(baseDraft && state?.publication?.version === baseDraft.version);
   const previewDocument = previewMode === "published" ? state?.publication?.document : document;
+  let previewValid = true;
+  if (previewDocument) { try { validatePageDocument(pageId, previewDocument); } catch { previewValid = false; } }
 
-  const request = useCallback(async (body?: unknown): Promise<EditorState> => {
-    const response = await fetch("/api/cms/editor", {
+  const request = useCallback(async (body?: Record<string, unknown>): Promise<EditorState> => {
+    const response = await fetch(`/api/cms/editor?pageId=${pageId}`, {
       method: body ? "POST" : "GET", cache: "no-store", credentials: "same-origin",
       headers: { "Content-Type": "application/json", "x-cms-request": "editor" },
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? JSON.stringify({ ...body, pageId }) : undefined,
     });
     let result;
     try { result = await response.json(); }
     catch { throw new Error("The editor could not read the response. Refresh status to check whether your changes were saved."); }
     if (!response.ok) throw new Error(result.error || `Request failed (${response.status}). Refresh status before trying again.`);
     return result;
-  }, []);
+  }, [pageId]);
   const load = useCallback(async () => {
     if (requestInFlight.current) return;
     requestInFlight.current = true; setOperation("load"); setError("");
@@ -95,7 +104,7 @@ export default function Editor() {
     if (action === "draft" && (!dirty || newerDraft)) return;
     if (action === "retry" && status.leaseActive) return;
     if (action === "draft") {
-      try { validateDocument(document); }
+      try { validatePageDocument(pageId, document); }
       catch (error) { setError(errorText(error)); return; }
     }
     requestInFlight.current = true; setOperation(action); setError(""); setMessage("");
@@ -114,17 +123,20 @@ export default function Editor() {
     setBaseDraft(draft ?? null); setDocument(draft?.document ?? null); setError(""); setMessage("Saved draft restored.");
   }
   const changeSection = (field: keyof Omit<Section, "images">, value: string) => {
-    setDocument(current => current ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
+    setDocument(current => current?.schemaVersion === 1 ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
   };
   function changeDetails(field: "title" | "seoTitle" | "seoDescription", value: string) {
-    setDocument(current => current ? { ...current, [field]: value } : current); setMessage("");
+    setDocument(current => current?.schemaVersion === 1 ? { ...current, [field]: value } : current); setMessage("");
   }
 
   return <div className={styles.workspace}><div className={styles.editor}>
     <header className={styles.header}>
-      <div className={styles.identity}><span className={styles.brand}><Icon name="leaf" /></span><div><p className={styles.eyebrow}>Breeze / Content studio</p><h1>Make it feel like Breeze.</h1><p>Edit your section and see every change as you go.</p></div></div>
+      <div className={styles.identity}><span className={styles.brand}><Icon name="leaf" /></span><div><p className={styles.eyebrow}>Breeze / Content studio</p><h1>Make it feel like Breeze.</h1><p>Edit your content and see every change as you go.</p></div></div>
       <span className={styles.workspaceBadge}><span />Test workspace</span>
     </header>
+    <label className={styles.pagePicker}>Editing page <select value={pageId} disabled={busy} onChange={event => {
+      if (!dirty || window.confirm("Discard your unsaved changes and switch pages?")) onPageChange(event.target.value as PageId);
+    }}>{Object.values(pages).map(page => <option key={page.id} value={page.id}>{page.label}</option>)}</select></label>
     <div className={styles.toolbar}>
       <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{status.detail}</span></div></div>
       <div className={styles.actions}>
@@ -138,20 +150,21 @@ export default function Editor() {
     {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
     {!document ? <section className={styles.emptyState} aria-busy={busy}>
       <span className={styles.emptyIcon}><Icon name="grid" /></span><h2>{operation === "load" ? "Opening your workspace…" : state ? "Your content starts here" : "Your workspace could not load"}</h2>
-      <p>{state ? "Bring your existing Breeze section into this editor to start a draft." : "Load the saved content to start editing."}</p>
+      <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero stay in place." : "Bring your existing Breeze section into this editor to start a draft." : "Load the saved content to start editing."}</p>
       {state && !state.draft ? <Button className={styles.primaryButton} disabled={busy} onClick={() => void act("import")}>{operation === "import" ? "Preparing content…" : "Copy existing content"}</Button> : !busy && <Button className={styles.secondaryButton} onClick={() => void load()}>Try again</Button>}
     </section> : <>
       <div className={styles.grid}>
         <section className={styles.editPanel} aria-label="Section editor">
           <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Section editor</p><h2>Your content</h2></div><span className={styles.smallBadge}>Draft {baseDraft?.version}</span></div>
-          <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
+          {document.schemaVersion === 1 && <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
             onClick={() => setTab(item.id)} onKeyDown={event => {
               const index = tabs.findIndex(candidate => candidate.id === item.id);
               const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
               if (next >= 0) { event.preventDefault(); setTab(tabs[next].id); window.document.getElementById(`tab-${tabs[next].id}`)?.focus(); }
-            }}><Icon name={item.icon} />{item.label}{item.id === "images" && <span>{document.section.images.length}</span>}</button>)}</div>
+            }}><Icon name={item.icon} />{item.label}{item.id === "images" && <span>{document.section.images.length}</span>}</button>)}</div>}
           <form id="cms-editor-form" onSubmit={event => { event.preventDefault(); void act("draft"); }}>
             <fieldset disabled={busy} className={styles.fields}><legend className={styles.srOnly}>Section content</legend>
+              {document.schemaVersion === 2 ? <HomeFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
               <div id="panel-content" role="tabpanel" aria-labelledby="tab-content" hidden={tab !== "content"}>
                 {fields.map(({ key, label, help, max, placeholder, multiline }) => <label className={styles.field} key={key}><span>{label}{key === "headline" && <span className={styles.required}> *</span>}</span><small id={`help-${key}`}>{help}</small>
                   {multiline ? <Textarea value={document.section[key]} maxLength={max} rows={6} placeholder={placeholder} aria-describedby={`help-${key}`} onChange={event => changeSection(key, event.target.value)} />
@@ -164,7 +177,7 @@ export default function Editor() {
                 <label className={styles.field}><span>Bottom note</span><small>Optional supporting text below the button.</small><Textarea value={document.section.bottom_note} maxLength={1000} rows={2} placeholder="Residential & commercial" onChange={event => changeSection("bottom_note", event.target.value)} /></label>
               </div>
               <div id="panel-images" role="tabpanel" aria-labelledby="tab-images" hidden={tab !== "images"}>
-                <ImageEditor images={document.section.images} disabled={busy} onChange={images => { setDocument(current => current ? { ...current, section: { ...current.section, images } } : current); setMessage(""); }} />
+                <ImageEditor images={document.section.images} disabled={busy} onChange={images => { setDocument(current => current?.schemaVersion === 1 ? { ...current, section: { ...current.section, images } } : current); setMessage(""); }} />
               </div>
               <div id="panel-details" role="tabpanel" aria-labelledby="tab-details" hidden={tab !== "details"}>
                 <div className={styles.sectionIntro}><h3>Page & search details</h3><p>Give this section a name and choose how its test page appears in search results.</p></div>
@@ -172,6 +185,7 @@ export default function Editor() {
                 <label className={styles.field}><span>SEO title</span><Input value={document.seoTitle} maxLength={200} placeholder="Heating & cooling | Breeze" onChange={event => changeDetails("seoTitle", event.target.value)} /><small>Leave empty to use the page title.</small></label>
                 <label className={styles.field}><span>SEO description</span><Textarea value={document.seoDescription} maxLength={500} rows={4} placeholder="A short description of the page." onChange={event => changeDetails("seoDescription", event.target.value)} /><small>{document.seoDescription.length} / 500 characters</small></label>
               </div>
+              </>}
             </fieldset>
             <div className={styles.formFooter}><span>{dirty ? "Your changes are only in this editor." : `Saved ${dateText(baseDraft?.updatedAt)}`}</span>{dirty && <Button type="button" className={styles.textButton} disabled={busy} onClick={discardChanges}>Discard changes</Button>}</div>
           </form>
@@ -182,15 +196,16 @@ export default function Editor() {
             <div className={styles.segmented} role="group" aria-label="Preview content"><button type="button" aria-pressed={previewMode === "draft"} onClick={() => setPreviewMode("draft")}>Your draft</button><button type="button" aria-pressed={previewMode === "published"} disabled={!state?.publication} onClick={() => setPreviewMode("published")}>Published</button></div>
             <div className={styles.segmented} role="group" aria-label="Preview screen size">{(["desktop", "tablet", "mobile"] as const).map(size => <button key={size} type="button" aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size[0].toUpperCase() + size.slice(1)}</button>)}</div>
           </div>
-          <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
+          {previewDocument?.schemaVersion === 2 ? <HomePreviewFrame document={previewDocument} viewport={viewport} /> : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
             <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / cms-proof</span><Icon name="shield" /></div>
-            {previewDocument && <CmsProofContent document={previewDocument} preview />}
-          </div></div>
+            {previewDocument?.schemaVersion === 1 && <CmsProofContent document={previewDocument} preview />}
+          </div></div>}
+          {!previewValid && <p className={styles.previewCaption}>Complete the required fields to update the homepage preview. It currently shows the last valid content.</p>}
           <p className={styles.previewCaption}>{previewMode === "draft" ? dirty ? "Showing your unsaved changes. Save a draft before publishing." : "Showing your saved draft." : state?.delivery?.confirmed_at ? "Showing the publication confirmed on the website." : "Showing the saved publication. Website delivery is still pending."} Preview buttons do not navigate.</p>
         </section>
       </div>
       <section className={styles.publishingPanel} aria-label="Publishing status">
-        <div className={styles.publishingHeading}><div><p className={styles.eyebrow}>From draft to website</p><h2>Publishing status</h2></div><a className={styles.publicLink} href="/cms-proof" target="_blank" rel="noreferrer">Open published page <span aria-hidden="true">↗</span></a></div>
+        <div className={styles.publishingHeading}><div><p className={styles.eyebrow}>From draft to website</p><h2>Publishing status</h2></div><a className={styles.publicLink} href={pages[pageId].path} target="_blank" rel="noreferrer">Open published page <span aria-hidden="true">↗</span></a></div>
         <div className={styles.steps}>
           <div className={styles.step}><Icon name={dirty ? "clock" : "check"} /><div><strong>{dirty ? "Unsaved changes" : "Draft saved"}</strong><span>{dirty ? "Save your edits to create a new draft." : `Draft ${baseDraft?.version} · ${dateText(baseDraft?.updatedAt)}`}</span></div></div>
           <div className={styles.step}><Icon name={state?.publication ? "check" : "clock"} /><div><strong>{state?.publication ? `Revision ${state.publication.version} published` : "Ready when you are"}</strong><span>{state?.publication ? dateText(state.publication.publishedAt) : "Publish a saved draft to update the website."}</span></div></div>
