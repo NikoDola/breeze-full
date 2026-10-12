@@ -173,7 +173,7 @@ export default function Editor() {
                 <label className={styles.field}><span>SEO description</span><Textarea value={document.seoDescription} maxLength={500} rows={4} placeholder="A short description of the page." onChange={event => changeDetails("seoDescription", event.target.value)} /><small>{document.seoDescription.length} / 500 characters</small></label>
               </div>
             </fieldset>
-            <div className={styles.formFooter}><span>{dirty ? "Your changes are only in this editor." : `Saved ${dateText(baseDraft?.updatedAt)}`}</span>{dirty && <Button className={styles.textButton} disabled={busy} onClick={discardChanges}>Discard changes</Button>}</div>
+            <div className={styles.formFooter}><span>{dirty ? "Your changes are only in this editor." : `Saved ${dateText(baseDraft?.updatedAt)}`}</span>{dirty && <Button type="button" className={styles.textButton} disabled={busy} onClick={discardChanges}>Discard changes</Button>}</div>
           </form>
         </section>
         <section className={styles.previewPanel} aria-label="Live section preview">
