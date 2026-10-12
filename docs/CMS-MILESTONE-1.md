@@ -4,7 +4,10 @@
 
 ### Cloud test setup: 2026-10-11
 
-The `cms-testing` branch has a Ready Vercel Preview in project `breeze-full`, with Node 22 and `iad1` verified in deployment resources. After explicit approval, the separate `breeze-test-db` was created (ID `bc8cb3a4-bf92-4be6-82d0-84738ec3a381`, ENAM; D1 reported primary colo EWR), exported before migration into ignored `.local/`, and migrated. `breeze-test-api` is deployed at `https://breeze-test-api.nikodola.workers.dev`, bound only to this database. Its writes remain disabled. The seven CMS variables are saved only for Vercel Preview branch `cms-testing`; subsequent Preview builds receive them.
+Current deployed evidence and remaining browser acceptance are recorded in
+[CMS-PREVIEW-RESULTS.md](CMS-PREVIEW-RESULTS.md).
+
+The `cms-testing` branch has a Ready Vercel Preview in project `breeze-full`, with Node 22 and `iad1` verified in deployment resources and the running function. After explicit approval, the separate `breeze-test-db` was created (ID `bc8cb3a4-bf92-4be6-82d0-84738ec3a381`, ENAM; D1 reported primary colo EWR), exported before migration into ignored `.local/`, and migrated. `breeze-test-api` is deployed at `https://breeze-test-api.nikodola.workers.dev`, bound only to this database. Test writes were enabled after the deployed, read-only security preflight passed with writes disabled. The checked-in default remains disabled. The seven CMS variables are saved only for Vercel Preview branch `cms-testing`; subsequent Preview builds receive them.
 
 No automation bypass secret has been created. A temporary Preview-alias share credential was tested with the automation header, did not pass Vercel protection, and was revoked. Existing Vercel development OIDC access **did** reach the Preview (200) and was refused by the protected production deployment (403). See [CMS-PREVIEW-ACCESS.md](CMS-PREVIEW-ACCESS.md) for the recommended change to Next-owned invalidation and its retry tradeoff. Next-owned delivery is now implemented with OIDC verification. Remote results are recorded separately after the Preview acceptance run. No project-wide bypass credential is used.
 
@@ -201,7 +204,7 @@ Keep Vercel Deployment Protection and OIDC Federation enabled. Default Trusted S
 
 The `cms-testing` branch includes `vercel.json` with `regions: ["iad1"]` for US East Node functions and ISR. It does not change `main` or the production deployment. Next.js 16.3.8 deprecates route-level `preferredRegion`, so placement uses Vercel configuration. The package pins Node 22.x. Verify actual function placement in the Preview deployment before measuring; CDN ingress location is not proof of function location. Use one exact deployment/alias for the editor, callbacks and measured page; refreshing a different deployment's cache will not prove this workflow.
 
-Acceptance on Vercel: record the deployment ID, publish twice through `/admin-test`, confirm each returned revision in `/cms-proof` HTML, inspect cache-hit headers and Worker request logs, and verify the deployment ID stayed unchanged. Measure API latency, first rendering, warmed delivery and publish-to-visible time separately. Local success does not establish Vercel latency or deployed invalidation behavior; this remains the next environment-specific gate.
+Acceptance on Vercel: record the deployment ID, publish through the same protected editor API used by `/admin-test`, confirm each returned revision in `/cms-proof` HTML, inspect cache-hit headers and Worker request logs, and verify the deployment ID stayed unchanged. Measure API latency, first rendering, warmed delivery and publish-to-visible time separately. Local measurements do not establish Vercel latency.
 
 ## Before extending beyond the proof
 
@@ -215,6 +218,8 @@ Use Vercel CLI to obtain a development OIDC token in ignored `.env.local`; never
 npm run cms:preview-proof
 # After the preflight and explicit test Worker enablement:
 npm run cms:preview-workflow
+# Alternative standard HTTP client if Vercel challenges Node's TLS client:
+node --env-file=.local/cms-preview.env --env-file=.env.local workers/cms/tests/preview-proof.mjs --allow-test-writes --transport=curl
 ```
 
 The second command modifies only the isolated proof page. It tests draft privacy,
@@ -223,11 +228,23 @@ duplicate publication, interrupted delivery recovery, 30 direct Worker requests,
 It restores the test document afterward. Record the Vercel deployment ID before
 and after to confirm no redeployment. An authenticated Wrangler tail records
 sanitized request counts; raw request headers and secrets are never saved.
-The direct API phase calibrates the tail against 30 actual D1 read log entries. Origin samples are spaced 1.2 seconds apart because the live stream dropped events during rapid requests; these waits are excluded from latency. Probe paths avoid UUIDs because Cloudflare redacts UUID-shaped URL segments in logs.
+The direct API phase compares the tail against 30 actual requests and records whether calibration passed. Live logs can drop events even without a client sampling filter: an incomplete calibration is reported, not treated as proof of exact counts or an application failure. Origin samples are spaced 1.2 seconds apart; these waits are excluded from latency. Probe paths avoid UUIDs because Cloudflare redacts UUID-shaped URL segments in logs. Cache HIT headers, local origin-count assertions, and calibrated logs provide separate evidence. Counts are observed test-window events, not account-wide billing totals.
 Reports under `.local/` contain samples, median and nearest-rank p95, cache headers,
 and request counts. Timings are full HTTP response times from the machine running
 the test, including its network distance; uncached samples are regenerated pages,
 not measurements of every possible cold-start condition.
+
+The curl transport includes a fresh HTTPS connection in each measured response;
+Node fetch normally reuses connections. Do not mix these transports into one
+latency sample. `--cached-samples=50` and `--request-gap-ms=1500` control the
+cached sample count and pacing (waits are excluded from timing). The optional
+`--resume-measurements` reuses completed Worker/uncached samples from the ignored
+report; use it only on the same verified deployment and with the same transport.
+It retains interrupted attempts. Vercel security-checkpoint responses are test
+interruptions, never cache successes. Do not disable project protection or create
+a broad automation credential to make a benchmark pass.
+If the core workflow completes but checkpoint responses occur, the harness
+reports `workflow-passed-with-checkpoint-warnings` and exits with code 2.
 
 ### Next milestone
 

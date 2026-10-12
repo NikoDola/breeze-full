@@ -12,7 +12,7 @@ No project-wide automation bypass token was created. The project's OIDC federati
 | Protected production deployment without credentials | 302 to Vercel sign-in |
 | Same production deployment with development OIDC | 403 |
 
-These checks prove the local development-to-Preview boundary in the current project. They do not yet prove a deployed Preview function's self-access; that must be tested during the implementation. No production mutation was attempted.
+These checks prove the local development-to-Preview boundary in the current project. The deployed `cms-testing` function's OIDC self-access has since passed the signed dry-run preflight and actual publication/HTML verification in `iad1`. No production mutation was attempted.
 
 A temporary alias-scoped share credential was created, tested with `x-vercel-protection-bypass`, and rejected with a 302 to sign-in. It was revoked. Shareable links are documented as query-string/browser sharing; we should not build server callbacks around browser cookies or undocumented headers.
 
@@ -26,7 +26,7 @@ The current `main` revision retains the legacy admin endpoints and fallback pass
 
 Pinning a callback URL and retaining separate HMAC secrets prevent accidental misrouting and unauthenticated cache purges. They do not constrain what a stolen project-wide bypass credential can reach. Giving such a credential to the test Worker would violate the intended separation.
 
-## Recommended flow: Next owns invalidation
+## Implemented flow: Next owns invalidation
 
 1. The protected Preview editor authenticates the user and validates Origin, host, body, and expected draft version.
 2. Its Next server handler publishes through the test Worker, which atomically commits the immutable revision, publication pointer, and durable delivery record in test D1.
@@ -38,7 +38,7 @@ The Worker needs **no Vercel credential**. Local performance tests use their own
 
 ### Retry tradeoff
 
-Moving delivery to Next requires changing the existing Worker-owned retry flow. For the milestone, the editor can retry pending delivery through the protected Next handler, including after an interrupted publication. A robust unattended retry needs a trusted runner with Preview-only OIDC access. Vercel Cron runs against production deployments, so it cannot simply replace the Worker cron in this Preview.
+Delivery now belongs to Next. The editor can retry pending delivery through the protected Next handler, including after an interrupted publication. This has been verified against the deployed Preview without creating another revision. A robust unattended retry needs a trusted runner with Preview-only OIDC access. Vercel Cron runs against production deployments, so it cannot simply replace the Worker cron in this Preview.
 
 Do not mark delivery confirmed merely because the cache API returned successfully, or acknowledge the outbox before invalidation. Do not claim unattended recovery until its runner is implemented and tested. Worker cron must not keep attempting the old protected callback when operating in the proposed Next-owned delivery mode.
 
