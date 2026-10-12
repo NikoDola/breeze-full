@@ -1,0 +1,25 @@
+.section { container-type: inline-size; position: relative; isolation: isolate; overflow: hidden; background: var(--navy); color: white; }
+.content { position: relative; width: min(100% - 48px, 1200px); margin-inline: auto; padding-block: clamp(35px, 6cqw, 76px); }
+.headline { max-width: 1050px; margin: 0; color: white; font-size: clamp(30px, 6.8cqw, 82px); font-weight: 800; line-height: 1.07; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.eyebrow { color: var(--orange); font-size: clamp(10px, 1.3cqw, 12px); font-weight: 850; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 13px; overflow-wrap: anywhere; }
+.body, .note { max-width: 650px; color: #e0edf0; font-size: clamp(14px, 2.4cqw, 19px); line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
+.body { margin: 19px 0 0; }
+.note { margin: 20px 0 0; font-size: clamp(12px, 1.8cqw, 16px); color: #b2d0d5; }
+.cta { margin: 25px 0 0; }
+.button { display: inline-flex; align-items: center; justify-content: center; padding: 12px 19px; border-radius: 30px; color: var(--navy); background: var(--orange); font-size: 13px; font-weight: 800; text-decoration: none; max-width: 100%; overflow-wrap: anywhere; }
+a.button:hover { background: #ffac63; }
+a.button:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.gallery { position: relative; margin-top: 32px; max-width: 850px; overflow: hidden; border-radius: 14px; border: 1px solid #ffffff24; background: #ffffff0c; }
+.gallery:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.slide { aspect-ratio: 16 / 9; }
+.imageFrame { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; background: #e8efeb; }
+.imageFrame img { object-fit: cover; }
+.unavailable { height: 100%; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; color: #688279; text-align: center; font-size: 11px; }
+.unavailable svg { width: 26px; height: 26px; }
+.unavailable small { color: #7e918b; font-size: 10px; }
+.galleryControls { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 10px; background: #0b2335; }
+.galleryControls button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; color: white; background: #ffffff10; border: 1px solid #ffffff2b; border-radius: 50%; cursor: pointer; font: inherit; font-size: 18px; }
+.galleryControls button:hover { background: #ffffff24; }
+.galleryControls button:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.galleryControls > span { color: #c2d9de; font-size: 11px; font-variant-numeric: tabular-nums; }
+@container (max-width: 450px) { .content { width: calc(100% - 36px); padding-block: 32px; } .gallery { margin-top: 26px; border-radius: 10px; } .button { font-size: 12px; padding: 11px 16px; } }

@@ -1,16 +1,21 @@
 import type { Document } from "../../../cms/shared/contract";
 import { safeRoute } from "../../../cms/shared/contract";
-// Same renderer for preview and public content. Text only; no arbitrary HTML or styles.
-export default function CmsProofContent({ document }: { document: Document }) {
+import CmsSectionImages from "./CmsSectionImages";
+import styles from "./cms-proof.module.css";
+// Shared by the live editor and published proof. Only validated text and image references.
+export default function CmsProofContent({ document, preview = false }: { document: Document; preview?: boolean }) {
   const section = document.section;
-  return <section className="inner-hero">
+  const Heading = preview ? "h3" : "h1";
+  const showButton = section.button_text && section.button_route && safeRoute(section.button_route);
+  return <section className={styles.section}>
     <div className="inner-hero-shade" />
-    <div className="wrap inner-hero-content">
-      {section.eyebrow && <p className="inner-hero-eyebrow">{section.eyebrow}</p>}
-      <h1>{section.headline}</h1>
-      {section.body && <p className="inner-hero-tagline" style={{ whiteSpace: "pre-line" }}>{section.body}</p>}
-      {section.button_text && section.button_route && safeRoute(section.button_route) && <p style={{ marginTop: 24 }}><a className="service-page-button-2" href={section.button_route}>{section.button_text}</a></p>}
-      {section.bottom_note && <p className="inner-hero-tagline">{section.bottom_note}</p>}
+    <div className={styles.content}>
+      {section.eyebrow && <p className={styles.eyebrow}>{section.eyebrow}</p>}
+      <Heading className={styles.headline}>{section.headline || (preview ? "Your headline goes here" : "")}</Heading>
+      {section.body && <p className={styles.body}>{section.body}</p>}
+      {showButton && <p className={styles.cta}>{preview ? <span className={styles.button}>{section.button_text}</span> : <a className={styles.button} href={section.button_route}>{section.button_text}</a>}</p>}
+      {section.bottom_note && <p className={styles.note}>{section.bottom_note}</p>}
+      <CmsSectionImages images={section.images} />
     </div>
   </section>;
 }

@@ -1,0 +1,24 @@
+.imageSummary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.imageSummary > span { color: #71877b; font-size: 11px; }
+.library { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; border: 1px solid #dce8df; border-radius: 10px; padding: 12px; margin-bottom: 20px; background: #f6faf7; }
+.library button { border: 1px solid #d6e3d9; border-radius: 8px; overflow: hidden; padding: 0; background: white; color: #385745; text-align: left; }
+.library button:hover:not(:disabled) { border-color: var(--orange); }
+.libraryThumb { display: block; height: 82px; }
+.library button > span:last-child { display: block; padding: 8px; font-size: 10px; font-weight: 700; }
+.imageList { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0 0 22px; }
+.imageCard { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid #dce7df; border-radius: 10px; background: #fcfefc; }
+.thumbnail { width: 78px; height: 86px; flex: none; border-radius: 6px; overflow: hidden; }
+.imageFields { min-width: 0; flex: 1; }
+.imageLabel { display: grid; gap: 6px; font-size: 11px; font-weight: 750; }
+.imageActions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 9px; }
+.imageActions button { background: transparent; border: 0; padding: 2px 0; color: #5e7e6d; font-size: 10px; }
+.imageActions button.remove { margin-left: auto; color: #a44b37; }
+.referenceWarning { display: block; margin: 9px 0 0; color: #a84a31; font-size: 10px; line-height: 1.5; }
+.noImages { display: flex; flex-direction: column; align-items: center; padding: 25px 18px; margin-bottom: 23px; border: 1px dashed #c8dacd; border-radius: 11px; text-align: center; color: #77937f; }
+.noImages > svg { width: 30px; height: 30px; margin-bottom: 11px; }
+.noImages strong { font-size: 12px; }
+.noImages p { margin: 7px 0 0; font-size: 11px; line-height: 1.6; }
+.addImage { padding-top: 20px; border-top: 1px solid #e4ece7; }
+.addImage label { margin-bottom: 12px; }
+.help { margin: 16px 0 0; color: #798c81; font-size: 10px; line-height: 1.7; }
+@media (max-width: 420px) { .thumbnail { width: 56px; height: 73px; } .imageCard { gap: 9px; padding: 10px; } .imageActions { gap: 8px; } .imageActions button span { display: none; } }

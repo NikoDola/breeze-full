@@ -1,18 +1,49 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import CmsProofContent from "@/components/sections/CmsProofContent";
+import Button from "@/components/ui/Button";
+import Icon from "@/components/ui/Icon";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
 import { validateDocument, type Document, type Draft, type EditorState, type Section } from "../../../cms/shared/contract";
+import ImageEditor from "./ImageEditor";
+import { editorStatus, type Operation } from "./editor-state";
 import styles from "./editor.module.css";
+
+type Tab = "content" | "images" | "details";
+type Viewport = "desktop" | "tablet" | "mobile";
+const tabs: { id: Tab; label: string; icon: string }[] = [
+  { id: "content", label: "Content", icon: "grid" },
+  { id: "images", label: "Images", icon: "image" },
+  { id: "details", label: "Page details", icon: "link" },
+];
+const fields: { key: keyof Omit<Section, "images">; label: string; help: string; max: number; placeholder: string; multiline?: boolean }[] = [
+  { key: "eyebrow", label: "Eyebrow", help: "A short introduction above the headline.", max: 200, placeholder: "Welcome to Breeze" },
+  { key: "headline", label: "Headline", help: "The main message visitors see first.", max: 300, placeholder: "Your comfort is our priority" },
+  { key: "body", label: "Description", help: "Tell visitors what you offer. Line breaks are preserved.", max: 10000, placeholder: "Professional heating and cooling services for your home.", multiline: true },
+];
+const errorText = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Please try again.";
+const dateText = (value?: string | null) => value ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
 
 export default function Editor() {
   const [state, setState] = useState<EditorState | null>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [baseDraft, setBaseDraft] = useState<Draft | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<Operation>("load");
+  const [tab, setTab] = useState<Tab>("content");
+  const [viewport, setViewport] = useState<Viewport>("desktop");
+  const [previewMode, setPreviewMode] = useState<"draft" | "published">("draft");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [clock, setClock] = useState(0);
+  const requestInFlight = useRef(false);
   const dirty = Boolean(document && baseDraft && JSON.stringify(document) !== JSON.stringify(baseDraft.document));
   const newerDraft = Boolean(baseDraft && state?.draft && baseDraft.version !== state.draft.version);
+  const busy = operation !== null;
+  const status = editorStatus({ state, baseVersion: baseDraft?.version, dirty, operation, now: clock });
+  const publishedIsCurrent = Boolean(baseDraft && state?.publication?.version === baseDraft.version);
+  const previewDocument = previewMode === "published" ? state?.publication?.document : document;
 
   const request = useCallback(async (body?: unknown): Promise<EditorState> => {
     const response = await fetch("/api/cms/editor", {
@@ -20,87 +51,157 @@ export default function Editor() {
       headers: { "Content-Type": "application/json", "x-cms-request": "editor" },
       body: body ? JSON.stringify(body) : undefined,
     });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
+    let result;
+    try { result = await response.json(); }
+    catch { throw new Error("The editor could not read the response. Refresh status to check whether your changes were saved."); }
+    if (!response.ok) throw new Error(result.error || `Request failed (${response.status}). Refresh status before trying again.`);
     return result;
   }, []);
   const load = useCallback(async () => {
-    setBusy(true); setError("");
+    if (requestInFlight.current) return;
+    requestInFlight.current = true; setOperation("load"); setError("");
     try { const data = await request(); setState(data); setBaseDraft(data.draft); setDocument(data.draft?.document ?? null); }
-    catch (e) { setError(e instanceof Error ? e.message : "Could not load content."); }
-    finally { setBusy(false); }
+    catch (error) { setError(errorText(error)); }
+    finally { requestInFlight.current = false; setOperation(null); }
   }, [request]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
+    setClock(Date.now());
+    if (!state?.delivery || state.delivery.confirmed_at) return;
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [state?.delivery]);
+  useEffect(() => {
     if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  async function act(action: "import" | "draft" | "publish" | "retry") {
-    setBusy(true); setError(""); setMessage("");
+  async function refresh() {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true; setOperation("refresh"); setError(""); setMessage("");
     try {
-      if (action === "draft") validateDocument(document);
+      const next = await request(); setState(next);
+      // Refresh publishing status without discarding local edits.
+      if (!dirty) { setBaseDraft(next.draft); setDocument(next.draft?.document ?? null); }
+      setMessage(dirty ? "Status refreshed. Your unsaved changes are still here." : "Content and publishing status are up to date.");
+    } catch (error) { setError(errorText(error)); }
+    finally { requestInFlight.current = false; setOperation(null); }
+  }
+  async function act(action: "import" | "draft" | "publish" | "retry") {
+    if (requestInFlight.current) return;
+    if (action === "publish" && (dirty || newerDraft || !baseDraft || publishedIsCurrent)) return;
+    if (action === "draft" && (!dirty || newerDraft)) return;
+    if (action === "retry" && status.leaseActive) return;
+    if (action === "draft") {
+      try { validateDocument(document); }
+      catch (error) { setError(errorText(error)); return; }
+    }
+    requestInFlight.current = true; setOperation(action); setError(""); setMessage("");
+    try {
       const next = await request({ action, document: action === "draft" ? document : undefined, expectedVersion: baseDraft?.version });
       setState(next);
       if (action === "import" || action === "draft") { setBaseDraft(next.draft); setDocument(next.draft?.document ?? null); }
-      setMessage(action === "draft" ? "Draft saved. The public page is unchanged." : action === "import" ? "Existing content copied into the test draft." : next.delivery?.confirmed_at ? "Published revision confirmed on the public page." : "Publication saved. Public-page confirmation is pending; retry delivery or refresh status.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Request failed."); }
-    finally { setBusy(false); }
+      setMessage(action === "draft" ? "Draft saved. Publish it when you are ready." : action === "import" ? "Your existing content is ready to edit."
+        : next.delivery?.confirmed_at ? "Published content is visible on the website." : "Your publication is saved. Its website refresh still needs confirmation.");
+    } catch (error) { setError(errorText(error)); }
+    finally { requestInFlight.current = false; setOperation(null); }
+  }
+  function discardChanges() {
+    if (busy || !window.confirm(newerDraft ? "Replace your unsaved changes with the latest saved draft?" : "Discard your unsaved changes?")) return;
+    const draft = newerDraft ? state?.draft : baseDraft;
+    setBaseDraft(draft ?? null); setDocument(draft?.document ?? null); setError(""); setMessage("Saved draft restored.");
   }
   const changeSection = (field: keyof Omit<Section, "images">, value: string) => {
-    if (document) setDocument({ ...document, section: { ...document.section, [field]: value } });
+    setDocument(current => current ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
   };
-  const fields: { key: keyof Omit<Section, "images">; label: string; max: number; multiline?: boolean }[] = [
-    { key: "eyebrow", label: "Eyebrow", max: 200 }, { key: "headline", label: "Headline", max: 300 },
-    { key: "body", label: "Description", max: 10000, multiline: true },
-    { key: "button_text", label: "Button text", max: 100 }, { key: "button_route", label: "Button destination", max: 2048 },
-    { key: "bottom_note", label: "Bottom note", max: 1000 },
-  ];
-  return <div className={styles.editor}>
+  function changeDetails(field: "title" | "seoTitle" | "seoDescription", value: string) {
+    setDocument(current => current ? { ...current, [field]: value } : current); setMessage("");
+  }
+
+  return <div className={styles.workspace}><div className={styles.editor}>
     <header className={styles.header}>
-      <div><p className={styles.eyebrow}>Breeze · Test workspace</p><h1>Content editor</h1><p>One section, from draft to published page.</p></div>
-      <a href="/cms-proof" target="_blank" rel="noreferrer">Open public test page ↗</a>
+      <div className={styles.identity}><span className={styles.brand}><Icon name="leaf" /></span><div><p className={styles.eyebrow}>Breeze / Content studio</p><h1>Make it feel like Breeze.</h1><p>Edit your section and see every change as you go.</p></div></div>
+      <span className={styles.workspaceBadge}><span />Test workspace</span>
     </header>
-    <div className={styles.status} aria-live="polite">
-      <span>Draft: {baseDraft ? `v${baseDraft.version}${dirty ? " · unsaved changes" : " · saved"}` : "not imported"}</span>
-      <span>Published: {state?.publication ? `v${state.publication.version}` : "none"}</span>
-      <span>Public page: {state?.delivery?.confirmed_at ? "confirmed" : state?.delivery?.invalidated_at ? "cache refreshed; awaiting confirmation" : state?.publication ? "cache refresh pending" : "not published"}</span>
+    <div className={styles.toolbar}>
+      <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{status.detail}</span></div></div>
+      <div className={styles.actions}>
+        <Button className={styles.secondaryButton} disabled={busy} onClick={() => void refresh()}><Icon name="clock" />{operation === "refresh" ? "Refreshing…" : "Refresh status"}</Button>
+        <Button type="submit" form="cms-editor-form" className={styles.secondaryButton} disabled={busy || !dirty || newerDraft || !document}>{operation === "draft" ? "Saving draft…" : "Save draft"}</Button>
+        <Button className={styles.primaryButton} disabled={busy || dirty || newerDraft || !baseDraft || publishedIsCurrent} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "Publish draft"}</Button>
+      </div>
     </div>
-    {error && <p className={styles.error} role="alert">{error}</p>}
-    {newerDraft && <p className={styles.error} role="alert">A newer draft is available. Copy any unsaved edits, then refresh before saving or publishing.</p>}
-    {message && <p role="status">{message}</p>}
-    {state?.delivery?.last_error && <p className={styles.error}>Delivery: {state.delivery.last_error} Attempts: {state.delivery.attempts}.</p>}
-    {state?.delivery && !state.delivery.confirmed_at && state.delivery.lease_until > Date.now() &&
-      <p role="status">A cache refresh is in progress. If it is interrupted, retry after {new Date(state.delivery.lease_until).toLocaleTimeString()}. The publication is saved.</p>}
-    <div className={styles.actions}>
-      <button type="button" disabled={busy} onClick={() => { if (!dirty || window.confirm("Discard unsaved edits and reload?")) void load(); }}>Refresh status</button>
-      {state && !state.draft && <button type="button" disabled={busy} onClick={() => void act("import")}>Copy existing D1 content</button>}
-      {state?.publication && !state.delivery?.confirmed_at && <button type="button" disabled={busy} onClick={() => void act("retry")}>Retry cache refresh</button>}
-      {busy && <span role="status">Working…</span>}
-    </div>
-    {document && <div className={styles.grid}>
-      <form onSubmit={event => { event.preventDefault(); void act("draft"); }}>
-        <fieldset disabled={busy}>
-          <legend>Section content</legend>
-          {fields.map(({ key, label, max, multiline }) => <label key={key}>{label}
-            {multiline ? <textarea value={document.section[key]} maxLength={max} rows={6} onChange={e => changeSection(key, e.target.value)} />
-              : <input value={document.section[key]} maxLength={max} required={key === "headline"} onChange={e => changeSection(key, e.target.value)} />}
-          </label>)}
-          <details><summary>Page title and search description</summary>
-            {(["title", "seoTitle", "seoDescription"] as const).map(key => <label key={key}>{key === "title" ? "Page title" : key === "seoTitle" ? "SEO title" : "SEO description"}
-              <input value={document[key]} maxLength={key === "seoDescription" ? 500 : 200} required={key === "title"} onChange={e => setDocument({ ...document, [key]: e.target.value })} />
-            </label>)}
-          </details>
-          <p className={styles.note}>{document.section.images.length} existing image references preserved. Image editing is a later milestone.</p>
-          <div className={styles.actions}>
-            <button type="submit" disabled={!dirty || newerDraft}>Save draft</button>
-            <button type="button" className={styles.publish} disabled={dirty || newerDraft || !baseDraft || state?.publication?.version === baseDraft.version} onClick={() => void act("publish")}>Publish saved draft</button>
+    {error && <div className={`${styles.notice} ${styles.errorNotice}`} role="alert"><strong>We could not complete that action</strong><p>{error}</p><p>Refresh status before trying again. Your local edits will be kept.</p></div>}
+    {message && <p className={`${styles.notice} ${styles.successNotice}`} role="status"><Icon name="check" />{message}</p>}
+    {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
+    {!document ? <section className={styles.emptyState} aria-busy={busy}>
+      <span className={styles.emptyIcon}><Icon name="grid" /></span><h2>{operation === "load" ? "Opening your workspace…" : state ? "Your content starts here" : "Your workspace could not load"}</h2>
+      <p>{state ? "Bring your existing Breeze section into this editor to start a draft." : "Load the saved content to start editing."}</p>
+      {state && !state.draft ? <Button className={styles.primaryButton} disabled={busy} onClick={() => void act("import")}>{operation === "import" ? "Preparing content…" : "Copy existing content"}</Button> : !busy && <Button className={styles.secondaryButton} onClick={() => void load()}>Try again</Button>}
+    </section> : <>
+      <div className={styles.grid}>
+        <section className={styles.editPanel} aria-label="Section editor">
+          <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Section editor</p><h2>Your content</h2></div><span className={styles.smallBadge}>Draft {baseDraft?.version}</span></div>
+          <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
+            onClick={() => setTab(item.id)} onKeyDown={event => {
+              const index = tabs.findIndex(candidate => candidate.id === item.id);
+              const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
+              if (next >= 0) { event.preventDefault(); setTab(tabs[next].id); window.document.getElementById(`tab-${tabs[next].id}`)?.focus(); }
+            }}><Icon name={item.icon} />{item.label}{item.id === "images" && <span>{document.section.images.length}</span>}</button>)}</div>
+          <form id="cms-editor-form" onSubmit={event => { event.preventDefault(); void act("draft"); }}>
+            <fieldset disabled={busy} className={styles.fields}><legend className={styles.srOnly}>Section content</legend>
+              <div id="panel-content" role="tabpanel" aria-labelledby="tab-content" hidden={tab !== "content"}>
+                {fields.map(({ key, label, help, max, placeholder, multiline }) => <label className={styles.field} key={key}><span>{label}{key === "headline" && <span className={styles.required}> *</span>}</span><small id={`help-${key}`}>{help}</small>
+                  {multiline ? <Textarea value={document.section[key]} maxLength={max} rows={6} placeholder={placeholder} aria-describedby={`help-${key}`} onChange={event => changeSection(key, event.target.value)} />
+                    : <Input value={document.section[key]} maxLength={max} placeholder={placeholder} aria-describedby={`help-${key}`} onChange={event => changeSection(key, event.target.value)} />}
+                </label>)}
+                <div className={styles.fieldGroup}><div className={styles.groupHeading}><Icon name="link" /><h3>Call to action</h3><span>Optional</span></div><p>Add both a label and a destination to show a button.</p>
+                  <label className={styles.field}><span>Button text</span><Input value={document.section.button_text} maxLength={100} placeholder="Get a free quote" onChange={event => changeSection("button_text", event.target.value)} /></label>
+                  <label className={styles.field}><span>Button destination</span><Input value={document.section.button_route} maxLength={2048} placeholder="/contact-us" onChange={event => changeSection("button_route", event.target.value)} /><small>Use a page path, such as /contact-us, or a full HTTPS address.</small></label>
+                </div>
+                <label className={styles.field}><span>Bottom note</span><small>Optional supporting text below the button.</small><Textarea value={document.section.bottom_note} maxLength={1000} rows={2} placeholder="Residential & commercial" onChange={event => changeSection("bottom_note", event.target.value)} /></label>
+              </div>
+              <div id="panel-images" role="tabpanel" aria-labelledby="tab-images" hidden={tab !== "images"}>
+                <ImageEditor images={document.section.images} disabled={busy} onChange={images => { setDocument(current => current ? { ...current, section: { ...current.section, images } } : current); setMessage(""); }} />
+              </div>
+              <div id="panel-details" role="tabpanel" aria-labelledby="tab-details" hidden={tab !== "details"}>
+                <div className={styles.sectionIntro}><h3>Page & search details</h3><p>Give this section a name and choose how its test page appears in search results.</p></div>
+                <label className={styles.field}><span>Page title <span className={styles.required}>*</span></span><Input value={document.title} maxLength={200} placeholder="Breeze services" onChange={event => changeDetails("title", event.target.value)} /></label>
+                <label className={styles.field}><span>SEO title</span><Input value={document.seoTitle} maxLength={200} placeholder="Heating & cooling | Breeze" onChange={event => changeDetails("seoTitle", event.target.value)} /><small>Leave empty to use the page title.</small></label>
+                <label className={styles.field}><span>SEO description</span><Textarea value={document.seoDescription} maxLength={500} rows={4} placeholder="A short description of the page." onChange={event => changeDetails("seoDescription", event.target.value)} /><small>{document.seoDescription.length} / 500 characters</small></label>
+              </div>
+            </fieldset>
+            <div className={styles.formFooter}><span>{dirty ? "Your changes are only in this editor." : `Saved ${dateText(baseDraft?.updatedAt)}`}</span>{dirty && <Button className={styles.textButton} disabled={busy} onClick={discardChanges}>Discard changes</Button>}</div>
+          </form>
+        </section>
+        <section className={styles.previewPanel} aria-label="Live section preview">
+          <div className={styles.previewHeading}><div><p className={styles.eyebrow}>Live preview</p><h2>A little closer to your website.</h2></div><span className={styles.liveBadge}><span />Live</span></div>
+          <div className={styles.previewControls}>
+            <div className={styles.segmented} role="group" aria-label="Preview content"><button type="button" aria-pressed={previewMode === "draft"} onClick={() => setPreviewMode("draft")}>Your draft</button><button type="button" aria-pressed={previewMode === "published"} disabled={!state?.publication} onClick={() => setPreviewMode("published")}>Published</button></div>
+            <div className={styles.segmented} role="group" aria-label="Preview screen size">{(["desktop", "tablet", "mobile"] as const).map(size => <button key={size} type="button" aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size[0].toUpperCase() + size.slice(1)}</button>)}</div>
           </div>
-        </fieldset>
-      </form>
-      <section className={styles.preview} aria-label="Draft preview"><h2>Draft preview</h2><CmsProofContent document={document} /></section>
-    </div>}
-  </div>;
+          <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
+            <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / cms-proof</span><Icon name="shield" /></div>
+            {previewDocument && <CmsProofContent document={previewDocument} preview />}
+          </div></div>
+          <p className={styles.previewCaption}>{previewMode === "draft" ? dirty ? "Showing your unsaved changes. Save a draft before publishing." : "Showing your saved draft." : state?.delivery?.confirmed_at ? "Showing the publication confirmed on the website." : "Showing the saved publication. Website delivery is still pending."} Preview buttons do not navigate.</p>
+        </section>
+      </div>
+      <section className={styles.publishingPanel} aria-label="Publishing status">
+        <div className={styles.publishingHeading}><div><p className={styles.eyebrow}>From draft to website</p><h2>Publishing status</h2></div><a className={styles.publicLink} href="/cms-proof" target="_blank" rel="noreferrer">Open published page <span aria-hidden="true">↗</span></a></div>
+        <div className={styles.steps}>
+          <div className={styles.step}><Icon name={dirty ? "clock" : "check"} /><div><strong>{dirty ? "Unsaved changes" : "Draft saved"}</strong><span>{dirty ? "Save your edits to create a new draft." : `Draft ${baseDraft?.version} · ${dateText(baseDraft?.updatedAt)}`}</span></div></div>
+          <div className={styles.step}><Icon name={state?.publication ? "check" : "clock"} /><div><strong>{state?.publication ? `Revision ${state.publication.version} published` : "Ready when you are"}</strong><span>{state?.publication ? dateText(state.publication.publishedAt) : "Publish a saved draft to update the website."}</span></div></div>
+          <div className={`${styles.step} ${status.deliveryFailed ? styles.failedStep : ""}`}><Icon name={state?.delivery?.confirmed_at ? "check" : "clock"} /><div><strong>{status.deliveryLabel}</strong><span>{status.deliveryDetail}</span></div></div>
+        </div>
+        {state?.publication && !state.delivery?.confirmed_at && <div className={styles.deliveryNotice}>
+          <p>{state.delivery?.last_error || (status.leaseActive ? `The website refresh is in progress. You can retry after ${new Date(state.delivery!.lease_until).toLocaleTimeString()}.` : "Your revision is published. Retry the website refresh to confirm it is visible.")} {state.delivery && <span>Attempts: {state.delivery.attempts}.</span>}</p>
+          <Button className={styles.secondaryButton} disabled={busy || status.leaseActive} onClick={() => void act("retry")}>{operation === "retry" ? "Retrying refresh…" : "Retry cache refresh"}</Button>
+        </div>}
+        {dirty && <p className={styles.publishingNote}>Save your draft first. Publishing always uses the saved draft.</p>}
+      </section>
+    </>}
+  </div></div>;
 }

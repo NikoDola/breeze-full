@@ -15,7 +15,7 @@ This is one complete content workflow, with `/admin-test` as the editor and `/cm
 
 The original `home-hero` row is read through the existing public GET endpoint and copied into a separate test database. Its complete original JSON is retained in `cms_imports`; repeating the import never overwrites edits. The production schema cannot be inspected through that endpoint. Before any future live migration, inspect the real schema and export a backup with account access.
 
-The existing images are bare filenames (`hero1.webp`, etc.), and the original button destination is `/contact` rather than the site's `/contact-us`. Import preserves these values. Images are retained as references but not displayed or editable in this text-only proof. The editor can change the button destination. R2 uploads are deliberately not part of this milestone.
+The existing images are bare filenames (`hero1.webp`, etc.), and the original button destination is `/contact` rather than the site's `/contact-us`. Import preserves these values. The visual editor can now select existing site images, edit image references, reorder/remove them, and preview a single image or slider. Missing legacy files display an unavailable placeholder; references are never silently replaced. The editor can change the button destination. R2 uploads remain outside this milestone. See [CMS-VISUAL-EDITOR.md](CMS-VISUAL-EDITOR.md).
 
 ## Stages implemented
 
