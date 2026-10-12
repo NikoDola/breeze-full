@@ -50,6 +50,10 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
   const busy = operation !== null;
   const status = editorStatus({ state, baseVersion: baseDraft?.version, dirty, operation, now: clock });
   const publishedIsCurrent = Boolean(baseDraft && state?.publication?.version === baseDraft.version);
+  const saveDisabled = busy || !dirty || newerDraft || !document;
+  const publishDisabled = busy || dirty || newerDraft || !baseDraft || publishedIsCurrent;
+  const saveHelp = dirty ? "Save draft to keep your changes, then Publish draft to update the website."
+    : !publishedIsCurrent ? "Your draft is saved. Publish draft to update the website." : status.detail;
   const previewDocument = previewMode === "published" ? state?.publication?.document : document;
   let previewValid = true;
   if (previewDocument) { try { validatePageDocument(pageId, previewDocument); } catch { previewValid = false; } }
@@ -129,7 +133,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
     setDocument(current => current?.schemaVersion === 1 ? { ...current, [field]: value } : current); setMessage("");
   }
 
-  return <div className={styles.workspace}><div className={styles.editor}>
+  return <div className={`${styles.workspace} ${document ? styles.withSaveBar : ""}`}><div className={styles.editor}>
     <header className={styles.header}>
       <div className={styles.identity}><span className={styles.brand}><Icon name="leaf" /></span><div><p className={styles.eyebrow}>Breeze / Content studio</p><h1>Make it feel like Breeze.</h1><p>Edit your content and see every change as you go.</p></div></div>
       <span className={styles.workspaceBadge}><span />Test workspace</span>
@@ -141,8 +145,8 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
       <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{status.detail}</span></div></div>
       <div className={styles.actions}>
         <Button className={styles.secondaryButton} disabled={busy} onClick={() => void refresh()}><Icon name="clock" />{operation === "refresh" ? "Refreshing…" : "Refresh status"}</Button>
-        <Button type="submit" form="cms-editor-form" className={styles.secondaryButton} disabled={busy || !dirty || newerDraft || !document}>{operation === "draft" ? "Saving draft…" : "Save draft"}</Button>
-        <Button className={styles.primaryButton} disabled={busy || dirty || newerDraft || !baseDraft || publishedIsCurrent} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "Publish draft"}</Button>
+        <Button type="submit" form="cms-editor-form" className={styles.secondaryButton} disabled={saveDisabled}>{operation === "draft" ? "Saving draft…" : "Save draft"}</Button>
+        <Button className={styles.primaryButton} disabled={publishDisabled} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "Publish draft"}</Button>
       </div>
     </div>
     {error && <div className={`${styles.notice} ${styles.errorNotice}`} role="alert"><strong>We could not complete that action</strong><p>{error}</p><p>Refresh status before trying again. Your local edits will be kept.</p></div>}
@@ -218,5 +222,12 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
         {dirty && <p className={styles.publishingNote}>Save your draft first. Publishing always uses the saved draft.</p>}
       </section>
     </>}
+    {document && <div className={styles.saveBar} role="region" aria-label="Save and publish content">
+      <div className={styles.saveSummary} aria-live="polite"><strong>{error ? "Action needs attention" : status.label}</strong><span>{error || (busy ? status.detail : newerDraft ? "Load the latest draft above before saving or publishing." : saveHelp)}</span></div>
+      <div className={styles.actions}>
+        <Button type="submit" form="cms-editor-form" className={dirty ? styles.primaryButton : styles.secondaryButton} disabled={saveDisabled}>{operation === "draft" ? "Saving draft…" : "1. Save draft"}</Button>
+        <Button type="button" className={styles.primaryButton} disabled={publishDisabled} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "2. Publish draft"}</Button>
+      </div>
+    </div>}
   </div></div>;
 }

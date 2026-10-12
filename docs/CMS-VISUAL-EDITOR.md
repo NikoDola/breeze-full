@@ -14,6 +14,9 @@ delivery, access checks, and deployment configuration are unchanged.
   publishing, published delivery, and pending/failed cache refresh independently.
 - Save draft keeps edits private. Publish operates on a saved, current draft;
   unsaved or stale edits disable publication. Duplicate clicks are guarded.
+- A persistent bottom action bar keeps **1. Save draft** and **2. Publish draft**
+  visible while scrolling through fields, including on mobile. It shares the
+  toolbar's action handlers and disabled states, and shows saving/error feedback.
 - Refresh status preserves unsaved edits. If a newer saved draft exists, saving
   and publishing are blocked until the user explicitly loads the latest version.
   Discarding edits asks for confirmation; leaving with unsaved edits warns.

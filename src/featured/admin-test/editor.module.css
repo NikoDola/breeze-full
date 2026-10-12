@@ -1,4 +1,19 @@
 .workspace { background: #f3f6f5; color: var(--navy); border-top: 1px solid #e4eae8; }
+.withSaveBar { padding-bottom: 110px; }
+.saveBar { position: fixed; bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 20px; width: min(1280px, calc(100% - 32px)); padding: 16px 20px; border: 1px solid #d0dfd9; border-radius: 14px; background: #fff; box-shadow: 0 8px 40px #092b3826; }
+.saveSummary { min-width: 0; font-size: 12px; line-height: 1.55; }
+.saveSummary strong { display: block; color: var(--navy); font-size: 13px; }
+.saveSummary span { display: block; margin-top: 3px; color: #64777d; }
+.saveBar .actions { flex: none; }
+.fields input, .fields textarea, .fields button { scroll-margin-block-end: 160px; }
+@media (max-width: 600px) {
+  .withSaveBar { padding-bottom: 190px; }
+  .saveBar { flex-direction: column; align-items: stretch; gap: 12px; width: calc(100% - 20px); padding: 14px; }
+  .saveBar .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .saveBar .actions button { width: 100%; min-width: 0; padding-inline: 8px; }
+  .saveBar .actions .secondaryButton:first-child { margin-right: 0; }
+  .fields input, .fields textarea, .fields button { scroll-margin-block-end: 220px; }
+}
 .pagePicker { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; font-size: 13px; }
 .pagePicker select { max-width: 280px; }
 .sectionPicker { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
