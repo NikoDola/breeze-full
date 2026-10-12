@@ -139,3 +139,38 @@ retained safely; no automatic R2 lifecycle rule is enabled.
 Public-site CSS, the homepage hero, form implementation and homepage schema are
 unchanged. Production authentication, migration of additional page image fields,
 permanent deletion and switching optimization provider remain separate work.
+
+## Verified results — 2026-10-13 (Europe/Skopje)
+
+- Implementation commit: `ec35398` on `cms-testing`.
+- Next production build and local D1/R2/Next integration passed. The CMS suite
+  passed 29 tests, including the original publishing and homepage regressions.
+- Private bucket verified: `r2.dev` disabled and no public bucket custom domains.
+- Migration applied only to `breeze-test-db`, after an ignored pre-migration export.
+  D1 initially rejected a multi-statement validation trigger; its transaction
+  rolled back completely. Separate validation/capture triggers then applied.
+- Preview: `https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app`.
+  Deployment `dpl_4bYFF4G1mU27CNKZQcNnWnhtCgZS`, Ready, `iad1`.
+- Final test Worker version: `4132d527-cdfc-470d-a078-fa301e121f83`.
+  Writes were enabled only after the new Preview's OIDC/HMAC/credential/storage
+  preflight passed with writes disabled.
+- Real Preview uploads passed for JPEG, PNG, WebP and AVIF, including a PNG above
+  4.5 MB. Authenticated no-store previews passed; draft public URLs returned 404;
+  missing authentication and wrong origins were rejected. Fake JPEG pixel data
+  was rejected by Sharp on Vercel.
+- Draft → immutable publication → Next invalidation → confirmed HTML passed.
+  Publish-to-visible was **2.74 seconds in this single acceptance run**.
+- Responsive AVIF at 384px and WebP at 960px were returned; repeated requests
+  reported `x-vercel-cache: HIT`. Synthetic test images verify format/size/cache
+  behavior, not representative photo compression or median/p95 performance.
+- Deployment ID was unchanged across publishing. All **13 pre-existing revision
+  rows remained identical**; only the media test and restoration revisions were
+  added. Previous proof publication/draft restored, homepage revision unchanged.
+  The test image remains available through its immutable historical revision.
+- Local production-mode cache checks recorded zero Worker content requests for
+  five cached proof requests and three cached homepage requests. Remote origin
+  request counts and the old full performance benchmark were not repeated.
+
+Raw reports, history snapshots, test images and credentials are excluded from Git.
+Verification used HTTP integration tests; visual browser acceptance remains with
+the user. No production resources, security settings or `main` commits changed.
