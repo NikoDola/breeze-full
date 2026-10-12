@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import CmsImage from "./CmsImage";
+import type { ImageReference } from "../../../cms/shared/media";
 import styles from "./cms-proof.module.css";
 
-export default function CmsSectionImages({ images }: { images: string[] }) {
+export default function CmsSectionImages({ images, preview = false, mediaOrigin }: { images: ImageReference[]; preview?: boolean; mediaOrigin?: string }) {
   const [selected, setSelected] = useState(0);
   if (!images.length) return null;
   const active = Math.min(selected, images.length - 1);
@@ -15,7 +16,7 @@ export default function CmsSectionImages({ images }: { images: string[] }) {
       if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); move(event.key === "ArrowRight" ? 1 : -1); }
     }}>
     <div className={styles.slide} role={multiple ? "group" : undefined} aria-roledescription={multiple ? "slide" : undefined} aria-label={`Image ${active + 1} of ${images.length}`}>
-      <CmsImage reference={images[active]} />
+      <CmsImage reference={images[active]} preview={preview} mediaOrigin={mediaOrigin} />
     </div>
     {multiple && <div className={styles.galleryControls}>
       <button type="button" onClick={() => move(-1)} aria-label="Previous image"><span aria-hidden="true">←</span></button>

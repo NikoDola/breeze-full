@@ -21,7 +21,7 @@ export async function createWorker(options = {}) {
   return new Miniflare(convertV4MiniflareOptions({
     modules: true, script: await bundle(new URL("../src/index.ts", import.meta.url)),
     compatibilityDate: "2026-10-01", host: "127.0.0.1", port: 0,
-    d1Databases: ["DB"], log: new Log(LogLevel.ERROR),
+    d1Databases: ["DB"], r2Buckets: ["MEDIA"], log: new Log(LogLevel.ERROR),
     bindings: { CMS_ENVIRONMENT: "test", CMS_WRITES_ENABLED: "true", CMS_WRITE_TOKEN: token, ...bindings },
     ...rest,
   }));

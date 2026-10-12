@@ -22,7 +22,7 @@ const getPublication = cache(async (pageId: PageId): Promise<Publication | null>
 
 export const getPublishedProof = cache(async (): Promise<Publication & { document: ProofDocument }> => {
   const publication = await getPublication(PAGE_ID);
-  if (!publication || publication.document.schemaVersion !== 1) notFound();
+  if (!publication || publication.document.schemaVersion === 2) notFound();
   return { ...publication, document: publication.document };
 });
 

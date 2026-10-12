@@ -3,12 +3,15 @@ import {
   readBody, record, validatePageDocument, type Document, type DeliveryClaim, type PageId,
 } from "../../../cms/shared/contract";
 import { homeSeed, HOME_SOURCE_ID } from "../../../cms/shared/home-seed";
+import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets } from "./media";
 
 export interface Env {
   DB: D1Database;
   CMS_ENVIRONMENT: string;
   CMS_WRITES_ENABLED: string;
   CMS_WRITE_TOKEN?: string;
+  MEDIA?: R2Bucket;
+  CMS_UPLOAD_ORIGIN?: string;
 }
 class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -75,6 +78,7 @@ async function importContent(env: Env, pageId: PageId, source: unknown) {
 }
 async function saveDraft(env: Env, pageId: PageId, input: Record<string, unknown>) {
   const document = validatePageDocument(pageId, input.document), version = expectedVersion(input.expectedVersion);
+  await validateDraftAssets(env, document);
   const result = await env.DB.prepare(`UPDATE cms_drafts SET document_json = ?, version = version + 1, updated_at = ?
     WHERE page_id = ? AND version = ?`).bind(JSON.stringify(document), new Date().toISOString(), pageId, version).run();
   if (!result.meta.changes) throw new HttpError(409, "The draft changed in another editor. Reload before saving.");
@@ -83,7 +87,7 @@ async function publish(env: Env, pageId: PageId, version: number) {
   const draft = await env.DB.withSession("first-primary").prepare("SELECT document_json FROM cms_drafts WHERE page_id = ? AND version = ?")
     .bind(pageId, version).first<{ document_json: string }>();
   if (!draft) throw new HttpError(409, "The saved draft changed. Reload before publishing.");
-  validatePageDocument(pageId, JSON.parse(draft.document_json));
+  await validateDraftAssets(env, validatePageDocument(pageId, JSON.parse(draft.document_json)));
   const id = crypto.randomUUID(), eventId = crypto.randomUUID(), now = new Date().toISOString();
   // The version predicate is evaluated INSIDE the transaction, including retries and racing editors.
   // Snapshot, public pointer and durable outbox are committed together or rolled back together.
@@ -157,13 +161,16 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
       const url = new URL(request.url), path = url.pathname;
+      if (path.startsWith("/api/media/upload/")) return await mediaUpload(request, env);
+      if (path.startsWith("/media/")) return await mediaPublic(request, env);
       const publicMatch = path.match(/^\/api\/public\/pages\/(cms-proof|home)$/);
       if (request.method === "GET" && publicMatch) {
         const row = await readPublication(env, pageDefinition(publicMatch[1]).id);
         return row ? json(publication(row)) : json({ error: "Not published." }, 404);
       }
       if (!path.startsWith("/api/admin/")) return json({ error: "Not found." }, 404);
-      await authorize(request, env, path === "/api/admin/health" && request.method === "GET");
+      await authorize(request, env, ["/api/admin/health", "/api/admin/media/health"].includes(path) && request.method === "GET");
+      if (path === "/api/admin/media" || path.startsWith("/api/admin/media/")) return await mediaAdmin(request, env);
       if (request.method === "GET" && path === "/api/admin/health") {
         const columns = await env.DB.prepare("PRAGMA table_info(cms_publish_outbox)").all<{ name: string }>();
         return json({ environment: env.CMS_ENVIRONMENT, writesEnabled: writesEnabled(env),

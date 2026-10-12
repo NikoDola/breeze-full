@@ -7,6 +7,7 @@ import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomBytes, createHmac } from "node:crypto";
 import { admin, createWorker, migrate, root, token, revalidationSecret } from "./helpers.mjs";
+import { runMediaWorkflow } from "./media-http-proof.mjs";
 
 const reportDir = join(root, ".local");
 await mkdir(reportDir, { recursive: true });
@@ -38,7 +39,7 @@ try {
   const appPort = portReservation.address().port;
   await new Promise(resolve => portReservation.close(resolve));
   const origin = `http://127.0.0.1:${appPort}`;
-  mf = await createWorker({ bindings: { CMS_SITE_ORIGIN: origin } });
+  mf = await createWorker({ bindings: { CMS_SITE_ORIGIN: origin, CMS_UPLOAD_ORIGIN: origin } });
   const db = await mf.getD1Database("DB");
   await migrate(db);
   assert.equal((await admin(mf, "import", { source })).status, 200);
@@ -179,6 +180,8 @@ try {
   assert.equal((await editor()).publication.revisionId, state.publication.revisionId);
   assert.equal(await readFile(join(root, ".next-cms-proof/BUILD_ID"), "utf8"), buildId);
   check("Homepage original content restored by another publication without rebuild; proof revision unchanged");
+  results.media = await runMediaWorkflow({ origin, worker: workerOrigin, nextFetch: (path,options) => fetch(origin+path,options), editorHeaders: headers, check });
+  assert.equal(await readFile(join(root, ".next-cms-proof/BUILD_ID"), "utf8"), buildId);
   results.buildIdUnchanged = true;
   results.publishedRevision = state.publication.revisionId;
   results.status = "passed";

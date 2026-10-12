@@ -47,7 +47,8 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
   const requestInFlight = useRef(false);
   const dirty = Boolean(document && baseDraft && JSON.stringify(document) !== JSON.stringify(baseDraft.document));
   const newerDraft = Boolean(baseDraft && state?.draft && baseDraft.version !== state.draft.version);
-  const busy = operation !== null;
+  const [mediaBusy, setMediaBusy] = useState(false);
+  const busy = operation !== null || mediaBusy;
   const status = editorStatus({ state, baseVersion: baseDraft?.version, dirty, operation, now: clock });
   const publishedIsCurrent = Boolean(baseDraft && state?.publication?.version === baseDraft.version);
   const saveDisabled = busy || !dirty || newerDraft || !document;
@@ -127,10 +128,10 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
     setBaseDraft(draft ?? null); setDocument(draft?.document ?? null); setError(""); setMessage("Saved draft restored.");
   }
   const changeSection = (field: keyof Omit<Section, "images">, value: string) => {
-    setDocument(current => current?.schemaVersion === 1 ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
+    setDocument(current => current && current.schemaVersion !== 2 ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
   };
   function changeDetails(field: "title" | "seoTitle" | "seoDescription", value: string) {
-    setDocument(current => current?.schemaVersion === 1 ? { ...current, [field]: value } : current); setMessage("");
+    setDocument(current => current && current.schemaVersion !== 2 ? { ...current, [field]: value } : current); setMessage("");
   }
 
   return <div className={`${styles.workspace} ${document ? styles.withSaveBar : ""}`}><div className={styles.editor}>
@@ -141,6 +142,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
     <label className={styles.pagePicker}>Editing page <select value={pageId} disabled={busy} onChange={event => {
       if (!dirty || window.confirm("Discard your unsaved changes and switch pages?")) onPageChange(event.target.value as PageId);
     }}>{Object.values(pages).map(page => <option key={page.id} value={page.id}>{page.label}</option>)}</select></label>
+    {pageId === "home" && <p className={styles.publishingNote}>To upload and test images, select CMS proof, then open Images. The approved homepage keeps its existing artwork.</p>}
     <div className={styles.toolbar}>
       <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{status.detail}</span></div></div>
       <div className={styles.actions}>
@@ -160,7 +162,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
       <div className={styles.grid}>
         <section className={styles.editPanel} aria-label="Section editor">
           <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Section editor</p><h2>Your content</h2></div><span className={styles.smallBadge}>Draft {baseDraft?.version}</span></div>
-          {document.schemaVersion === 1 && <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
+          {document.schemaVersion !== 2 && <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
             onClick={() => setTab(item.id)} onKeyDown={event => {
               const index = tabs.findIndex(candidate => candidate.id === item.id);
               const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
@@ -181,7 +183,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
                 <label className={styles.field}><span>Bottom note</span><small>Optional supporting text below the button.</small><Textarea value={document.section.bottom_note} maxLength={1000} rows={2} placeholder="Residential & commercial" onChange={event => changeSection("bottom_note", event.target.value)} /></label>
               </div>
               <div id="panel-images" role="tabpanel" aria-labelledby="tab-images" hidden={tab !== "images"}>
-                <ImageEditor images={document.section.images} disabled={busy} onChange={images => { setDocument(current => current?.schemaVersion === 1 ? { ...current, section: { ...current.section, images } } : current); setMessage(""); }} />
+                <ImageEditor images={document.section.images} disabled={busy} onBusyChange={setMediaBusy} onChange={images => { setDocument(current => current && current.schemaVersion !== 2 ? { ...current, schemaVersion: 3, section: { ...current.section, images } } : current); setMessage(""); }} />
               </div>
               <div id="panel-details" role="tabpanel" aria-labelledby="tab-details" hidden={tab !== "details"}>
                 <div className={styles.sectionIntro}><h3>Page & search details</h3><p>Give this section a name and choose how its test page appears in search results.</p></div>
@@ -202,7 +204,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
           </div>
           {previewDocument?.schemaVersion === 2 ? <HomePreviewFrame document={previewDocument} viewport={viewport} /> : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
             <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / cms-proof</span><Icon name="shield" /></div>
-            {previewDocument?.schemaVersion === 1 && <CmsProofContent document={previewDocument} preview />}
+            {previewDocument && <CmsProofContent document={previewDocument} preview />}
           </div></div>}
           {!previewValid && <p className={styles.previewCaption}>Complete the required fields to update the homepage preview. It currently shows the last valid content.</p>}
           <p className={styles.previewCaption}>{previewMode === "draft" ? dirty ? "Showing your unsaved changes. Save a draft before publishing." : "Showing your saved draft." : state?.delivery?.confirmed_at ? "Showing the publication confirmed on the website." : "Showing the saved publication. Website delivery is still pending."} Preview buttons do not navigate.</p>

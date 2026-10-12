@@ -3,7 +3,7 @@ import { safeRoute } from "../../../cms/shared/contract";
 import CmsSectionImages from "./CmsSectionImages";
 import styles from "./cms-proof.module.css";
 // Shared by the live editor and published proof. Only validated text and image references.
-export default function CmsProofContent({ document, preview = false }: { document: ProofDocument; preview?: boolean }) {
+export default function CmsProofContent({ document, preview = false, mediaOrigin }: { document: ProofDocument; preview?: boolean; mediaOrigin?: string }) {
   const section = document.section;
   const Heading = preview ? "h3" : "h1";
   const showButton = section.button_text && section.button_route && safeRoute(section.button_route);
@@ -15,7 +15,7 @@ export default function CmsProofContent({ document, preview = false }: { documen
       {section.body && <p className={styles.body}>{section.body}</p>}
       {showButton && <p className={styles.cta}>{preview ? <span className={styles.button}>{section.button_text}</span> : <a className={styles.button} href={section.button_route}>{section.button_text}</a>}</p>}
       {section.bottom_note && <p className={styles.note}>{section.bottom_note}</p>}
-      <CmsSectionImages images={section.images} />
+      <CmsSectionImages images={section.images} preview={preview} mediaOrigin={mediaOrigin} />
     </div>
   </section>;
 }

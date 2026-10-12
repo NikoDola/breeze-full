@@ -1,5 +1,6 @@
 import { validateHomeDocument, type HomeDocument } from "./home";
 import { InputError, record, text as string } from "./validation";
+import { validatePlacement, type ImageReference } from "./media";
 export { InputError, record } from "./validation";
 
 export const PAGE_ID = "cms-proof";
@@ -22,10 +23,10 @@ export const MAX_BODY_BYTES = 48 * 1024;
 export type Section = {
   eyebrow: string; headline: string; body: string;
   button_text: string; button_route: string; bottom_note: string;
-  images: string[];
+  images: ImageReference[];
 };
 export type ProofDocument = {
-  schemaVersion: 1; title: string; seoTitle: string; seoDescription: string;
+  schemaVersion: 1 | 3; title: string; seoTitle: string; seoDescription: string;
   section: Section;
 };
 export type Document = ProofDocument | HomeDocument;
@@ -55,10 +56,10 @@ export function validatePageDocument(pageId: PageId, value: unknown): Document {
 }
 export function validateProofDocument(value: unknown): ProofDocument {
   const doc = record(value), section = record(doc.section);
-  if (doc.schemaVersion !== 1) throw new InputError("Unsupported document version.");
+  if (doc.schemaVersion !== 1 && doc.schemaVersion !== 3) throw new InputError("Unsupported document version.");
   const images = section.images;
-  // Legacy image references are retained verbatim; this milestone does not render or upload them.
-  if (!Array.isArray(images) || images.length > 12 || images.some(v => typeof v !== "string" || v.length > 2048)) {
+  // Version 1 remains byte-compatible. Version 3 adds validated asset placements.
+  if (!Array.isArray(images) || images.length > 12) {
     throw new InputError("Invalid image references.");
   }
   const route = string(section.button_route, "button destination", 2048);
@@ -66,7 +67,7 @@ export function validateProofDocument(value: unknown): ProofDocument {
   const button = string(section.button_text, "button text", 100);
   if (Boolean(button.trim()) !== Boolean(route)) throw new InputError("Provide both button text and destination, or leave both empty.");
   return {
-    schemaVersion: 1,
+    schemaVersion: doc.schemaVersion,
     title: string(doc.title, "title", 200, true),
     seoTitle: string(doc.seoTitle, "SEO title", 200),
     seoDescription: string(doc.seoDescription, "SEO description", 500),
@@ -76,7 +77,11 @@ export function validateProofDocument(value: unknown): ProofDocument {
       body: string(section.body, "body", 10000),
       button_text: button, button_route: route,
       bottom_note: string(section.bottom_note, "bottom note", 1000),
-      images: [...images] as string[],
+      images: images.map(image => {
+        if (typeof image === "string" && image.length <= 2048) return image;
+        if (doc.schemaVersion === 3) return validatePlacement(image);
+        throw new InputError("Invalid image references.");
+      }),
     },
   };
 }

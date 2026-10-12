@@ -9,4 +9,4 @@ export function proxy(request: NextRequest) {
   response.headers.set("Content-Security-Policy", request.nextUrl.pathname === "/admin-test/preview" ? "frame-ancestors 'self'" : "frame-ancestors 'none'");
   return response;
 }
-export const config = { matcher: ["/admin/:path*", "/admin-test/:path*", "/api/cms/editor/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/admin-test/:path*", "/api/cms/editor/:path*", "/api/cms/media/:path*"] };

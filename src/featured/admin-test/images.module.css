@@ -21,4 +21,27 @@
 .addImage { padding-top: 20px; border-top: 1px solid #e4ece7; }
 .addImage label { margin-bottom: 12px; }
 .help { margin: 16px 0 0; color: #798c81; font-size: 10px; line-height: 1.7; }
+.uploadBox { display: grid; gap: 12px; padding: 20px; border: 1px dashed #b9cec0; background: #f4f9f5; border-radius: 12px; margin-bottom: 18px; }
+.uploadBox label { display: grid; gap: 5px; }
+.uploadBox strong { font-size: 14px; color: #173d2a; }
+.uploadBox span, .uploadBox small { color: #526f5e; font-size: 11px; line-height: 1.6; }
+.uploadBox input { max-width: 100%; font-size: 12px; }
+.uploadBox input::file-selector-button { padding: 9px 12px; background: #fff; border: 1px solid #b9cec0; border-radius: 6px; margin-right: 10px; cursor: pointer; }
+.uploadBox progress { width: 100%; accent-color: var(--orange); }
+.mediaNotice { padding: 10px 12px; border-radius: 8px; background: #edf6ef; color: #28583d; font-size: 12px; line-height: 1.6; }
+.imageSummary h4, .libraryHeading h4 { font-size: 13px; margin: 16px 0; color: #244733; }
+.imageSummary h4 span { margin-left: 8px; color: #637e6e; font-weight: 400; }
+.libraryHeading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.assetCard { min-width: 0; border: 1px solid #d6e3d9; border-radius: 8px; overflow: hidden; padding-bottom: 9px; background: #fff; }
+.assetCard > button:first-child { width: 100%; border: 0; border-radius: 0; }
+.assetCard > small { display: block; padding: 3px 8px; font-size: 10px; line-height: 1.5; color: #536e5d; overflow-wrap: anywhere; }
+.assetCard button > span:last-child { overflow-wrap: anywhere; }
+.assetPending { display: grid; place-content: center; height: 100%; color: #627a6b; font-size: 12px; background: #e9f0eb; }
+.assetCard .retry { margin: 8px; padding: 7px 9px; font-size: 11px; color: #284d38; }
+.checkLabel { display: flex; align-items: center; gap: 7px; margin-top: 9px; font-size: 10px; line-height: 1.5; color: #4e6d5a; }
+.checkLabel input { accent-color: var(--orange); }
+.assetDetails { padding: 7px 8px; font-size: 10px; color: #46614f; }
+.assetDetails summary { cursor: pointer; margin-bottom: 8px; }
+.assetDetails input { min-width: 0; width: 100%; font-size: 11px; }
+.assetDetails small { display: block; margin-top: 6px; }
 @media (max-width: 420px) { .thumbnail { width: 56px; height: 73px; } .imageCard { gap: 9px; padding: 10px; } .imageActions { gap: 8px; } .imageActions button span { display: none; } }
