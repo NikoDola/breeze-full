@@ -20,6 +20,15 @@
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 60; display: flex; flex-direction: column; width: var(--admin-sidebar-width); height: 100dvh; overflow-y: auto; background: var(--admin-surface); border-right: 1px solid var(--admin-line); }
 .sidebarHeading { display: flex; align-items: center; min-height: var(--admin-topbar-height); padding: 0 22px; border-bottom: 1px solid var(--admin-line); font-size: 13px; font-weight: 600; }
 .navigation { padding: 24px 12px; }
+.sidebar > .navigation, .drawer > .navigation { flex: 1 0 auto; }
+.supportContact { flex: none; margin-top: auto; padding: 20px 20px max(24px, env(safe-area-inset-bottom)); border-top: 1px solid var(--admin-line); }
+.supportContact p { margin: 0 0 16px; color: var(--admin-muted); font-size: 11px; line-height: 1.6; }
+.supportContact a { display: flex; align-items: center; gap: 10px; padding-block: 6px; color: var(--admin-secondary); font-size: 12px; line-height: 1.5; text-decoration: none; overflow-wrap: anywhere; }
+.supportContact a + a { margin-top: 8px; }
+.supportContact a:hover { color: var(--admin-accent); }
+.supportContact svg { width: 17px; height: 17px; flex: none; color: var(--admin-accent); }
+.supportContact a[href^="tel:"] svg { color: var(--orange); }
+.contactLabel { display: block; color: var(--admin-muted); font-size: 10px; line-height: 1.6; }
 .navGroup { margin-bottom: 26px; }
 .groupLabel { margin: 0 0 8px; padding: 0 10px; color: var(--admin-muted); font-size: 10px; font-weight: 600; line-height: 1.5; text-transform: uppercase; letter-spacing: .08em; }
 .navItem { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 3px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--admin-secondary); font: inherit; font-size: 13px; font-weight: 500; text-align: left; cursor: pointer; }
@@ -39,6 +48,7 @@
 .menuButton svg, .closeButton svg { width: 20px; height: 20px; }
 .drawer { inset: 0 auto 0 0; width: min(300px, calc(100vw - 48px)); height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: var(--admin-surface); color: var(--admin-text); font: inherit; }
 .drawer::backdrop { background: #14203566; }
+.drawer[open] { display: flex; flex-direction: column; }
 .drawerHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--admin-topbar-height); padding: 10px 16px; border-bottom: 1px solid var(--admin-line); }
 .drawerHeading h2 { margin: 0; font: 600 13px/1.4 var(--font-geist), system-ui, sans-serif; letter-spacing: normal; }
 .shell button:focus-visible, .shell a:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }

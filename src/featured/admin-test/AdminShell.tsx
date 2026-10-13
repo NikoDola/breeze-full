@@ -11,6 +11,14 @@ const navigation = [
   { label: "Tools", items: [{ pageId: "cms-proof", icon: "grid" }] },
 ] as const;
 
+function SupportContact() {
+  return <div className={css.supportContact} aria-label="Admin support contact">
+    <p>For any questions, you can reach out on</p>
+    <a href="mailto:nikodola@gmail.com"><Icon name="mail" /><span><span className={css.contactLabel}>Email</span>nikodola@gmail.com</span></a>
+    <a href="tel:+38974222858"><Icon name="phone" /><span><span className={css.contactLabel}>Phone number</span>+389 74 222 858</span></a>
+  </div>;
+}
+
 export default function AdminShell({ pageId, onPageChange, onLeave, disabled, children }: {
   pageId: PageId;
   onPageChange: (pageId: PageId) => boolean;
@@ -58,6 +66,7 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
     <aside className={css.sidebar} aria-label="Administration sidebar">
       <div className={css.sidebarHeading}>Administration</div>
       {pageNavigation()}
+      <SupportContact />
     </aside>
     <div className={css.main}>
       <header className={css.topbar}>
@@ -87,6 +96,7 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
         <button type="button" className={css.closeButton} aria-label="Close admin navigation" onClick={() => drawer.current?.close()}><Icon name="x" /></button>
       </div>
       {pageNavigation()}
+      <SupportContact />
     </dialog>
   </div>;
 }
