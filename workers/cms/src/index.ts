@@ -4,6 +4,7 @@ import {
 } from "../../../cms/shared/contract";
 import { homeSeed, HOME_SOURCE_ID } from "../../../cms/shared/home-seed";
 import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets } from "./media";
+import { environmentEnabled } from "./environment";
 
 export interface Env {
   DB: D1Database;
@@ -21,10 +22,10 @@ type Job = { id: string; revision_id: string; attempts: number };
 const json = (value: unknown, status = 200) => Response.json(value, {
   status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
 });
-const writesEnabled = (env: Env) => env.CMS_ENVIRONMENT === "test" && env.CMS_WRITES_ENABLED === "true" && (env.CMS_WRITE_TOKEN?.length ?? 0) >= 32;
+const writesEnabled = (env: Env) => environmentEnabled(env) && env.CMS_WRITES_ENABLED === "true" && (env.CMS_WRITE_TOKEN?.length ?? 0) >= 32;
 
 async function authorize(request: Request, env: Env, health = false) {
-  if (env.CMS_ENVIRONMENT !== "test" || (env.CMS_WRITE_TOKEN?.length ?? 0) < 32 || (!health && !writesEnabled(env))) throw new HttpError(404, "Not found.");
+  if (!environmentEnabled(env) || (env.CMS_WRITE_TOKEN?.length ?? 0) < 32 || (!health && !writesEnabled(env))) throw new HttpError(404, "Not found.");
   const authorization = request.headers.get("authorization") ?? "";
   const candidate = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   if (!candidate || candidate.length > 512) throw new HttpError(401, "Unauthorized.");
@@ -122,7 +123,7 @@ async function claimDelivery(env: Env, pageId: PageId, force: boolean): Promise<
     pageId, path: pages[pageId].path, version: revision.draft_version } };
 }
 const deliveryErrors: Record<string, string> = {
-  identity: "Preview identity unavailable. Publication is saved; retry cache refresh.",
+  identity: "Deployment identity unavailable. Publication is saved; retry cache refresh.",
   invalidation: "Cache invalidation failed. Publication is saved; retry cache refresh.",
   verification: "Published revision is not confirmed on the public page. Retry cache refresh.",
 };
@@ -161,6 +162,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
       const url = new URL(request.url), path = url.pathname;
+      if (!environmentEnabled(env)) return json({ error: "Not found." }, 404);
       if (path.startsWith("/api/media/upload/")) return await mediaUpload(request, env);
       if (path.startsWith("/media/")) return await mediaPublic(request, env);
       const publicMatch = path.match(/^\/api\/public\/pages\/(cms-proof|home)$/);
@@ -196,7 +198,7 @@ export default {
       return json(await editorState(env, pageId));
     } catch (error) {
       if (error instanceof HttpError || error instanceof InputError) return json({ error: error.message }, error.status);
-      return json({ error: "CMS request failed. Check the test database configuration and Worker logs." }, 500);
+      return json({ error: "CMS request failed. Check the database configuration and Worker logs." }, 500);
     }
   },
 } satisfies ExportedHandler<Env>;

@@ -1,12 +1,13 @@
 import { InputError, PREVIEW_ORIGIN, readBody, record, type Document } from "../../../cms/shared/contract";
 import { assetIdPattern, imageSignature, MAX_UPLOAD_BYTES, readBytes, type MediaAsset } from "../../../cms/shared/media";
 import type { Env } from "./index";
+import { environmentEnabled } from "./environment";
 
 class MediaError extends InputError { constructor(public status: number, message: string) { super(message); } }
 const json = (data: unknown, status = 200, headers = {}) => Response.json(data, { status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
 const at = () => new Date().toISOString();
 const uploadOrigin = (env: Env) => env.CMS_UPLOAD_ORIGIN || PREVIEW_ORIGIN;
-const writable = (env: Env) => env.CMS_ENVIRONMENT === "test" && env.CMS_WRITES_ENABLED === "true" && (env.CMS_WRITE_TOKEN?.length ?? 0) >= 32 && !!env.MEDIA;
+const writable = (env: Env) => environmentEnabled(env) && env.CMS_WRITES_ENABLED === "true" && (env.CMS_WRITE_TOKEN?.length ?? 0) >= 32 && !!env.MEDIA;
 const sha256 = async (data: Uint8Array) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", data))].map(v => v.toString(16).padStart(2, "0")).join("");
 const hashToken = (token: string) => sha256(new TextEncoder().encode(token));
 const fields = "a.id, a.filename, a.mime_type, a.original_bytes, a.width, a.height, a.default_alt, a.status, a.archived, a.error, a.created_at, (SELECT COUNT(*) FROM revision_assets r WHERE r.asset_id = a.id) AS used_by";
@@ -64,7 +65,7 @@ export async function mediaUpload(request: Request, env: Env): Promise<Response>
 export async function mediaPublic(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const match = url.pathname.match(/^\/media\/([a-f0-9-]+)\/(master|thumb)-v1\.webp$/);
-  if (env.CMS_ENVIRONMENT !== "test" || !env.MEDIA || !match || !assetIdPattern.test(match[1]) || url.search || !["GET", "HEAD"].includes(request.method)) return json({ error: "Not found." }, 404);
+  if (!environmentEnabled(env) || !env.MEDIA || !match || !assetIdPattern.test(match[1]) || url.search || !["GET", "HEAD"].includes(request.method)) return json({ error: "Not found." }, 404);
   const cache = caches.default, key = new Request(url.href);
   const hit = await cache.match(key);
   if (hit) { const response = new Response(request.method === "HEAD" ? null : hit.body, hit); response.headers.set("X-Media-Cache", "HIT"); return response; }

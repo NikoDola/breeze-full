@@ -17,6 +17,8 @@ export function pageDefinition(value: unknown = PAGE_ID) {
 }
 export const PREVIEW_ORIGIN = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app";
 export const TEST_WORKER_ORIGIN = "https://breeze-test-api.nikodola.workers.dev";
+export const LIVE_ORIGIN = "https://breeze-full.vercel.app";
+export const LIVE_WORKER_ORIGIN = "https://breeze-live-api.nikodola.workers.dev";
 export const LEGACY_URL = "https://breeze-api.nikodola.workers.dev/api/sections/home-hero";
 export const MAX_BODY_BYTES = 48 * 1024;
 

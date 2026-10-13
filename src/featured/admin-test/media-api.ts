@@ -1,4 +1,5 @@
-import { protectEditor, testOrigin } from "@/lib/cms/access";
+import { protectEditor } from "@/lib/cms/access";
+import { cmsOrigin } from "@/lib/cms/scope";
 import { workerAdmin, workerOrigin } from "@/lib/cms/worker";
 import { InvalidImageError, processImage } from "@/lib/cms/process-image";
 import { assetIdPattern, readBytes } from "../../../cms/shared/media";
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
     if (new URL(request.url).pathname !== "/api/cms/media" || !request.headers.get("content-type")?.startsWith("application/json")) throw new InputError("Invalid media request.");
     const input = record(JSON.parse(await readBody(request)));
     if (input.action === "grant") {
-      const result = await checked(await workerAdmin("media/grant", { filename: input.filename, mime: input.mime, bytes: input.bytes, origin: testOrigin() }));
+      const result = await checked(await workerAdmin("media/grant", { filename: input.filename, mime: input.mime, bytes: input.bytes, origin: cmsOrigin() }));
       return json({ ...result, uploadUrl: `${workerOrigin()}${result.uploadPath}` });
     }
     if (typeof input.assetId !== "string" || !assetIdPattern.test(input.assetId)) throw new InputError("Invalid image.");

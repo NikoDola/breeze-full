@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return json(await response.json(), response.status);
   } catch (error) {
     if (error instanceof InputError) return json({ error: error.message }, 400);
-    return json({ error: "Cannot reach the test Worker. Check CMS_WORKER_URL and the local Worker process." }, 502);
+    return json({ error: "Cannot reach the CMS Worker. Check CMS_WORKER_URL and the Worker service." }, 502);
   }
 }
 export async function POST(request: Request) {

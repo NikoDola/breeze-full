@@ -15,7 +15,8 @@ async function loadServerModule(url) {
 }
 
 test("Next editor gate fails closed in production, checks credentials and blocks CSRF", async () => {
-  const { authorized, editorEnabled, protectEditor, testOrigin } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+  const { authorized, editorEnabled, protectEditor } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+  const { cmsOrigin } = await loadServerModule(new URL("../../../src/lib/cms/scope.ts", import.meta.url));
   const saved = { ...process.env };
   try {
     const password = randomBytes(32).toString("hex");
@@ -33,7 +34,7 @@ test("Next editor gate fails closed in production, checks credentials and blocks
     assert.equal(protectEditor(new Request("http://localhost:3000/api/cms/editor", { method: "POST", headers })), null);
     process.env.CMS_TEST_PASSWORD = ""; assert.equal(editorEnabled(), false);
     process.env.CMS_TEST_PASSWORD = password;
-    process.env.VERCEL_ENV = "production"; assert.equal(editorEnabled(), false); assert.equal(testOrigin(), null);
+    process.env.VERCEL_ENV = "production"; assert.equal(editorEnabled(), false); assert.equal(cmsOrigin(), null);
     Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing", CMS_TEST_ORIGIN: "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app" });
     assert.equal(editorEnabled(), true);
     process.env.VERCEL_GIT_COMMIT_REF = "main"; assert.equal(editorEnabled(), false);
@@ -41,6 +42,48 @@ test("Next editor gate fails closed in production, checks credentials and blocks
     process.env.CMS_TEST_ORIGIN = "https://breeze-full.vercel.app"; assert.equal(editorEnabled(), false);
     process.env.VERCEL_ENV = ""; assert.equal(editorEnabled(), false);
     process.env.VERCEL = ""; assert.equal(editorEnabled(), false); // Non-Vercel remote hosts require a future auth implementation.
+  } finally {
+    for (const name of Object.keys(process.env)) if (!(name in saved)) delete process.env[name];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("client CMS requires explicit main/production scope, separate credentials and cache namespace", async () => {
+  const { authorized, editorEnabled, protectEditor } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+  const { cmsScope, cmsCacheTag } = await loadServerModule(new URL("../../../src/lib/cms/scope.ts", import.meta.url));
+  const { workerOrigin } = await loadServerModule(new URL("../../../src/lib/cms/worker.ts", import.meta.url));
+  const saved = { ...process.env };
+  try {
+    const live = "https://breeze-full.vercel.app", preview = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app";
+    const password = randomBytes(32).toString("hex");
+    Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "main",
+      CMS_LIVE_ENABLED: "true", CMS_LIVE_ORIGIN: live, CMS_LIVE_USERNAME: "client", CMS_LIVE_PASSWORD: password,
+      CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: preview, CMS_TEST_USERNAME: "tester", CMS_TEST_PASSWORD: randomBytes(32).toString("hex"),
+      CMS_WRITE_TOKEN: randomBytes(32).toString("hex"), CMS_WORKER_URL: "https://breeze-live-api.nikodola.workers.dev" });
+    assert.equal(editorEnabled(), true);
+    assert.equal(cmsScope().oidcEnvironment, "production");
+    assert.equal(cmsCacheTag("home"), "cms:live:breeze:page:home");
+    assert.equal(workerOrigin(), process.env.CMS_WORKER_URL);
+    const headers = new Headers({ host: "breeze-full.vercel.app", origin: live, "x-cms-request": "editor",
+      authorization: `Basic ${Buffer.from(`client:${password}`).toString("base64")}` });
+    assert.equal(authorized(headers), true);
+    assert.equal(protectEditor(new Request(live + "/api/cms/editor", { method: "POST", headers })), null);
+    headers.set("origin", preview);
+    assert.equal(protectEditor(new Request(live + "/api/cms/editor", { method: "POST", headers })).status, 403);
+    headers.set("authorization", `Basic ${Buffer.from(`tester:${process.env.CMS_TEST_PASSWORD}`).toString("base64")}`);
+    assert.equal(authorized(headers), false);
+    const baseline = { ...process.env };
+    for (const overrides of [
+      { CMS_LIVE_ENABLED: "false" }, { CMS_LIVE_ORIGIN: preview },
+      { CMS_LIVE_PASSWORD: "" }, { CMS_WORKER_URL: "https://breeze-test-api.nikodola.workers.dev" },
+      { VERCEL_ENV: "preview" }, { VERCEL_GIT_COMMIT_REF: "cms-testing" }, { VERCEL: "" },
+    ]) {
+      Object.assign(process.env, baseline, overrides);
+      assert.equal(editorEnabled(), false, JSON.stringify(Object.keys(overrides)));
+    }
+    Object.assign(process.env, baseline, { CMS_LIVE_ENABLED: "false", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing" });
+    assert.throws(workerOrigin, /scope/); // Preview cannot point at the live Worker.
+    assert.equal(cmsCacheTag("home"), "cms:preview:cms-testing:page:home");
   } finally {
     for (const name of Object.keys(process.env)) if (!(name in saved)) delete process.env[name];
     Object.assign(process.env, saved);

@@ -28,12 +28,12 @@ const fields: { key: keyof Omit<Section, "images">; label: string; help: string;
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Please try again.";
 const dateText = (value?: string | null) => value ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
 
-export default function Editor() {
+export default function Editor({ workspaceLabel = "Test workspace" }: { workspaceLabel?: string }) {
   const [pageId, setPageId] = useState<PageId>("home");
-  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} />;
+  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} workspaceLabel={workspaceLabel} />;
 }
 
-function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange: (pageId: PageId) => void }) {
+function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: PageId; onPageChange: (pageId: PageId) => void; workspaceLabel: string }) {
   const [state, setState] = useState<EditorState | null>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [baseDraft, setBaseDraft] = useState<Draft | null>(null);
@@ -137,7 +137,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
   return <div className={`${styles.workspace} ${document ? styles.withSaveBar : ""}`}><div className={styles.editor}>
     <header className={styles.header}>
       <div className={styles.identity}><span className={styles.brand}><Icon name="leaf" /></span><div><p className={styles.eyebrow}>Breeze / Content studio</p><h1>Make it feel like Breeze.</h1><p>Edit your content and see every change as you go.</p></div></div>
-      <span className={styles.workspaceBadge}><span />Test workspace</span>
+      <span className={styles.workspaceBadge}><span />{workspaceLabel}</span>
     </header>
     <label className={styles.pagePicker}>Editing page <select value={pageId} disabled={busy} onChange={event => {
       if (!dirty || window.confirm("Discard your unsaved changes and switch pages?")) onPageChange(event.target.value as PageId);

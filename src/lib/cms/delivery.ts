@@ -3,18 +3,19 @@ import { getVercelOidcToken } from "@vercel/oidc";
 import { PAGE_ID, pages, readBody, validateEvent, type DeliveryClaim, type PublishEvent, type PageId } from "../../../cms/shared/contract";
 import { confirmsPublication } from "../../../cms/shared/publication-marker";
 import { sign } from "../../../cms/shared/signature";
-import { testOrigin } from "./access";
+import { cmsOrigin, cmsScope } from "./scope";
 import { workerAdmin } from "./worker";
 
-async function previewHeaders(): Promise<Record<string, string>> {
-  if (!testOrigin()) throw new Error("Preview scope is disabled.");
-  if (!process.env.VERCEL) return {}; // testOrigin permits only loopback locally.
+async function deploymentHeaders(): Promise<Record<string, string>> {
+  const scope = cmsScope();
+  if (!scope) throw new Error("CMS deployment is disabled.");
+  if (scope.kind === "local") return {};
   const token = await getVercelOidcToken();
   // Vercel verifies the signature on the receiving request. These extra checks
-  // reject accidental use of a development/production or different-project token.
+  // reject a token from another environment or project; no cross-environment trust.
   const claims = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
-  if (claims.environment !== "preview" || claims.project_id !== "prj_w0vgYQ8eOEMOt6ftAqPcaPRu8rTV") {
-    throw new Error("Unexpected Preview identity.");
+  if (claims.environment !== scope.oidcEnvironment || claims.project_id !== "prj_w0vgYQ8eOEMOt6ftAqPcaPRu8rTV") {
+    throw new Error("Unexpected deployment identity.");
   }
   return { "x-vercel-trusted-oidc-idp-token": token };
 }
@@ -23,8 +24,8 @@ async function invalidate(event: PublishEvent, headers: Record<string, string>, 
   if (!secret || secret.length < 32) throw new Error("Next cache credential is missing.");
   const body = JSON.stringify({ ...event, dryRun }), timestamp = String(Date.now());
   // A separate Next request completes invalidation before we request fresh HTML.
-  // The HMAC secret stays in Next; OIDC is sent only to the pinned Preview origin.
-  const response = await fetch(`${testOrigin()}/api/cms/revalidate`, {
+  // Independent HMAC secrets stay in Next; OIDC goes only to this deployment's pinned origin.
+  const response = await fetch(`${cmsOrigin()}/api/cms/revalidate`, {
     method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000), body,
     headers: { ...headers, "Content-Type": "application/json", "x-cms-timestamp": timestamp,
       "x-cms-signature": await sign(secret, timestamp, body) },
@@ -38,14 +39,14 @@ async function workerJson(path: string, body?: unknown) {
 }
 export async function preflight(pageId: PageId = PAGE_ID) {
   const health = await workerJson("health");
-  if (health.environment !== "test" || !health.schemaReady || health.deliveryOwner !== "nextjs" || (pageId === "home" && !health.pages?.includes("home"))) {
-    throw new Error("Test Worker or migration is not ready.");
+  if (health.environment !== cmsScope()?.workerEnvironment || !health.schemaReady || health.deliveryOwner !== "nextjs" || (pageId === "home" && !health.pages?.includes("home"))) {
+    throw new Error("CMS Worker or migration is not ready.");
   }
-  const headers = await previewHeaders();
+  const headers = await deploymentHeaders();
   await invalidate({ eventId: crypto.randomUUID(), revisionId: crypto.randomUUID(), pageId,
     path: pages[pageId].path, version: 1 }, headers, true);
-  return { ok: true, ...health, identity: process.env.VERCEL ? "preview-oidc" : "local-loopback",
-    origin: testOrigin(), region: process.env.VERCEL_REGION ?? "local", branch: process.env.VERCEL_GIT_COMMIT_REF ?? "local" };
+  return { ok: true, ...health, identity: process.env.VERCEL ? `${cmsScope()!.oidcEnvironment}-oidc` : "local-loopback",
+    origin: cmsOrigin(), region: process.env.VERCEL_REGION ?? "local", branch: process.env.VERCEL_GIT_COMMIT_REF ?? "local" };
 }
 export async function deliverPublication(pageId: PageId = PAGE_ID) {
   const { claim } = await workerJson("delivery/claim", { pageId, force: true }) as { claim: DeliveryClaim | null };
@@ -55,7 +56,7 @@ export async function deliverPublication(pageId: PageId = PAGE_ID) {
   const started = performance.now();
   let reason = "identity";
   try {
-    const headers = await previewHeaders();
+    const headers = await deploymentHeaders();
     reason = "invalidation";
     await invalidate(event, headers);
     const invalidatedMs = performance.now() - started;
@@ -64,7 +65,7 @@ export async function deliverPublication(pageId: PageId = PAGE_ID) {
     let confirmed = false;
     const verificationStart = performance.now();
     for (let attempt = 0; attempt < 3 && !confirmed; attempt++) {
-      const page = await fetch(`${testOrigin()}${event.path}`, { cache: "no-store", redirect: "error",
+      const page = await fetch(`${cmsOrigin()}${event.path}`, { cache: "no-store", redirect: "error",
         signal: AbortSignal.timeout(10000), headers: { ...headers, Pragma: "no-cache" } });
       if (!page.ok) throw new Error("Public page is unavailable.");
       const html = await readBody(page, 1024 * 1024);

@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "breeze-live-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "vars": {
+    "CMS_ENVIRONMENT": "live",
+    "CMS_WRITES_ENABLED": "false",
+    "CMS_UPLOAD_ORIGIN": "https://breeze-full.vercel.app"
+  },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "breeze-live-db",
+    "database_id": "829be11e-abe5-4e7f-b6d2-7816cdcb5709",
+    "migrations_dir": "migrations",
+    "migrations_table": "cms_schema_migrations"
+  }],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "breeze-live-assets" }],
+  "triggers": { "crons": [] }
+}

@@ -1,17 +1,17 @@
 import "server-only";
 import { cache } from "react";
 import { notFound } from "next/navigation";
-import { testOrigin } from "./access";
+import { cmsOrigin, cmsCacheTag } from "./scope";
 import { workerOrigin } from "./worker";
-import { PAGE_ID, pages, validatePageDocument, type Publication, type PageId, type ProofDocument } from "../../../cms/shared/contract";
+import { PAGE_ID, validatePageDocument, type Publication, type PageId, type ProofDocument } from "../../../cms/shared/contract";
 import type { HomeDocument } from "../../../cms/shared/home";
 // Metadata and page rendering share one request, including when the fetch uses
 // an AbortSignal (which opts out of Next's automatic fetch deduplication).
 const getPublication = cache(async (pageId: PageId): Promise<Publication | null> => {
-  // Production and unrelated Preview branches retain the original source content.
-  if (!testOrigin() || !process.env.CMS_WORKER_URL) return null;
+  // Unconfigured deployments retain the original source content.
+  if (!cmsOrigin() || !process.env.CMS_WORKER_URL) return null;
   const response = await fetch(`${workerOrigin()}/api/public/pages/${pageId}`, {
-    cache: "force-cache", next: { tags: [pages[pageId].cacheTag], revalidate: 3600 },
+    cache: "force-cache", next: { tags: [cmsCacheTag(pageId)], revalidate: 3600 },
     redirect: "error", signal: AbortSignal.timeout(10000),
   });
   if (response.status === 404) return null;

@@ -3,6 +3,10 @@
 Implemented on `cms-testing`, 2026-10-13. Read this alongside
 `CMS-HOMEPAGE-MIGRATION.md` and `CMS-SOL-HANDOFF.md`.
 
+The separately authorized client deployment is documented in
+`CMS-CLIENT-LAUNCH.md`; its live resources and credentials are independent of
+the test resources described below.
+
 ## Using the library
 
 Open the branch Preview `/admin-test`, select **CMS proof**, then **Images**.

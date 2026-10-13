@@ -1,11 +1,11 @@
 import { revalidatePath, revalidateTag } from "next/cache";
-import { testOrigin } from "@/lib/cms/access";
-import { pages, InputError, readBody, validateEvent } from "../../../cms/shared/contract";
+import { cmsOrigin, cmsCacheTag } from "@/lib/cms/scope";
+import { InputError, readBody, validateEvent } from "../../../cms/shared/contract";
 import { verify } from "../../../cms/shared/signature";
 export async function POST(request: Request) {
   const secret = process.env.CMS_REVALIDATE_SECRET;
   const headers = { "Cache-Control": "no-store" };
-  const origin = testOrigin();
+  const origin = cmsOrigin();
   if (!origin || request.headers.get("host") !== new URL(origin).host || !secret || secret.length < 32) return Response.json({ error: "Not found." }, { status: 404, headers });
   try {
     const body = await readBody(request, 2048);
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const event = validateEvent(input);
     if (input.dryRun === true) return Response.json({ ok: true, eventId: event.eventId }, { headers });
     // Duplicate events are safe. Only manifest-defined paths and tags are accepted.
-    revalidateTag(pages[event.pageId].cacheTag, { expire: 0 });
+    revalidateTag(cmsCacheTag(event.pageId), { expire: 0 });
     revalidatePath(event.path);
     return Response.json({ ok: true, eventId: event.eventId }, { headers });
   } catch (error) {

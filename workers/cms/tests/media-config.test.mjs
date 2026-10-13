@@ -17,6 +17,7 @@ test("local media optimization remains scoped to development and never enables o
     assert.deepEqual(development.remotePatterns[1], { protocol: "http", hostname: "127.0.0.1", port: "8787", pathname: "/media/**", search: "" });
     for (const overrides of [
       { VERCEL: "1", VERCEL_ENV: "preview", CMS_LOCAL_PROOF_BUILD: "true" },
+      { VERCEL: "1", VERCEL_ENV: "production", CMS_LOCAL_PROOF_BUILD: "true" },
       { VERCEL_ENV: "production", CMS_LOCAL_PROOF_BUILD: "true" },
       { NODE_ENV: "production" },
       { CMS_TEST_ENABLED: "false" },
@@ -27,7 +28,8 @@ test("local media optimization remains scoped to development and never enables o
       const images = await config(overrides);
       assert.equal(images.dangerouslyAllowLocalIP, false, JSON.stringify(overrides));
       assert.equal(images.remotePatterns.length, 1);
-      assert.equal(images.remotePatterns[0].hostname, "breeze-test-api.nikodola.workers.dev");
+      assert.equal(images.remotePatterns[0].hostname, overrides.VERCEL && overrides.VERCEL_ENV === "production"
+        ? "breeze-live-api.nikodola.workers.dev" : "breeze-test-api.nikodola.workers.dev");
     }
     assert.equal((await config({ NODE_ENV: "production", CMS_LOCAL_PROOF_BUILD: "true" })).dangerouslyAllowLocalIP, true);
   } finally {

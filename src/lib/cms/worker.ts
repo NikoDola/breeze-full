@@ -1,10 +1,10 @@
 import "server-only";
-import { TEST_WORKER_ORIGIN } from "../../../cms/shared/contract";
-import { testOrigin } from "./access";
+import { cmsScope } from "./scope";
 export function workerOrigin(): string {
   const value = process.env.CMS_WORKER_URL;
   if (!value) throw new Error("CMS_WORKER_URL is not configured.");
-  if (process.env.VERCEL && (!testOrigin() || value !== TEST_WORKER_ORIGIN)) throw new Error("Test Worker scope is invalid.");
+  const scope = cmsScope();
+  if (process.env.VERCEL && (!scope || value !== scope.worker)) throw new Error("CMS Worker scope is invalid.");
   const url = new URL(value);
   if (url.origin !== value || url.username || url.password || (url.protocol !== "https:" &&
       !(url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname)))) throw new Error("Invalid Worker origin.");
