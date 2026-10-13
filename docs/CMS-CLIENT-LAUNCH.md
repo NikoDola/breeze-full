@@ -126,3 +126,40 @@ independent client data for recovery. Existing immutable revisions remain intact
 D1 provides point-in-time recovery; manual export and restore still need a tested
 operating procedure and retention policy. No destructive cleanup is enabled.
 See [D1 Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/).
+
+## Verified client release — 2026-10-13
+
+- Release code `6cc94ea` was fast-forwarded from `cms-testing` into `main` after
+  the backup branch was pushed. No secrets, database exports, private images or
+  unrelated local files were committed.
+- Production deployment `dpl_8nhiqGxngfjNcLdtxnffh7ZRwsMP`
+  (`breeze-full-3f8vboxiu-nikodolas-projects.vercel.app`) was Ready in `iad1`.
+  The deployment ID remained the same throughout publication acceptance.
+- The new Worker was first deployed with writes disabled. Authenticated preflight
+  confirmed the client hostname, `main`, production OIDC, HMAC, D1 schema and R2
+  readiness. Writes were enabled afterward; final Worker version:
+  `a7282df7-6ca9-4a22-a108-4c744d525ad9`.
+- The copied 17 R2 objects matched source checksums. Public bucket access and
+  bucket custom domains remained disabled. All 15 original revision rows remain
+  identical in both databases; acceptance added four live revisions (19 total).
+  Test D1 still has its original 15 revisions.
+- The protected live editor passed uploads for JPEG, PNG, WebP and AVIF, including
+  a PNG above 4.5 MB. Private draft previews, unpublished-image 404s, missing
+  authentication, wrong origins, Preview credential rejection and invalid pixel
+  rejection were verified.
+- Image draft → publish → cache invalidation → confirmed HTML passed. Manual
+  retry reused the same revision. The measured publish-to-confirmation duration
+  was 3.15 seconds in this single acceptance run, not a latency benchmark.
+- Optimized AVIF at 384px and WebP at 960px returned cache HIT on repeat requests.
+  The synthetic acceptance files test delivery behavior, not photo compression.
+- The homepage also passed draft, publication and cache refresh using a temporary
+  internal document title; its visible content stayed identical. Both homepage
+  and proof drafts/publications were restored through normal immutable revisions.
+- Next production build, existing CMS regression tests and new live/Preview
+  isolation tests passed. No browser visual acceptance or full performance
+  benchmark was run.
+
+Ignored evidence: `.local/cms-live-preflight.json`, `.local/cms-live-results.json`,
+`.local/cms-live-history-check.json`, `.local/cms-live-media-copy-results.json`.
+The client can use the website and password-protected editor at the URLs above;
+the separate credential file is ready for private sharing.
