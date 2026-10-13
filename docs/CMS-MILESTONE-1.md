@@ -138,7 +138,7 @@ The local timings are observations, not estimates of Vercel `iad1` performance. 
    node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
    ```
 
-4. Set `CMS_TEST_ENABLED=true` in `.env.local`. Keep only `CMS_WRITE_TOKEN` identical in both files. `CMS_REVALIDATE_SECRET` stays only in Next. Use `CMS_TEST_ORIGIN=http://localhost:3000` in Next. The Worker URL is `http://127.0.0.1:8787`. Hostnames and ports must match your browser's URL exactly.
+4. Set `CMS_TEST_ENABLED=true` in `.env.local`. Keep only `CMS_WRITE_TOKEN` identical in both files. `CMS_REVALIDATE_SECRET` stays only in Next. Use `CMS_TEST_ORIGIN=http://localhost:3000` in Next and `CMS_UPLOAD_ORIGIN=http://localhost:3000` in the Worker's `.dev.vars`. The Worker URL is `http://127.0.0.1:8787`. Hostnames and ports must match your browser's URL exactly. See `CMS-MEDIA.md` for local media setup and recovery.
 5. Apply the migration **locally** and start the Worker:
 
    ```powershell

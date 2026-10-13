@@ -112,8 +112,45 @@ are disabled. Authenticated draft previews bypass the public optimizer. Source
 URLs change on replacement; the existing Next content invalidation flow updates
 the page reference. Cache eviction/new sizes can legitimately refetch the source.
 
-Local integration tests explicitly allow their loopback Worker origin in the
-optimizer. That option requires `CMS_LOCAL_PROOF_BUILD` and is disabled on Vercel.
+Local development also allows the configured `http://127.0.0.1:<port>` Worker
+when `NODE_ENV=development`, `CMS_TEST_ENABLED=true` and `CMS_TEST_ORIGIN` is an
+exact loopback origin. Isolated production-mode proofs use `CMS_LOCAL_PROOF_BUILD`.
+Both cases restrict images to that port's `/media/` path, disallow query strings
+and redirects, and are disabled on Vercel and in production Vercel environments.
+
+## Local setup and missing-schema recovery
+
+Local Wrangler emulates D1 and R2 under `workers/cms/.wrangler/`; it does not use
+the deployed database or bucket. A successful remote migration or disposable
+`cms:proof` run does **not** migrate this persistent local database.
+
+1. Next `.env.local`: `CMS_TEST_ENABLED=true`,
+   `CMS_TEST_ORIGIN=http://localhost:3000`, `CMS_WORKER_URL=http://127.0.0.1:8787`.
+   Retain the existing private credentials.
+2. Worker `workers/cms/.dev.vars`: `CMS_ENVIRONMENT=test`,
+   `CMS_WRITES_ENABLED=true`, `CMS_UPLOAD_ORIGIN=http://localhost:3000` and the
+   same server-only `CMS_WRITE_TOKEN` as Next. Merge these into existing files.
+   Do not change the Preview origin in `wrangler.jsonc` or Vercel settings.
+3. From `workers/cms`, inspect with `npx wrangler d1 migrations list DB --local`.
+   For existing local data, export first:
+   `npx wrangler d1 export DB --local --output ../../.local/local-before-migration.sql`
+   (create `.local` if needed; use a new backup filename each time).
+4. From the repository root, run
+   `npm --prefix workers/cms run migrate:local`. This applies only missing local
+   migrations, including `0003_media.sql`; never substitute `--remote` here.
+5. Start `npm --prefix workers/cms run dev`, then in another terminal run
+   `npm run dev -- --hostname localhost`. Restart after environment/config changes.
+6. Open `http://localhost:3000/admin-test`, choose **CMS proof → Images**.
+   The authenticated Next health route is `/api/cms/media/health`; expect both
+   readiness flags true and `uploadOrigin` equal to `http://localhost:3000`.
+
+`storageReady:true, schemaReady:false` means the bucket binding is available but
+one or more media tables are missing from the **selected** database. Check the
+Worker URL and local/remote migration ledger before applying anything. A Preview
+upload origin reported by the local Worker means its `.dev.vars` override is
+missing. Local and Preview libraries are intentionally separate; local images
+do not appear in Preview. Local development cache timings are not production
+benchmarks; use the isolated proof for production-mode cache assertions.
 
 ## Verification and operations
 
@@ -174,3 +211,28 @@ permanent deletion and switching optimization provider remain separate work.
 Raw reports, history snapshots, test images and credentials are excluded from Git.
 Verification used HTTP integration tests; visual browser acceptance remains with
 the user. No production resources, security settings or `main` commits changed.
+
+### Local workstation recovery — 2026-10-13
+
+- Reproduced the issue against `http://127.0.0.1:8787`: the persistent local DB
+  had only migrations 0001/0002, and local `.dev.vars` lacked the upload origin.
+  Remote test media health was already ready and retained the Preview origin.
+- Exported local data to ignored `.local/breeze-local-before-media-20261013.sql`,
+  then applied only the existing additive 0003 migration locally. No remote D1,
+  R2 or Worker settings were changed. Restarted local Wrangler with the local
+  origin override and started Next at `http://localhost:3000`.
+- Authenticated editor, media health and listing returned 200. Both readiness
+  flags are true. Exact-origin upload preflight passed; missing authentication
+  and incorrect origins were rejected. Preview's health remained unchanged.
+- The actual local development server accepted JPEG, PNG, WebP and AVIF,
+  including a PNG above 4.5 MB; invalid JPEG pixel data was rejected. Private
+  previews, draft privacy, publication, cache delivery confirmation, retry
+  without another revision, and responsive AVIF/WebP optimization passed.
+- The imported local proof had no publication; the test first published its
+  unchanged version-1 content. After the image test, that content and its draft
+  were restored through normal revisions. The homepage's published revision
+  was unchanged. Test uploads/history are retained in local storage.
+- Next production build and the configuration isolation regression test passed.
+  Local image responses reported cache HIT. This was a functional development
+  test, not a new Vercel latency benchmark. The ignored acceptance report is
+  `.local/cms-local-media-results.json`.

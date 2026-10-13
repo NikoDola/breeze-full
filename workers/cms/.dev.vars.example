@@ -1,4 +1,7 @@
 CMS_ENVIRONMENT=test
 CMS_WRITES_ENABLED=true
+# Local-only override; wrangler.jsonc keeps the deployed Preview origin.
+# Must exactly match CMS_TEST_ORIGIN in the Next.js .env.local file.
+CMS_UPLOAD_ORIGIN=http://localhost:3000
 # Must match the server-only Next.js values. No default credentials exist.
 CMS_WRITE_TOKEN=
