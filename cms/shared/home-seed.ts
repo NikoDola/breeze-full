@@ -1,8 +1,8 @@
-import type { HomeDocument } from "./home";
+import type { LegacyHomeDocument } from "./home";
 
 // Exact approved content at this source revision. Import never overwrites an existing draft.
 export const HOME_SOURCE_ID = "repository:5b40373fc78403c689d82550d9ca7067e2f97bdd:homepage";
-export const homeSeed: HomeDocument = {
+export const homeSeed: LegacyHomeDocument = {
   schemaVersion: 2, template: "breeze.home", templateVersion: 1, title: "Homepage",
   slots: {
     seasons: { type: "breeze.seasons", version: 1, content: {

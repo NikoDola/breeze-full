@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import HomeContent from "@/components/sections/home/HomeContent";
 import { homeSeed } from "../../../cms/shared/home-seed";
-import { validateHomeDocument } from "../../../cms/shared/home";
+import { validateHomeDocument, type HomeDocument } from "../../../cms/shared/home";
 
 export default function HomePreview() {
-  const [content, setContent] = useState(homeSeed);
+  const [content, setContent] = useState<HomeDocument>(homeSeed);
   useEffect(() => {
     function receive(event: MessageEvent) {
       if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "breeze.cms.home-preview") return;

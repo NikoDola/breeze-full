@@ -16,11 +16,12 @@ test("homepage seed renders the original markup; hero, form and public CSS are u
   const baseline = JSON.parse(await readFile(new URL("./fixtures/home-baseline.json", import.meta.url), "utf8"));
   const require = createRequire(resolve(root, "package.json"));
   for (const [name, slot] of Object.entries({ SeasonsSection: "seasons", ContactSection: "contact", ReviewsSection: "reviews", AreaSection: "area" })) {
-    const result = await build({ stdin: { contents: `import { createElement } from 'react'; import { renderToStaticMarkup } from 'react-dom/server'; import Section from './src/components/sections/home/${name}'; import {homeSeed} from './cms/shared/home-seed'; export const original = renderToStaticMarkup(createElement(Section)); export const seeded = renderToStaticMarkup(createElement(Section, {content: homeSeed.slots.${slot}.content}));`, resolveDir: root },
-      bundle: true, write: false, platform: "node", format: "cjs", packages: "external", alias: { "@": resolve(root, "src") }, jsx: "automatic" });
+    const result = await build({ stdin: { contents: `import { createElement } from 'react'; import { renderToStaticMarkup } from 'react-dom/server'; import Section from './src/components/sections/home/${name}'; import {homeSeed} from './cms/shared/home-seed'; import {editableHome} from './cms/shared/home'; export const original = renderToStaticMarkup(createElement(Section)); export const seeded = renderToStaticMarkup(createElement(Section, {content: homeSeed.slots.${slot}.content})); export const rich = renderToStaticMarkup(createElement(Section, {content: editableHome(homeSeed).slots.${slot}.content}));`, resolveDir: root },
+      bundle: true, write: false, outfile: "section.cjs", platform: "node", format: "cjs", packages: "external", alias: { "@": resolve(root, "src") }, jsx: "automatic" });
     const module = { exports: {} }; new Function("require", "module", "exports", result.outputFiles[0].text)(require, module, module.exports);
     assert.equal(module.exports.original, baseline.sections[name], `${name} default markup changed`);
     assert.equal(module.exports.seeded, baseline.sections[name], `${name} CMS markup changed`);
+    assert.equal(module.exports.rich, baseline.sections[name], `${name} converted heading markup changed`);
   }
   for (const [file, hash] of Object.entries(baseline.protectedFiles)) assert.equal(createHash("sha256").update(await readFile(resolve(root, file))).digest("hex"), hash, file);
 });

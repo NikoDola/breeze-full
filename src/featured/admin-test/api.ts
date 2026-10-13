@@ -2,7 +2,7 @@ import { protectEditor } from "@/lib/cms/access";
 import { workerAdmin } from "@/lib/cms/worker";
 import { deliverPublication, preflight } from "@/lib/cms/delivery";
 import { cmsPageEnabled } from "@/lib/cms/scope";
-import { InputError, LEGACY_URL, importLegacy, pageDefinition, readBody, record } from "../../../cms/shared/contract";
+import { InputError, LEGACY_URL, importLegacy, pageDefinition, readBody, record, validatePageDocument, expectedVersion } from "../../../cms/shared/contract";
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
 export async function GET(request: Request) {
   const denied = protectEditor(request); if (denied) return denied;
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     if (input.action === "preflight") return json(await preflight(pageId));
     if (input.action === "retry") return json(await deliverPublication(pageId));
     let body: unknown = { ...input, pageId };
+    if (input.action === "draft") body = { pageId, document: validatePageDocument(pageId, input.document), expectedVersion: expectedVersion(input.expectedVersion) };
     if (input.action === "import" && pageId === "cms-proof") {
       const legacy = await fetch(LEGACY_URL, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
       if (!legacy.ok) throw new Error("Legacy read failed.");

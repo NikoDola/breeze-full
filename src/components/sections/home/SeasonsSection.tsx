@@ -1,5 +1,6 @@
 import { homeSeed } from "../../../../cms/shared/home-seed";
 import type { SeasonsContent } from "../../../../cms/shared/home";
+import RichTextContent from "@/components/ui/RichTextContent";
 
 export default function SeasonsSection({ content = homeSeed.slots.seasons.content, publication }: {
   content?: SeasonsContent; publication?: { revisionId: string; version: number };
@@ -7,7 +8,7 @@ export default function SeasonsSection({ content = homeSeed.slots.seasons.conten
   return (
     <section className="section seasons" id="heating-cooling" aria-labelledby="seasons-title" data-cms-page={publication ? "home" : undefined} data-cms-revision={publication?.revisionId} data-cms-version={publication?.version}>
       <div className="wrap">
-        <div className="section-heading"><div><h2 id="seasons-title">{content.headingLine1}<br />{content.headingLine2.trimEnd() + " "}<em>{content.headingAccent}</em></h2></div><p>{content.intro}</p></div>
+        <div className="section-heading"><div><h2 id="seasons-title">{"headingLine1" in content ? <>{content.headingLine1}<br />{content.headingLine2.trimEnd() + " "}<em>{content.headingAccent}</em></> : <RichTextContent value={content.heading} />}</h2></div><p>{content.intro}</p></div>
         <div className="season-grid">
           <article className="season-card cooling">
             <div className="season-top"><span className="season-icon" aria-hidden="true">❄</span></div>

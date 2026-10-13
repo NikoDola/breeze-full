@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import { homeSectionRegistry, homeSlotOrder, type HomeDocument, type HomeSlot, type Field, type TextField } from "../../../cms/shared/home";
+import { homeSectionRegistry, homeRichSectionRegistry, homeSlotOrder, type HomeDocument, type HomeSlot, type Field, type TextField } from "../../../cms/shared/home";
+import { richTextPlainText, type RichText } from "../../../cms/shared/rich-text";
 import styles from "./editor.module.css";
 
 function TextControl({ field, value, onChange }: { field: TextField; value: string; onChange: (value: string) => void }) {
@@ -16,7 +17,7 @@ function TextControl({ field, value, onChange }: { field: TextField; value: stri
 
 export default function HomeFields({ document, onChange }: { document: HomeDocument; onChange: (document: HomeDocument) => void }) {
   const [slot, setSlot] = useState<HomeSlot>("seasons");
-  const schema = homeSectionRegistry[slot];
+  const schema = document.templateVersion === 2 ? homeRichSectionRegistry[slot] : homeSectionRegistry[slot];
   const content = document.slots[slot].content as unknown as Record<string, unknown>;
   function change(key: string, value: unknown) {
     onChange({ ...document, slots: { ...document.slots, [slot]: { ...document.slots[slot], content: { ...content, [key]: value } } } } as HomeDocument);
@@ -29,6 +30,7 @@ export default function HomeFields({ document, onChange }: { document: HomeDocum
     <div className={styles.sectionIntro}><h3>{schema.label}</h3><p>{schema.help}</p></div>
     {(Object.entries(schema.fields) as [string, Field][]).map(([key, field]) => {
       if (field.kind === "text") return <TextControl key={`${slot}-${key}`} field={field} value={content[key] as string} onChange={value => change(key, value)} />;
+      if (field.kind === "rich-text") return <label key={`${slot}-${key}`} className={styles.field}><span>{field.label}</span><Textarea readOnly value={richTextPlainText(content[key] as RichText)} /><small>This heading uses formatted text. Update the editor to change its formatting.</small></label>;
       const items = content[key] as Record<string, string>[];
       function move(index: number, step: number) {
         const next = [...items]; [next[index], next[index + step]] = [next[index + step], next[index]]; change(key, next);
