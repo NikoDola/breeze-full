@@ -6,9 +6,9 @@ Read this file before editing the site. The project is a Next.js 16 App Router s
 
 | Location | Purpose |
 | --- | --- |
-| `src/app/` | Thin Next.js route entry files. Pages re-export their implementation from `src/featured/`. `src/app/layout.tsx` loads CSS and re-exports the site layout. API route files expose the handlers and their required runtime settings. |
+| `src/app/` | Thin Next.js route entry files. Public page adapters live under `(site)/`, whose layout adds the public header/footer without changing URLs. Admin and API routes stay outside that group. `src/app/layout.tsx` loads CSS and re-exports the common HTML shell. |
 | `src/featured/<route>/page.tsx` | Page composition, route-specific content, and metadata. `/` is `src/featured/home/page.tsx`. |
-| `src/featured/site/layout.tsx` | Shared HTML shell, site metadata, header, and footer. |
+| `src/featured/site/layout.tsx` | Shared HTML shell, font, and site metadata. `PublicLayout.tsx` contains the public header, main, and footer. |
 | `src/featured/seo/` | Sitemap and robots responses. |
 | `src/featured/admin/` | Admin page and API implementation. |
 | `src/components/sections/` | Complete visual sections or larger page blocks, such as `PageHero`, `ServicePage`, `CtaBand`, and the request form. |
@@ -41,7 +41,7 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 - Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`.
 - Company and client routes, including `/about-us`, `/reviews`, `/gallery`, `/careers`, and `/contact-us`, have matching feature pages. Shared page blocks live in `src/components/sections/`.
 - Promotions use `src/featured/promotions/`, `src/featured/summer-promotions/`, and `src/featured/winter-promotions/`, with data in `src/lib/promotions.ts` and `src/content/promotions.json`.
-- `/admin-test` is the protected visual CMS editor in `src/featured/admin-test/`. Homepage editing uses component-specific fields and a protected responsive `/admin-test/preview` iframe. The CMS proof retains Content, Images, and Page details tabs. Its CSS modules are scoped to this workspace. `/admin` redirects there after authorization. The legacy JSON-write and filesystem-upload APIs return `410`; `ADMIN_PASSWORD` is no longer used. See `docs/CMS-HOMEPAGE-MIGRATION.md` and `docs/CMS-VISUAL-EDITOR.md`.
+- `/admin-test` is the protected visual CMS editor in `src/featured/admin-test/`. `AdminShell.tsx` provides a Brzio-inspired desktop sidebar and a mobile dialog menu, with a Leave admin link. It has no public header/footer. Homepage editing uses component-specific fields and a protected responsive `/admin-test/preview` iframe that keeps the public website shell. The CMS proof retains Content, Images, and Page details tabs. Its CSS modules are scoped to this workspace. `/admin` redirects there after authorization. The legacy JSON-write and filesystem-upload APIs return `410`; `ADMIN_PASSWORD` is no longer used. See `docs/CMS-HOMEPAGE-MIGRATION.md` and `docs/CMS-VISUAL-EDITOR.md`.
 - `/cms-proof` is an isolated, cached publication page. It does not replace any existing page or the custom homepage hero. The CMS is disabled by default. The explicitly enabled client deployment uses separate storage and credentials; see `docs/CMS-CLIENT-LAUNCH.md`. See `docs/CMS-MILESTONE-1.md` for the original test setup, migrations and test commands.
 - The CMS proof's Images tab now manages private R2 uploads, placement descriptions, selection/order and published delivery. See `docs/CMS-MEDIA.md` for media schema, API, validation, caching and test instructions.
 - The service and careers forms prepare an email in the visitor's mail application. Their behavior is in `src/components/sections/ServiceRequestForm.tsx` and `CareersForm.tsx`.

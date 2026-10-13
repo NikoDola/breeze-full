@@ -1,0 +1,52 @@
+/* Adapted from Brzio's compact admin shell. Tokens are local to the admin. */
+.shell {
+  --admin-bg: #f5f2ea;
+  --admin-surface: #fffdf8;
+  --admin-card: #fff;
+  --admin-text: #1b2440;
+  --admin-secondary: #4a5370;
+  --admin-muted: #737b8d;
+  --admin-line: #e3e0d8;
+  --admin-line-strong: #d1d2cb;
+  --admin-accent: #217b51;
+  --admin-accent-soft: #e9f3ec;
+  --admin-sidebar-width: 240px;
+  --admin-topbar-height: 56px;
+  min-height: 100dvh;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: var(--font-geist), system-ui, sans-serif;
+}
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 60; display: flex; flex-direction: column; width: var(--admin-sidebar-width); height: 100dvh; overflow-y: auto; background: var(--admin-surface); border-right: 1px solid var(--admin-line); }
+.sidebarHeading { display: flex; align-items: center; min-height: var(--admin-topbar-height); padding: 0 22px; border-bottom: 1px solid var(--admin-line); font-size: 13px; font-weight: 600; }
+.navigation { padding: 24px 12px; }
+.navGroup { margin-bottom: 26px; }
+.groupLabel { margin: 0 0 8px; padding: 0 10px; color: var(--admin-muted); font-size: 10px; font-weight: 600; line-height: 1.5; text-transform: uppercase; letter-spacing: .08em; }
+.navItem { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 3px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--admin-secondary); font: inherit; font-size: 13px; font-weight: 500; text-align: left; cursor: pointer; }
+.navItem:hover:not(:disabled) { background: #eeece6; color: var(--admin-text); }
+.navItem[aria-current="page"] { background: var(--admin-accent-soft); color: var(--admin-accent); }
+.navItem:disabled { cursor: wait; opacity: .6; }
+.navItem svg { width: 17px; height: 17px; flex: none; }
+.main { min-width: 0; margin-left: var(--admin-sidebar-width); }
+.topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; height: var(--admin-topbar-height); padding: 0 32px; background: var(--admin-surface); border-bottom: 1px solid var(--admin-line); }
+.leaveLink { display: inline-flex; align-items: center; gap: 9px; color: var(--admin-secondary); font-size: 12px; font-weight: 500; text-decoration: none; }
+.leaveLink:hover { color: var(--admin-accent); }
+.leaveLink[aria-disabled="true"] { opacity: .5; cursor: wait; }
+.leaveLink svg { width: 16px; height: 16px; }
+.content { min-width: 0; }
+.menuButton, .closeButton { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 9px; border: 1px solid var(--admin-line); border-radius: 7px; background: transparent; color: var(--admin-secondary); cursor: pointer; }
+.menuButton { display: none; }
+.menuButton svg, .closeButton svg { width: 20px; height: 20px; }
+.drawer { inset: 0 auto 0 0; width: min(300px, calc(100vw - 48px)); height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: var(--admin-surface); color: var(--admin-text); font: inherit; }
+.drawer::backdrop { background: #14203566; }
+.drawerHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--admin-topbar-height); padding: 10px 16px; border-bottom: 1px solid var(--admin-line); }
+.drawerHeading h2 { margin: 0; font: 600 13px/1.4 var(--font-geist), system-ui, sans-serif; letter-spacing: normal; }
+.shell button:focus-visible, .shell a:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }
+@media (max-width: 900px) {
+  .shell { --admin-sidebar-width: 0px; }
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .topbar { padding-inline: 20px; }
+  .menuButton { display: inline-flex; }
+}
+@media (max-width: 600px) { .topbar { padding-inline: 16px; } }

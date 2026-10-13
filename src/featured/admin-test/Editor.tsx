@@ -11,6 +11,7 @@ import ImageEditor from "./ImageEditor";
 import HomeFields from "./HomeFields";
 import HomePreviewFrame from "./HomePreviewFrame";
 import { editorStatus, type Operation } from "./editor-state";
+import AdminShell from "./AdminShell";
 import styles from "./editor.module.css";
 
 type Tab = "content" | "images" | "details";
@@ -28,12 +29,12 @@ const fields: { key: keyof Omit<Section, "images">; label: string; help: string;
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Please try again.";
 const dateText = (value?: string | null) => value ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
 
-export default function Editor({ workspaceLabel = "Test workspace" }: { workspaceLabel?: string }) {
+export default function Editor() {
   const [pageId, setPageId] = useState<PageId>("home");
-  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} workspaceLabel={workspaceLabel} />;
+  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} />;
 }
 
-function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: PageId; onPageChange: (pageId: PageId) => void; workspaceLabel: string }) {
+function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange: (pageId: PageId) => void }) {
   const [state, setState] = useState<EditorState | null>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [baseDraft, setBaseDraft] = useState<Draft | null>(null);
@@ -134,15 +135,12 @@ function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: Page
     setDocument(current => current && current.schemaVersion !== 2 ? { ...current, [field]: value } : current); setMessage("");
   }
 
-  return <div className={`${styles.workspace} ${document ? styles.withSaveBar : ""}`}><div className={styles.editor}>
-    <header className={styles.header}>
-      <div className={styles.identity}><span className={styles.brand}><Icon name="leaf" /></span><div><p className={styles.eyebrow}>Breeze / Content studio</p><h1>Make it feel like Breeze.</h1><p>Edit your content and see every change as you go.</p></div></div>
-      <span className={styles.workspaceBadge}><span />{workspaceLabel}</span>
-    </header>
-    <label className={styles.pagePicker}>Editing page <select value={pageId} disabled={busy} onChange={event => {
-      if (!dirty || window.confirm("Discard your unsaved changes and switch pages?")) onPageChange(event.target.value as PageId);
-    }}>{Object.values(pages).map(page => <option key={page.id} value={page.id}>{page.label}</option>)}</select></label>
-    {pageId === "home" && <p className={styles.publishingNote}>To upload and test images, select CMS proof, then open Images. The approved homepage keeps its existing artwork.</p>}
+  return <AdminShell pageId={pageId} disabled={busy} onPageChange={next => {
+    if (busy || (dirty && !window.confirm("Discard your unsaved changes and switch pages?"))) return false;
+    onPageChange(next); return true;
+  }} onLeave={() => !dirty || window.confirm("Leave admin and discard your unsaved changes?")}>
+    <div className={`${styles.workspace} ${document ? styles.withSaveBar : ""}`}><div className={styles.editor}>
+    <header className={styles.header}><h1>{pages[pageId].label}</h1><p>Edit content, preview changes, and publish.</p></header>
     <div className={styles.toolbar}>
       <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{status.detail}</span></div></div>
       <div className={styles.actions}>
@@ -155,13 +153,13 @@ function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: Page
     {message && <p className={`${styles.notice} ${styles.successNotice}`} role="status"><Icon name="check" />{message}</p>}
     {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
     {!document ? <section className={styles.emptyState} aria-busy={busy}>
-      <span className={styles.emptyIcon}><Icon name="grid" /></span><h2>{operation === "load" ? "Opening your workspace…" : state ? "Your content starts here" : "Your workspace could not load"}</h2>
+      <span className={styles.emptyIcon}><Icon name="grid" /></span><h2>{operation === "load" ? "Loading content…" : state ? "Content not initialized" : "Content could not load"}</h2>
       <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero stay in place." : "Bring your existing Breeze section into this editor to start a draft." : "Load the saved content to start editing."}</p>
       {state && !state.draft ? <Button className={styles.primaryButton} disabled={busy} onClick={() => void act("import")}>{operation === "import" ? "Preparing content…" : "Copy existing content"}</Button> : !busy && <Button className={styles.secondaryButton} onClick={() => void load()}>Try again</Button>}
     </section> : <>
       <div className={styles.grid}>
         <section className={styles.editPanel} aria-label="Section editor">
-          <div className={styles.panelHeading}><div><p className={styles.eyebrow}>Section editor</p><h2>Your content</h2></div><span className={styles.smallBadge}>Draft {baseDraft?.version}</span></div>
+          <div className={styles.panelHeading}><h2>Content</h2><span className={styles.smallBadge}>Draft {baseDraft?.version}</span></div>
           {document.schemaVersion !== 2 && <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
             onClick={() => setTab(item.id)} onKeyDown={event => {
               const index = tabs.findIndex(candidate => candidate.id === item.id);
@@ -197,7 +195,7 @@ function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: Page
           </form>
         </section>
         <section className={styles.previewPanel} aria-label="Live section preview">
-          <div className={styles.previewHeading}><div><p className={styles.eyebrow}>Live preview</p><h2>A little closer to your website.</h2></div><span className={styles.liveBadge}><span />Live</span></div>
+          <div className={styles.previewHeading}><h2>Preview</h2><span className={styles.liveBadge}><span />Live</span></div>
           <div className={styles.previewControls}>
             <div className={styles.segmented} role="group" aria-label="Preview content"><button type="button" aria-pressed={previewMode === "draft"} onClick={() => setPreviewMode("draft")}>Your draft</button><button type="button" aria-pressed={previewMode === "published"} disabled={!state?.publication} onClick={() => setPreviewMode("published")}>Published</button></div>
             <div className={styles.segmented} role="group" aria-label="Preview screen size">{(["desktop", "tablet", "mobile"] as const).map(size => <button key={size} type="button" aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size[0].toUpperCase() + size.slice(1)}</button>)}</div>
@@ -211,7 +209,7 @@ function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: Page
         </section>
       </div>
       <section className={styles.publishingPanel} aria-label="Publishing status">
-        <div className={styles.publishingHeading}><div><p className={styles.eyebrow}>From draft to website</p><h2>Publishing status</h2></div><a className={styles.publicLink} href={pages[pageId].path} target="_blank" rel="noreferrer">Open published page <span aria-hidden="true">↗</span></a></div>
+        <div className={styles.publishingHeading}><h2>Publishing status</h2><a className={styles.publicLink} href={pages[pageId].path} target="_blank" rel="noreferrer">Open published page <span aria-hidden="true">↗</span></a></div>
         <div className={styles.steps}>
           <div className={styles.step}><Icon name={dirty ? "clock" : "check"} /><div><strong>{dirty ? "Unsaved changes" : "Draft saved"}</strong><span>{dirty ? "Save your edits to create a new draft." : `Draft ${baseDraft?.version} · ${dateText(baseDraft?.updatedAt)}`}</span></div></div>
           <div className={styles.step}><Icon name={state?.publication ? "check" : "clock"} /><div><strong>{state?.publication ? `Revision ${state.publication.version} published` : "Ready when you are"}</strong><span>{state?.publication ? dateText(state.publication.publishedAt) : "Publish a saved draft to update the website."}</span></div></div>
@@ -231,5 +229,5 @@ function DocumentEditor({ pageId, onPageChange, workspaceLabel }: { pageId: Page
         <Button type="button" className={styles.primaryButton} disabled={publishDisabled} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "2. Publish draft"}</Button>
       </div>
     </div>}
-  </div></div>;
+  </div></div></AdminShell>;
 }

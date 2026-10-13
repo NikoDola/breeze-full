@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import Header from "@/components/sections/SiteHeader";
-import Footer from "@/components/sections/SiteFooter";
 import { site } from "@/lib/site";
 
 const geist = Geist({
@@ -43,9 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={geist.variable} data-scroll-behavior="smooth">
       <body>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

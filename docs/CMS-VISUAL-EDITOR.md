@@ -1,5 +1,32 @@
 # Visual editor: first slice
 
+## Current admin shell
+
+The editor now uses a compact, professional shell adapted from the existing
+Brzio admin UI in `Desktop/Junk code/brzio`. It has restrained typography,
+local surface/accent tokens, simple cards and a 240px desktop sidebar. The
+sidebar lists Homepage under Pages and CMS proof under Tools; extend the
+`navigation` registry in `AdminShell.tsx` for future admin destinations.
+
+The top bar contains Leave admin with a left arrow. At 900px and below, the
+sidebar becomes a burger-triggered native dialog with keyboard focus trapping,
+Escape/backdrop dismissal, and focus restoration. Switching pages or leaving
+asks before discarding unsaved changes; navigation is blocked during saves,
+publishing and uploads. Save/publish actions remain visible at the bottom and
+respect the sidebar width.
+
+The public header/footer belong to `src/app/(site)/layout.tsx`; all public URLs,
+metadata and page content remain the same. The shared root only supplies HTML,
+fonts and metadata. Admin pages render without the public shell. The protected
+homepage preview explicitly uses `PublicLayout` so its iframe still shows the
+actual website, including navigation and footer. No backend, credential,
+publication or cache configuration changes are involved in this UI update.
+
+The production HTTP proof checks the admin/public-preview separation alongside
+the existing draft, publish, retry and cached content workflow. The historical
+notes below describe earlier editor/media slices; current R2 behavior is in
+`CMS-MEDIA.md` and client deployment details are in `CMS-CLIENT-LAUNCH.md`.
+
 The `/admin-test` interface now edits the existing version-1 CMS document through
 `/api/cms/editor`. D1 tables, Worker endpoints, API contracts, cache tags, OIDC/HMAC
 delivery, access checks, and deployment configuration are unchanged.

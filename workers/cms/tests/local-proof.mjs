@@ -92,11 +92,20 @@ try {
   assert.equal((await fetch(`${origin}/api/cms/editor`, { method: "POST", headers: { ...headers, origin: "https://evil.example" }, body: "{}" })).status, 403);
   assert.equal((await fetch(`${origin}/api/admin`, { method: "POST", headers: { "x-admin-password": "breeze-admin" }, body: "{}" })).status, 410);
   assert.equal((await fetch(`${origin}/api/admin/upload`, { method: "POST" })).status, 410);
-  assert.equal((await fetch(`${origin}/admin-test`, { headers: { authorization } })).status, 200);
+  const adminPage = await fetch(`${origin}/admin-test`, { headers: { authorization } });
+  assert.equal(adminPage.status, 200);
+  const adminHtml = await adminPage.text();
+  assert.ok(adminHtml.includes("Leave admin") && adminHtml.includes("Administration"));
+  assert.ok(!adminHtml.includes('class="site-header') && !adminHtml.includes('class="site-footer'));
+  assert.ok(!adminHtml.includes("Make it feel like Breeze") && !adminHtml.includes("Content studio"));
   assert.equal((await fetch(`${origin}/admin-test/preview`)).status, 401);
   const frame = await fetch(`${origin}/admin-test/preview`, { headers: { authorization } });
   assert.equal(frame.status, 200);
   assert.equal(frame.headers.get("content-security-policy"), "frame-ancestors 'self'");
+  const frameHtml = await frame.text();
+  assert.equal((frameHtml.match(/class="site-header/g) ?? []).length, 1);
+  assert.equal((frameHtml.match(/class="site-footer/g) ?? []).length, 1);
+  check("Admin has its own navigation without public branding; the protected preview retains the complete website shell");
   check("Editor authentication, origin checks and retired legacy endpoints enforced over HTTP");
   assert.equal((await publicPage()).status, 404);
 
