@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomBytes, createHmac } from "node:crypto";
-import { admin, createWorker, migrate, root, token, revalidationSecret } from "./helpers.mjs";
+import { admin, bundle, createWorker, migrate, root, token, revalidationSecret } from "./helpers.mjs";
 import { runMediaWorkflow } from "./media-http-proof.mjs";
 
 const reportDir = join(root, ".local");
@@ -45,11 +45,12 @@ try {
   assert.equal((await admin(mf, "import", { source })).status, 200);
   check("Existing content copied into an isolated local D1 draft");
 
-  let publicApiReads = 0, homeApiReads = 0;
+  let publicApiReads = 0, homeApiReads = 0, workerDraftRequests = 0;
   gateway = createServer(async (req, res) => {
     try {
       if (req.url === "/api/public/pages/cms-proof") publicApiReads++;
       if (req.url === "/api/public/pages/home") homeApiReads++;
+      if (req.url === "/api/admin/draft") workerDraftRequests++;
       const chunks = []; for await (const chunk of req) chunks.push(chunk);
       const body = Buffer.concat(chunks);
       const response = await mf.dispatchFetch(`http://worker.local${req.url}`, {
@@ -172,12 +173,29 @@ try {
   assert.ok(!originalHome.html.includes('data-cms-page="home"'));
   let home = await editor({ action: "import", pageId: "home" });
   const seed = structuredClone(home.draft.document);
-  const edited = structuredClone(seed); edited.slots.contact.content.intro = `Private home copy ${Date.now()}`;
+  const { editableHome } = await import(`data:text/javascript;base64,${Buffer.from(await bundle(new URL("../../../cms/shared/home.ts", import.meta.url))).toString("base64")}`);
+  const edited = editableHome(seed); edited.slots.contact.content.intro = `Private home copy ${Date.now()}`;
+  edited.slots.seasons.content.heading = { version: 1, content: [
+    { type: "text", text: "Comfort ", bold: true }, { type: "text", text: "with care", italic: true, color: "accent" },
+    { type: "break" }, { type: "text", text: "<script>literal text</script>" },
+  ] };
+  const invalidHeading = structuredClone(edited); invalidHeading.slots.seasons.content.heading.content[1].color = "red";
+  const draftCallsBefore = workerDraftRequests;
+  const invalidResponse = await fetch(`${origin}/api/cms/editor`, { method: "POST", headers,
+    body: JSON.stringify({ action: "draft", pageId: "home", expectedVersion: home.draft.version, document: invalidHeading }) });
+  assert.equal(invalidResponse.status, 400); assert.equal(workerDraftRequests, draftCallsBefore);
+  check("Next rejects unsupported rich-text formatting before contacting the Worker");
   home = await editor({ action: "draft", pageId: "home", expectedVersion: home.draft.version, document: edited });
   assert.ok(!(await homePage()).html.includes(edited.slots.contact.content.intro));
   home = await editor({ action: "publish", pageId: "home", expectedVersion: home.draft.version });
   assert.ok(home.delivery?.confirmed_at, JSON.stringify(home.delivery));
   assert.ok((await homePage()).html.includes(edited.slots.contact.content.intro));
+  const richHtml = (await homePage()).html;
+  assert.match(richHtml, /<strong[^>]*>Comfort <\/strong><em><i[^>]*>with care<\/i><\/em><br\/>/);
+  assert.ok(richHtml.includes("&lt;script&gt;literal text&lt;/script&gt;"));
+  assert.ok(!richHtml.includes("<script>literal text</script>"));
+  assert.equal(home.publication.document.templateVersion, 2);
+  check("Rich headings publish through real Next/D1 delivery with safe inline markup and escaped text");
   const homeReadsBefore = homeApiReads;
   for (let i = 0; i < 3; i++) assert.equal((await homePage()).cache, "HIT");
   assert.equal(homeApiReads, homeReadsBefore);

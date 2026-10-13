@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import { homeSectionRegistry, homeRichSectionRegistry, homeSlotOrder, type HomeDocument, type HomeSlot, type Field, type TextField } from "../../../cms/shared/home";
-import { richTextPlainText, type RichText } from "../../../cms/shared/rich-text";
+import { homeSectionRegistry, homeRichSectionRegistry, homeSlotOrder, editableHome, type HomeDocument, type HomeSlot, type Field, type TextField } from "../../../cms/shared/home";
+import type { RichText } from "../../../cms/shared/rich-text";
 import styles from "./editor.module.css";
+const RichTextEditor = dynamic(() => import("./RichTextEditor"), { ssr: false, loading: () => <p role="status">Loading heading editor…</p> });
 
 function TextControl({ field, value, onChange }: { field: TextField; value: string; onChange: (value: string) => void }) {
   return <label className={styles.field}><span>{field.label}</span>
@@ -15,12 +17,14 @@ function TextControl({ field, value, onChange }: { field: TextField; value: stri
   </label>;
 }
 
-export default function HomeFields({ document, onChange }: { document: HomeDocument; onChange: (document: HomeDocument) => void }) {
+export default function HomeFields({ document, onChange, disabled, resetKey }: { document: HomeDocument; onChange: (document: HomeDocument) => void; disabled: boolean; resetKey: number }) {
   const [slot, setSlot] = useState<HomeSlot>("seasons");
-  const schema = document.templateVersion === 2 ? homeRichSectionRegistry[slot] : homeSectionRegistry[slot];
-  const content = document.slots[slot].content as unknown as Record<string, unknown>;
+  const schema = homeRichSectionRegistry[slot];
+  const editable = editableHome(document);
+  const content = editable.slots[slot].content as unknown as Record<string, unknown>;
   function change(key: string, value: unknown) {
-    onChange({ ...document, slots: { ...document.slots, [slot]: { ...document.slots[slot], content: { ...content, [key]: value } } } } as HomeDocument);
+    if (disabled) return;
+    onChange({ ...editable, slots: { ...editable.slots, [slot]: { ...editable.slots[slot], content: { ...content, [key]: value } } } } as HomeDocument);
   }
   return <>
     <div className={styles.sectionIntro}><h3>Homepage sections</h3><p>The hero, contact form, and section order are maintained by your website developer.</p></div>
@@ -30,7 +34,7 @@ export default function HomeFields({ document, onChange }: { document: HomeDocum
     <div className={styles.sectionIntro}><h3>{schema.label}</h3><p>{schema.help}</p></div>
     {(Object.entries(schema.fields) as [string, Field][]).map(([key, field]) => {
       if (field.kind === "text") return <TextControl key={`${slot}-${key}`} field={field} value={content[key] as string} onChange={value => change(key, value)} />;
-      if (field.kind === "rich-text") return <label key={`${slot}-${key}`} className={styles.field}><span>{field.label}</span><Textarea readOnly value={richTextPlainText(content[key] as RichText)} /><small>This heading uses formatted text. Update the editor to change its formatting.</small></label>;
+      if (field.kind === "rich-text") return <RichTextEditor key={`${slot}-${key}-${resetKey}`} value={content[key] as RichText} label={field.label} help={field.help} disabled={disabled} onChange={value => change(key, value)} />;
       const items = content[key] as Record<string, string>[];
       function move(index: number, step: number) {
         const next = [...items]; [next[index], next[index + step]] = [next[index + step], next[index]]; change(key, next);

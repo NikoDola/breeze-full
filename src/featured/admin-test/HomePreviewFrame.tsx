@@ -19,8 +19,9 @@ export default function HomePreviewFrame({ document, viewport }: { document: Hom
     function ready(event: MessageEvent) {
       if (event.origin === window.location.origin && event.source === frame.current?.contentWindow && event.data?.type === "breeze.cms.preview-ready") send();
     }
-    window.addEventListener("message", ready); send();
-    return () => window.removeEventListener("message", ready);
+    window.addEventListener("message", ready);
+    const timer = window.setTimeout(send, 120);
+    return () => { window.removeEventListener("message", ready); window.clearTimeout(timer); };
   }, [send]);
   return <div className={styles.homePreviewCanvas} ref={container}>
     <iframe ref={frame} src="/admin-test/preview" title={`Homepage ${viewport} live preview`} onLoad={send}

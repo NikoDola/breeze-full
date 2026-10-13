@@ -7,6 +7,8 @@ import Icon from "@/components/ui/Icon";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import { pages, validatePageDocument, type PageId, type Document, type Draft, type EditorState, type Section } from "../../../cms/shared/contract";
+import { MAX_BODY_BYTES } from "../../../cms/shared/contract";
+import { sameEditorDocument } from "../../../cms/shared/editor-document";
 import ImageEditor from "./ImageEditor";
 import HomeFields from "./HomeFields";
 import HomePreviewFrame from "./HomePreviewFrame";
@@ -46,7 +48,8 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
   const [error, setError] = useState("");
   const [clock, setClock] = useState(0);
   const requestInFlight = useRef(false);
-  const dirty = Boolean(document && baseDraft && JSON.stringify(document) !== JSON.stringify(baseDraft.document));
+  const [editorReset, setEditorReset] = useState(0);
+  const dirty = Boolean(document && baseDraft && !sameEditorDocument(document, baseDraft.document));
   const newerDraft = Boolean(baseDraft && state?.draft && baseDraft.version !== state.draft.version);
   const [mediaBusy, setMediaBusy] = useState(false);
   const busy = operation !== null || mediaBusy;
@@ -61,10 +64,12 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
   if (previewDocument) { try { validatePageDocument(pageId, previewDocument); } catch { previewValid = false; } }
 
   const request = useCallback(async (body?: Record<string, unknown>): Promise<EditorState> => {
+    const payload = body ? JSON.stringify({ ...body, pageId }) : undefined;
+    if (payload && new TextEncoder().encode(payload).length > MAX_BODY_BYTES) throw new Error("This page exceeds the 48 KiB content limit. Shorten the content before saving.");
     const response = await fetch(`/api/cms/editor?pageId=${pageId}`, {
       method: body ? "POST" : "GET", cache: "no-store", credentials: "same-origin",
       headers: { "Content-Type": "application/json", "x-cms-request": "editor" },
-      body: body ? JSON.stringify({ ...body, pageId }) : undefined,
+      body: payload,
     });
     let result;
     try { result = await response.json(); }
@@ -75,7 +80,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
   const load = useCallback(async () => {
     if (requestInFlight.current) return;
     requestInFlight.current = true; setOperation("load"); setError("");
-    try { const data = await request(); setState(data); setBaseDraft(data.draft); setDocument(data.draft?.document ?? null); }
+    try { const data = await request(); setState(data); setBaseDraft(data.draft); setDocument(data.draft?.document ?? null); setEditorReset(value => value + 1); }
     catch (error) { setError(errorText(error)); }
     finally { requestInFlight.current = false; setOperation(null); }
   }, [request]);
@@ -99,7 +104,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     try {
       const next = await request(); setState(next);
       // Refresh publishing status without discarding local edits.
-      if (!dirty) { setBaseDraft(next.draft); setDocument(next.draft?.document ?? null); }
+      if (!dirty) { setBaseDraft(next.draft); setDocument(next.draft?.document ?? null); setEditorReset(value => value + 1); }
       setMessage(dirty ? "Status refreshed. Your unsaved changes are still here." : "Content and publishing status are up to date.");
     } catch (error) { setError(errorText(error)); }
     finally { requestInFlight.current = false; setOperation(null); }
@@ -127,6 +132,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     if (busy || !window.confirm(newerDraft ? "Replace your unsaved changes with the latest saved draft?" : "Discard your unsaved changes?")) return;
     const draft = newerDraft ? state?.draft : baseDraft;
     setBaseDraft(draft ?? null); setDocument(draft?.document ?? null); setError(""); setMessage("Saved draft restored.");
+    setEditorReset(value => value + 1);
   }
   const changeSection = (field: keyof Omit<Section, "images">, value: string) => {
     setDocument(current => current && current.schemaVersion !== 2 ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
@@ -168,7 +174,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
             }}><Icon name={item.icon} />{item.label}{item.id === "images" && <span>{document.section.images.length}</span>}</button>)}</div>}
           <form id="cms-editor-form" onSubmit={event => { event.preventDefault(); void act("draft"); }}>
             <fieldset disabled={busy} className={styles.fields}><legend className={styles.srOnly}>Section content</legend>
-              {document.schemaVersion === 2 ? <HomeFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
+              {document.schemaVersion === 2 ? <HomeFields document={document} disabled={busy} resetKey={editorReset} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
               <div id="panel-content" role="tabpanel" aria-labelledby="tab-content" hidden={tab !== "content"}>
                 {fields.map(({ key, label, help, max, placeholder, multiline }) => <label className={styles.field} key={key}><span>{label}{key === "headline" && <span className={styles.required}> *</span>}</span><small id={`help-${key}`}>{help}</small>
                   {multiline ? <Textarea value={document.section[key]} maxLength={max} rows={6} placeholder={placeholder} aria-describedby={`help-${key}`} onChange={event => changeSection(key, event.target.value)} />

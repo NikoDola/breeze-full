@@ -1,5 +1,9 @@
 # Visual editor: first slice
 
+The homepage heading fields now use a compact Tiptap toolbar on `cms-testing`.
+See [CMS-RICH-TEXT.md](CMS-RICH-TEXT.md) for the versioned content contract,
+security limits, state handling, tests and compatible rollout requirements.
+
 ## Current admin shell
 
 The editor now uses a compact, professional shell adapted from the existing

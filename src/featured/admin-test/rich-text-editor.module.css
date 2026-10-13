@@ -1,0 +1,23 @@
+.field { display: grid; gap: 7px; margin-bottom: 22px; }
+.label { font-size: 12px; font-weight: 600; }
+.frame { border: 1px solid var(--admin-line-strong); border-radius: 8px; background: var(--admin-card); overflow: hidden; }
+.frame:focus-within { border-color: var(--admin-accent); box-shadow: 0 0 0 1px var(--admin-accent); }
+.frame[data-disabled] { background: #f7f7f4; }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; padding: 7px; border-bottom: 1px solid var(--admin-line); background: #fafaf7; }
+.toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 32px; min-height: 32px; padding: 5px 7px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--admin-secondary); font-size: 11px; line-height: 1.3; }
+.toolbar button b, .toolbar button i { font-size: 15px; }
+.toolbar button i { font-style: italic; }
+.toolbar button:hover:not(:disabled), .toolbar button[aria-pressed="true"] { color: var(--admin-accent); background: var(--admin-accent-soft); border-color: #c4dccd; }
+.divider { height: 18px; width: 1px; background: var(--admin-line); margin: 0 3px; }
+.defaultSwatch, .orangeSwatch { width: 10px; height: 10px; border-radius: 50%; background: var(--admin-text); }
+.orangeSwatch { background: var(--orange); }
+.input { min-height: 110px; padding: 13px 14px; outline: none; font-family: inherit; font-size: 18px; font-weight: 400; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.input p { margin: 0; line-height: inherit; }
+.input strong { font-weight: 750; }
+.input em { font-style: italic; }
+.input [data-breeze-color="accent"] { color: var(--orange); }
+.help { display: flex; align-items: start; justify-content: space-between; gap: 12px; color: var(--admin-muted); }
+.help small { font-size: 11px; line-height: 1.6; }
+.help small:last-child { white-space: nowrap; }
+.error { margin: 0; font-size: 12px; color: #ad3c31; }
+@media (max-width: 600px) { .toolbar button { min-height: 38px; min-width: 36px; } .divider { margin: 0 1px; } }
