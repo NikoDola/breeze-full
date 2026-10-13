@@ -75,9 +75,10 @@ async function curlRequest(url, init) {
     cache: cache || null, nextCache: nextCache || null, edge: edge?.split("::")[0] };
 }
 async function editor(body) {
+  const pageId = body?.pageId ?? "cms-proof";
   let response;
   for (let attempt = 0; attempt < 3; attempt++) {
-    response = await request(`${origin}/api/cms/editor`, { headers: auth, method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined });
+    response = await request(`${origin}/api/cms/editor?pageId=${pageId}`, { headers: auth, method: body ? "POST" : "GET", body: body ? JSON.stringify({ ...body, pageId }) : undefined });
     // A confirmed Vercel checkpoint stops the request before the application.
     // Record it; only this known pre-application response can be retried here.
     if (response.status !== 403 || response.mitigation !== "challenge" || attempt === 2) break;

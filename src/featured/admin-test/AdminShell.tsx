@@ -8,7 +8,6 @@ import css from "./shell.module.css";
 // Extend this navigation as new admin features are introduced.
 const navigation = [
   { label: "Pages", items: [{ pageId: "home", icon: "home" }] },
-  { label: "Tools", items: [{ pageId: "cms-proof", icon: "grid" }] },
 ] as const;
 
 function SupportContact() {
@@ -19,12 +18,13 @@ function SupportContact() {
   </div>;
 }
 
-export default function AdminShell({ pageId, onPageChange, onLeave, disabled, children }: {
+export default function AdminShell({ pageId, onPageChange, onLeave, disabled, children, proofEnabled = false }: {
   pageId: PageId;
   onPageChange: (pageId: PageId) => boolean;
   onLeave: () => boolean;
   disabled: boolean;
   children: React.ReactNode;
+  proofEnabled?: boolean;
 }) {
   const drawer = useRef<HTMLDialogElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -51,7 +51,7 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
 
   function pageNavigation() {
     return <nav className={css.navigation} aria-label="Admin pages">
-      {navigation.map(group => <div className={css.navGroup} key={group.label}>
+      {[...navigation, ...(proofEnabled ? [{ label: "Tools", items: [{ pageId: "cms-proof" as const, icon: "grid" }] }] : [])].map(group => <div className={css.navGroup} key={group.label}>
         <p className={css.groupLabel}>{group.label}</p>
         {group.items.map(item => <button type="button" key={item.pageId} className={css.navItem}
           aria-current={pageId === item.pageId ? "page" : undefined} disabled={disabled}

@@ -26,6 +26,14 @@ export function cmsScope() {
   } catch { return null; }
 }
 export const cmsOrigin = () => cmsScope()?.origin ?? null;
+// Keep the proof dormant for normal use and never expose it on the client site.
+// Isolated local integration builds retain their existing proof workflow.
+export function cmsProofEnabled() {
+  const scope = cmsScope();
+  return Boolean(scope && scope.kind !== "live" && (process.env.CMS_PROOF_ENABLED === "true" ||
+    (scope.kind === "local" && process.env.CMS_LOCAL_PROOF_BUILD === "true")));
+}
+export const cmsPageEnabled = (pageId: PageId) => pageId === "home" || cmsProofEnabled();
 export function cmsCacheTag(pageId: PageId) {
   const scope = cmsScope();
   if (!scope) throw new Error("CMS deployment is disabled.");

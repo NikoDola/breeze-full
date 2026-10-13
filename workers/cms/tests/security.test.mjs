@@ -90,6 +90,34 @@ test("client CMS requires explicit main/production scope, separate credentials a
   }
 });
 
+test("proof is dormant by default, retains isolated test support, and cannot be enabled on the client site", async () => {
+  const { cmsProofEnabled, cmsPageEnabled } = await loadServerModule(new URL("../../../src/lib/cms/scope.ts", import.meta.url));
+  const saved = { ...process.env };
+  try {
+    Object.assign(process.env, { VERCEL: "", VERCEL_ENV: "development", CMS_LIVE_ENABLED: "false",
+      CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: "http://localhost:3000",
+      CMS_PROOF_ENABLED: "false", CMS_LOCAL_PROOF_BUILD: "false" });
+    assert.equal(cmsProofEnabled(), false);
+    assert.equal(cmsPageEnabled("cms-proof"), false);
+    assert.equal(cmsPageEnabled("home"), true);
+    process.env.CMS_LOCAL_PROOF_BUILD = "true";
+    assert.equal(cmsProofEnabled(), true);
+    Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing",
+      CMS_TEST_ORIGIN: "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app" });
+    assert.equal(cmsProofEnabled(), false, "A local proof-build flag cannot expose the proof on Vercel");
+    process.env.CMS_PROOF_ENABLED = "true";
+    assert.equal(cmsProofEnabled(), true, "Future Preview testing needs explicit opt-in");
+    Object.assign(process.env, { CMS_LIVE_ENABLED: "true", VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "main",
+      CMS_LIVE_ORIGIN: "https://breeze-full.vercel.app", CMS_WORKER_URL: "https://breeze-live-api.nikodola.workers.dev" });
+    assert.equal(cmsProofEnabled(), false);
+    assert.equal(cmsPageEnabled("cms-proof"), false);
+    assert.equal(cmsPageEnabled("home"), true);
+  } finally {
+    for (const name of Object.keys(process.env)) if (!(name in saved)) delete process.env[name];
+    Object.assign(process.env, saved);
+  }
+});
+
 test("webhook HMAC expires and covers timestamp plus exact body", async () => {
   const { sign, verify } = await loadServerModule(new URL("../../../cms/shared/signature.ts", import.meta.url));
   const secret = randomBytes(32).toString("hex"), timestamp = String(Date.now()), body = '{"event":"publish"}';

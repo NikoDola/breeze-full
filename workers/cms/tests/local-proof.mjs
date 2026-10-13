@@ -79,7 +79,8 @@ try {
   const authorization = `Basic ${Buffer.from(`local-proof:${password}`).toString("base64")}`;
   const headers = { authorization, origin, "Content-Type": "application/json", "x-cms-request": "editor" };
   const editor = async body => {
-    const response = await fetch(`${origin}/api/cms/editor`, { headers, method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined });
+    const pageId = body?.pageId ?? "cms-proof";
+    const response = await fetch(`${origin}/api/cms/editor?pageId=${pageId}`, { headers, method: body ? "POST" : "GET", body: body ? JSON.stringify({ ...body, pageId }) : undefined });
     const value = await response.json();
     assert.equal(response.status, 200, JSON.stringify(value)); return value;
   };

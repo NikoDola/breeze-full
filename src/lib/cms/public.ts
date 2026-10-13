@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { notFound } from "next/navigation";
-import { cmsOrigin, cmsCacheTag } from "./scope";
+import { cmsOrigin, cmsCacheTag, cmsProofEnabled } from "./scope";
 import { workerOrigin } from "./worker";
 import { PAGE_ID, validatePageDocument, type Publication, type PageId, type ProofDocument } from "../../../cms/shared/contract";
 import type { HomeDocument } from "../../../cms/shared/home";
@@ -21,6 +21,7 @@ const getPublication = cache(async (pageId: PageId): Promise<Publication | null>
 });
 
 export const getPublishedProof = cache(async (): Promise<Publication & { document: ProofDocument }> => {
+  if (!cmsProofEnabled()) notFound();
   const publication = await getPublication(PAGE_ID);
   if (!publication || publication.document.schemaVersion === 2) notFound();
   return { ...publication, document: publication.document };

@@ -29,12 +29,12 @@ const fields: { key: keyof Omit<Section, "images">; label: string; help: string;
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Please try again.";
 const dateText = (value?: string | null) => value ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
 
-export default function Editor() {
+export default function Editor({ proofEnabled = false }: { proofEnabled?: boolean }) {
   const [pageId, setPageId] = useState<PageId>("home");
-  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} />;
+  return <DocumentEditor key={pageId} pageId={pageId} onPageChange={setPageId} proofEnabled={proofEnabled} />;
 }
 
-function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange: (pageId: PageId) => void }) {
+function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId; onPageChange: (pageId: PageId) => void; proofEnabled: boolean }) {
   const [state, setState] = useState<EditorState | null>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [baseDraft, setBaseDraft] = useState<Draft | null>(null);
@@ -135,7 +135,7 @@ function DocumentEditor({ pageId, onPageChange }: { pageId: PageId; onPageChange
     setDocument(current => current && current.schemaVersion !== 2 ? { ...current, [field]: value } : current); setMessage("");
   }
 
-  return <AdminShell pageId={pageId} disabled={busy} onPageChange={next => {
+  return <AdminShell pageId={pageId} proofEnabled={proofEnabled} disabled={busy} onPageChange={next => {
     if (busy || (dirty && !window.confirm("Discard your unsaved changes and switch pages?"))) return false;
     onPageChange(next); return true;
   }} onLeave={() => !dirty || window.confirm("Leave admin and discard your unsaved changes?")}>

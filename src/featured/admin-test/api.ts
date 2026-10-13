@@ -1,12 +1,14 @@
 import { protectEditor } from "@/lib/cms/access";
 import { workerAdmin } from "@/lib/cms/worker";
 import { deliverPublication, preflight } from "@/lib/cms/delivery";
+import { cmsPageEnabled } from "@/lib/cms/scope";
 import { InputError, LEGACY_URL, importLegacy, pageDefinition, readBody, record } from "../../../cms/shared/contract";
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
 export async function GET(request: Request) {
   const denied = protectEditor(request); if (denied) return denied;
   try {
-    const pageId = pageDefinition(new URL(request.url).searchParams.get("pageId") ?? undefined).id;
+    const pageId = pageDefinition(new URL(request.url).searchParams.get("pageId") ?? "home").id;
+    if (!cmsPageEnabled(pageId)) return json({ error: "This page is not enabled for CMS editing." }, 404);
     const response = await workerAdmin(`proof?pageId=${pageId}`);
     return json(await response.json(), response.status);
   } catch (error) {
@@ -19,7 +21,8 @@ export async function POST(request: Request) {
   try {
     if (!request.headers.get("content-type")?.startsWith("application/json")) throw new InputError("Expected JSON.");
     const input = record(JSON.parse(await readBody(request)));
-    const pageId = pageDefinition(input.pageId).id;
+    const pageId = pageDefinition(input.pageId ?? "home").id;
+    if (!cmsPageEnabled(pageId)) return json({ error: "This page is not enabled for CMS editing." }, 404);
     if (!["import", "draft", "publish", "retry", "preflight"].includes(String(input.action))) throw new InputError("Unknown action.");
     if (input.action === "preflight") return json(await preflight(pageId));
     if (input.action === "retry") return json(await deliverPublication(pageId));

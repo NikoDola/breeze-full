@@ -4,6 +4,13 @@ Client launch authorized on 2026-10-13. This supersedes the earlier restriction
 against integrating `cms-testing` into `main` for this deployment. The public
 website's design, homepage hero and contact form remain developer-controlled.
 
+CMS proof is now temporarily disabled on the client site: its sidebar entry,
+public page, editor actions and signed invalidation return no access. Homepage
+is the default editing target. Proof history and images are retained. Its Images
+interface is unavailable while dormant; homepage artwork remains developer-controlled.
+Future Preview/local testing may opt in with `CMS_PROOF_ENABLED=true`, while
+Production keeps the proof disabled. Isolated automated proofs still run locally.
+
 ## Environments
 
 | Environment | Next origin / branch | Worker | D1 | Private R2 |

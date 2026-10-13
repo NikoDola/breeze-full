@@ -5,8 +5,16 @@
 The editor now uses a compact, professional shell adapted from the existing
 Brzio admin UI in `Desktop/Junk code/brzio`. It has restrained typography,
 local surface/accent tokens, simple cards and a 240px desktop sidebar. The
-sidebar lists Homepage under Pages and CMS proof under Tools; extend the
+sidebar lists Homepage under Pages; extend the
 `navigation` registry in `AdminShell.tsx` for future admin destinations.
+
+CMS proof is temporarily disabled for normal use. It returns 404 and cannot be
+edited, published, retried or invalidated through Next's APIs. Requests without
+a page ID target Homepage. Existing proof content/history/media remain stored.
+The proof can be explicitly restored for Preview/local testing with
+`CMS_PROOF_ENABLED=true`; Production remains disabled regardless of that flag.
+The isolated `cms:proof` harness retains its test-only access and explicitly
+targets `pageId=cms-proof` so it can never fall back to editing Homepage.
 
 The top bar contains Leave admin with a left arrow. At 900px and below, the
 sidebar becomes a burger-triggered native dialog with keyboard focus trapping,

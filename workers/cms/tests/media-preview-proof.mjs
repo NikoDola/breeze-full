@@ -33,7 +33,7 @@ async function nextFetch(path, options={}) {
 const report={at:new Date().toISOString(),checks:[]};
 const check=message=>{report.checks.push(message);console.log(`PASS: ${message}`);};
 try {
-  const response=await nextFetch("/api/cms/editor",{method:"POST",headers:editorHeaders,body:JSON.stringify({action:"preflight"})});
+  const response=await nextFetch("/api/cms/editor",{method:"POST",headers:editorHeaders,body:JSON.stringify({action:"preflight",pageId:"cms-proof"})});
   assert.equal(response.status,200); const preflight=await response.json();
   assert.equal(preflight.branch,"cms-testing"); assert.equal(preflight.region,"iad1"); assert.equal(preflight.identity,"preview-oidc");
   check("Preview branch, iad1, OIDC and HMAC verified");

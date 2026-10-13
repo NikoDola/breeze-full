@@ -1,5 +1,5 @@
 import { revalidatePath, revalidateTag } from "next/cache";
-import { cmsOrigin, cmsCacheTag } from "@/lib/cms/scope";
+import { cmsOrigin, cmsCacheTag, cmsPageEnabled } from "@/lib/cms/scope";
 import { InputError, readBody, validateEvent } from "../../../cms/shared/contract";
 import { verify } from "../../../cms/shared/signature";
 export async function POST(request: Request) {
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     }
     const input = JSON.parse(body);
     const event = validateEvent(input);
+    if (!cmsPageEnabled(event.pageId)) return Response.json({ error: "Page not enabled." }, { status: 404, headers });
     if (input.dryRun === true) return Response.json({ ok: true, eventId: event.eventId }, { headers });
     // Duplicate events are safe. Only manifest-defined paths and tags are accepted.
     revalidateTag(cmsCacheTag(event.pageId), { expire: 0 });
