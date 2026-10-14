@@ -21,6 +21,8 @@ export const site = {
   phoneHref: `tel:${phoneDigits}`,
   email: data.email,
   emailHref: `mailto:${data.email}`,
+  formRecipientEmail: data.email,
+  formRecipientHref: `mailto:${data.email}`,
   address: data.address,
   addressLine,
   mapsHref: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -34,7 +36,9 @@ export type SiteData = typeof site;
 export function withGlobalSettings(global: GlobalDocument): SiteData {
   const digits = global.phone.replace(/\D/g, "");
   const phoneDigits = !global.phone.startsWith("+") && digits.length === 10 ? `1${digits}` : digits;
+  const formRecipientEmail = global.formRecipientEmail ?? global.email;
   return { ...site, phone: global.phone, phoneHref: `tel:+${phoneDigits}`, email: global.email,
+    formRecipientEmail, formRecipientHref: `mailto:${encodeURIComponent(formRecipientEmail).replace("%40", "@")}`,
     emailHref: `mailto:${encodeURIComponent(global.email).replace("%40", "@")}`, socials: global.socials.map(link => ({ ...link, label: socialPlatforms[link.platform].label })) };
 }
 

@@ -6,6 +6,23 @@ const load = async path => import(`data:text/javascript;base64,${Buffer.from(awa
 const { validateReviews, validateGlobal, favoriteReviews, orderedReviews } = await load("../../../cms/shared/collections.ts");
 const { createReviewsSeed, globalSeed } = await load("../../../cms/shared/collection-seeds.ts");
 const { homeSeed } = await load("../../../cms/shared/home-seed.ts");
+const { withGlobalSettings } = await load("../../../src/lib/site.ts");
+
+test("public email and form recipient are independent, safe, and compatible with historical documents", () => {
+  const { formRecipientEmail: omitted, ...legacy } = globalSeed;
+  assert.ok(omitted);
+  assert.deepEqual(validateGlobal(legacy), legacy);
+  assert.equal(withGlobalSettings(legacy).formRecipientEmail, legacy.email);
+  const separated = validateGlobal({ ...legacy, email: "public@example.com", formRecipientEmail: "requests+service@example.com" });
+  const site = withGlobalSettings(separated);
+  assert.equal(site.emailHref, "mailto:public@example.com");
+  assert.equal(site.formRecipientHref, "mailto:requests%2Bservice@example.com");
+  assert.equal(withGlobalSettings({ ...separated, email: "new-public@example.com" }).formRecipientHref, site.formRecipientHref);
+  assert.equal(withGlobalSettings({ ...separated, formRecipientEmail: "new-forms@example.com" }).emailHref, site.emailHref);
+  for (const invalid of ["", null, 42, "bad@example.com?bcc=evil@example.com", "bad@example.com\r\nBcc:evil", "bad%0a@example.com", "a".repeat(255)]) {
+    assert.throws(() => validateGlobal({ ...legacy, formRecipientEmail: invalid }));
+  }
+});
 
 test("review import preserves full testimonials and published homepage excerpts", () => {
   const home = structuredClone(homeSeed);
@@ -58,10 +75,11 @@ test("reviews/global reuse protected D1 drafts, immutable idempotent publishing 
     assert.equal((await mf.dispatchFetch(`https://worker.test/api/public/pages/${pageId}`)).status, 404);
     const doc = structuredClone(state.draft.document);
     if (pageId === "reviews") doc.items.push({ id: "new-review", name: "Test only", quote: "<script>literal text</script>", homeQuote: "", visible: true });
-    else doc.email = "test@example.com";
+    else { doc.email = "test@example.com"; doc.formRecipientEmail = "forms@example.com"; }
     const saved = await admin(mf, "draft", { pageId, expectedVersion: 1, document: doc }); assert.equal(saved.status, 200);
     assert.equal((await admin(mf, "draft", { pageId, expectedVersion: 1, document: doc })).status, 409);
     assert.equal((await admin(mf, "draft", { pageId, expectedVersion: 2, document: { ...doc, unsafe: true } })).status, 400);
+    if (pageId === "global") assert.equal((await admin(mf, "draft", { pageId, expectedVersion: 2, document: { ...doc, formRecipientEmail: "forms@example.com?bcc=evil@example.com" } })).status, 400);
     assert.equal((await admin(mf, "draft", { pageId, expectedVersion: 2, document: { ...doc, title: "x".repeat(50000) } })).status, 400);
     assert.equal((await admin(mf, "draft", { pageId, expectedVersion: 2, document: doc }, { origin: "https://evil.test" })).status, 403);
     state = await (await admin(mf, "import", { pageId })).json(); assert.deepEqual(state.draft.document, doc);

@@ -36,7 +36,7 @@ export default function TemplateServiceForm({ compact = false }: { compact?: boo
       "Details:",
       data.get("message") || "No additional details provided.",
     ].join("\n");
-    window.location.href = `${site.emailHref}?subject=${encodeURIComponent("Service request from Breeze website")}&body=${encodeURIComponent(body)}`;
+    window.location.href = `${site.formRecipientHref}?subject=${encodeURIComponent("Service request from Breeze website")}&body=${encodeURIComponent(body)}`;
     setPrepared(true);
   }
 

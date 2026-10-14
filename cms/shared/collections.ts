@@ -12,7 +12,13 @@ export const socialPlatforms = {
 } as const;
 export type SocialPlatform = keyof typeof socialPlatforms;
 export type SocialLink = { platform: SocialPlatform; href: string };
-export type GlobalDocument = { schemaVersion: 5; title: string; phone: string; email: string; socials: SocialLink[] };
+export type GlobalDocument = { schemaVersion: 5; title: string; phone: string; email: string; formRecipientEmail?: string; socials: SocialLink[] };
+
+function emailAddress(value: unknown, label: string) {
+  const email = text(value, label, 254, true).trim();
+  if (!/^[a-zA-Z0-9.!#$&'*+\/=^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/.test(email)) throw new InputError(`Enter a valid ${label}.`);
+  return email;
+}
 
 export function validateReviews(value: unknown): ReviewsDocument {
   const doc = record(value);
@@ -40,13 +46,14 @@ export function validateReviews(value: unknown): ReviewsDocument {
 
 export function validateGlobal(value: unknown): GlobalDocument {
   const doc = record(value);
-  exactKeys(doc, ["schemaVersion", "title", "phone", "email", "socials"], "global settings");
+  exactKeys(doc, ["schemaVersion", "title", "phone", "email", "formRecipientEmail", "socials"], "global settings");
   if (doc.schemaVersion !== 5) throw new InputError("Unsupported global settings version.");
   const phone = text(doc.phone, "phone", 40, true).trim();
   const digits = phone.replace(/\D/g, "");
   if (!/^\+?[0-9 ()\-\.]+$/.test(phone) || digits.length < 7 || digits.length > 15) throw new InputError("Enter a valid phone number, including country code outside the US.");
-  const email = text(doc.email, "email", 254, true).trim();
-  if (!/^[a-zA-Z0-9.!#$&'*+\/=^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/.test(email)) throw new InputError("Enter a valid email address.");
+  const email = emailAddress(doc.email, "public email address");
+  // Optional only for older snapshots. Never rewrite historical JSON while reading it.
+  const recipient = Object.hasOwn(doc, "formRecipientEmail") ? { formRecipientEmail: emailAddress(doc.formRecipientEmail, "form recipient email address") } : {};
   if (!Array.isArray(doc.socials) || doc.socials.length > Object.keys(socialPlatforms).length) throw new InputError("Invalid social links.");
   const seen = new Set<string>();
   const socials = doc.socials.map(value => {
@@ -62,7 +69,7 @@ export function validateGlobal(value: unknown): GlobalDocument {
       !(socialPlatforms[platform].hosts as readonly string[]).includes(url.hostname) || url.pathname === "/") throw new InputError(`Use a direct HTTPS ${socialPlatforms[platform].label} profile URL.`);
     return { platform, href };
   });
-  return { schemaVersion: 5, title: text(doc.title, "title", 200, true), phone, email, socials };
+  return { schemaVersion: 5, title: text(doc.title, "title", 200, true), phone, email, ...recipient, socials };
 }
 
 export function favoriteReviews(document: ReviewsDocument) {

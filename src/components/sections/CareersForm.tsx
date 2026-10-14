@@ -30,7 +30,7 @@ export default function CareersForm() {
       `Additional: ${d.get("additional")}`,
     ].join("\n");
 
-    window.location.href = `${site.emailHref}?subject=${encodeURIComponent(
+    window.location.href = `${site.formRecipientHref}?subject=${encodeURIComponent(
       "Employment application from breezehc.com",
     )}&body=${encodeURIComponent(body)}`;
     setSent(true);

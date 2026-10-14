@@ -20,4 +20,4 @@ export function createReviewsSeed(home: HomeDocument = homeSeed) {
 }
 
 // The old social URLs are platform homepages, not client profiles; publish real profiles through Global.
-export const globalSeed: GlobalDocument = { schemaVersion: 5, title: "Global settings", phone: site.phone, email: site.email, socials: [] };
+export const globalSeed: GlobalDocument = { schemaVersion: 5, title: "Global settings", phone: site.phone, email: site.email, formRecipientEmail: site.email, socials: [] };

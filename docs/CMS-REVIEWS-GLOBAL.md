@@ -17,7 +17,12 @@ Both views reuse the original ReviewCard component and CSS. Homepage headings an
 introduction remain in Homepage; its old inline review fields remain in historical
 documents but are superseded by the published Reviews library.
 
-Global controls the business phone, email and footer social profiles. Supported
+Global controls the business phone, public email, separate form-recipient email,
+and footer social profiles. Public email is used for contact links and metadata;
+the form recipient is used by service requests and careers applications. Existing
+forms still open the visitor's mail application, so the recipient is visible there
+and in browser data; this is not a private server-side mail delivery system.
+Supported
 platforms: Facebook, Instagram, YouTube, LinkedIn, TikTok and X. Each platform can
 appear once. Only direct HTTPS profile URLs on approved platform hosts are accepted.
 The old generic Facebook/Instagram homepages were never displayed; they are not
@@ -32,7 +37,7 @@ No SQL migration is required. Two additive documents reuse `cms_pages`,
 | Page ID | Unique stored slug | Schema | Fields | Verification route |
 | --- | --- | --- | --- | --- |
 | `reviews` | `reviews` | 4 | `title`, `items[{id,name,quote,homeQuote,visible}]`, ordered `favoriteIds` | `/reviews` |
-| `global` | `__global` | 5 | `title`, `phone`, `email`, `socials[{platform,href}]` | `/` |
+| `global` | `__global` | 5 | `title`, `phone`, `email`, optional `formRecipientEmail`, `socials[{platform,href}]` | `/` |
 
 `cms/shared/collections.ts` defines types, strict field/size validators, safe social
 hosts and public selection helpers. `collection-seeds.ts` imports all 15 original
@@ -41,6 +46,14 @@ homepage reviewers. If a legacy home has over three featured reviews, all are
 preserved in the library and the first three are initially favorites. Duplicate
 names get separate IDs. Imports are idempotent and do not overwrite drafts.
 Schemas 1/2/3 and immutable historical revisions remain readable and unchanged.
+The additive `formRecipientEmail` field is optional for compatibility with existing
+schema-5 snapshots. Absent values use that snapshot's public email. New imports
+store both explicitly; editing the public email in the admin pins the previous
+recipient so it does not change unintentionally. Both fields are independently
+validated in Next and the Worker. No migration or historical rewrite is required.
+The recipient split passed all 52 CMS tests, lint, TypeScript and an isolated
+production build. Test output: `.local/form-recipient-tests.log` and
+`.local/form-recipient-build.log`. Existing published email values were not changed.
 
 ## APIs and security
 

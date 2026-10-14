@@ -47,7 +47,8 @@ export function GlobalFields({ document, onChange }: { document: GlobalDocument;
   return <>
     <div className={styles.sectionIntro}><h3>Business contact details</h3><p>Publishing updates contact links and form email recipients throughout the website. Admin support details remain separate.</p></div>
     <label className={styles.field}><span>Phone number</span><Input type="tel" value={document.phone} maxLength={40} onChange={event => onChange({ ...document, phone: event.target.value })} /><small>Include a country code for numbers outside the US.</small></label>
-    <label className={styles.field}><span>Email address</span><Input type="email" value={document.email} maxLength={254} onChange={event => onChange({ ...document, email: event.target.value })} /></label>
+    <label className={styles.field}><span>Public email</span><Input type="email" value={document.email} maxLength={254} onChange={event => onChange({ ...document, formRecipientEmail: document.formRecipientEmail ?? document.email, email: event.target.value })} /><small>Displayed in website contact links and contact information.</small></label>
+    <label className={styles.field}><span>Form recipient email</span><Input type="email" value={document.formRecipientEmail ?? document.email} maxLength={254} onChange={event => onChange({ ...document, formRecipientEmail: event.target.value })} /><small>Receives service requests and careers applications. Forms open the visitor's email app with this recipient.</small></label>
     <div className={styles.sectionIntro}><h3>Social media</h3><p>Choose a platform and paste the full HTTPS link to your business profile. Published links appear in the footer.</p></div>
     {document.socials.map((link, index) => <fieldset className={styles.repeatedItem} key={index}><legend>Social link {index + 1}</legend>
       <label className={styles.field}><span>Platform</span><select value={link.platform} onChange={event => onChange({ ...document, socials: document.socials.map((item, at) => at === index ? { platform: event.target.value as SocialPlatform, href: "" } : item) })}>
@@ -71,6 +72,7 @@ export function CollectionPreview({ document }: { document: ReviewsDocument | Gl
     {(view === "home" ? favoriteReviews(document) : orderedReviews(document)).map(item => <ReviewCard key={item.id} name={item.name} quote={item.quote} collapsible={view === "client"} />)}
     {view === "home" && !document.favoriteIds.length && <p>No homepage review cards selected.</p>}
   </> : <><h3>Contact & social links</h3><p><Icon name="phone" /> {document.phone}</p><p><Icon name="mail" /> {document.email}</p>
+    <p><strong>Form recipient</strong><br />{document.formRecipientEmail ?? document.email}</p>
     {document.socials.map(link => <p key={link.platform}><strong>{socialPlatforms[link.platform].label}</strong><br />{link.href || "Add your profile URL"}</p>)}
   </>}</div>;
 }
