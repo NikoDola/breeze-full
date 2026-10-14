@@ -1,7 +1,7 @@
 /* Client review cards and the service layout, scoped away from the homepage. */
 .service-page-section-1 { padding-top: 48px; }
 .service-page-layout-1 { display: block; }
-.service-page-block-1 { max-width: 900px; margin-inline: auto; }
+.service-page-block-1 { max-width: 900px; margin-inline: 0; }
 .service-page-callouts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; margin-top: 45px; }
 .service-page-card-2 { margin: 0; }
 .service-page-card-3 { margin: 0; padding: 32px; border-radius: 34px; background: var(--navy); color: white; }

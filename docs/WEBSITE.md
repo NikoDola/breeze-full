@@ -38,7 +38,7 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 
 ## Routes and content
 
-- Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`. Schedule/emergency cards sit below the full-width service content, followed by `ServiceNavigation.tsx`. It displays other services on desktop and in a native dialog opened by Show all services on mobile.
+- Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`. The service image appears only in the hero, followed by the body copy. Schedule/emergency cards sit below the full-width service content, followed by `ServiceNavigation.tsx`. It displays other services on desktop and in a native dialog opened by Show all services on mobile.
 - `/reviews` (Client in the header) uses the homepage's shared `ReviewCard` with four columns on desktop, two on tablet and one on mobile. The three homepage reviewers appear first, followed by the remaining existing reviews. Long quotes expand through a native Read full review disclosure; all original testimonial text remains available.
 - Company and client routes, including `/about-us`, `/reviews`, `/gallery`, `/careers`, and `/contact-us`, have matching feature pages. Shared page blocks live in `src/components/sections/`.
 - Promotions use `src/featured/promotions/`, `src/featured/summer-promotions/`, and `src/featured/winter-promotions/`, with data in `src/lib/promotions.ts` and `src/content/promotions.json`.
@@ -55,6 +55,7 @@ The CSS is loaded in this order: `src/styles/globals.css`, `src/styles/template-
 - Landing-page layout, cards, and footer: `src/styles/template-2.css`.
 - Interior pages: `src/styles/interior.css`.
 - Client reviews and full-width service layout: `src/styles/reviews-and-services.css`. The desktop/mobile services picker uses `src/components/sections/service-navigation.module.css`.
+- Service hero images use `ParallaxHeroPhoto.tsx` and its CSS module for subtle scroll movement (up to 28px), disabled for reduced-motion preferences. Other page heroes remain static. Service body text aligns with the left edge of the cards below it.
 - Header top strip, logo, button sizing, and mobile header adjustments: `src/styles/header-adjustments.css`.
 - Home hero image layers and five animated, interrupted breeze lines: `src/styles/hero.css`. Each moving dash has an even width and rounded ends. The center line is thickest and slowest; the outer lines are thinnest and fastest. Desktop stacks `public/images/hero-bg.webp`, the SVG lines, and the transparent `public/images/hero-family.webp`; mobile uses `public/images/hero-full.webp`.
 - Earlier shared styles and admin styles: `src/styles/globals.css`.

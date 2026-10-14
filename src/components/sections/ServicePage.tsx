@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import PageHero from "./PageHero";
@@ -18,23 +17,13 @@ export default function ServicePage({ service }: { service: Service }) {
         eyebrow="HVAC Services"
         icon={service.icon}
         image={service.image}
+        parallax
       />
 
       <section className="service-page-section-1">
         <div className="service-page-layout-1">
           {/* Body copy */}
           <div>
-            <div className="service-page-card-1">
-              <Image
-                src={service.image}
-                alt={service.title}
-                width={1200}
-                height={640}
-                sizes="(max-width: 520px) calc(100vw - 32px), (max-width: 1288px) calc(100vw - 48px), 1240px"
-                className="service-page-image-1"
-              />
-            </div>
-
             <div className="service-page-block-1">
               {service.blocks.map((block, i) => {
                 if (block.type === "h3") {
