@@ -2,10 +2,3 @@
   inset-block: -128px;
   transform: translateY(var(--hero-parallax-offset, 0px));
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .photo:global(.inner-hero-photo) {
-    inset-block: 0;
-    transform: none;
-  }
-}
