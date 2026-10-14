@@ -1,5 +1,5 @@
 .photo:global(.inner-hero-photo) {
-  inset-block: -32px;
+  inset-block: -128px;
   transform: translateY(var(--hero-parallax-offset, 0px));
 }
 

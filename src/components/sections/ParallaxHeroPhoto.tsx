@@ -18,7 +18,7 @@ export default function ParallaxHeroPhoto({ image }: { image: string }) {
       frame = 0;
       const bounds = hero!.getBoundingClientRect();
       if (bounds.bottom <= 0 || bounds.top >= window.innerHeight) return;
-      const offset = Math.min(28, Math.max(0, window.scrollY * 0.12));
+      const offset = Math.min(120, Math.max(0, window.scrollY * 0.35));
       photo!.style.setProperty("--hero-parallax-offset", `${offset}px`);
     }
 

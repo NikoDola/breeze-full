@@ -55,7 +55,7 @@ The CSS is loaded in this order: `src/styles/globals.css`, `src/styles/template-
 - Landing-page layout, cards, and footer: `src/styles/template-2.css`.
 - Interior pages: `src/styles/interior.css`.
 - Client reviews and full-width service layout: `src/styles/reviews-and-services.css`. The desktop/mobile services picker uses `src/components/sections/service-navigation.module.css`.
-- Service hero images use `ParallaxHeroPhoto.tsx` and its CSS module for subtle scroll movement (up to 28px), disabled for reduced-motion preferences. Other page heroes remain static. Service body text aligns with the left edge of the cards below it.
+- Service hero images use `ParallaxHeroPhoto.tsx` and its CSS module for scroll movement (up to 120px), disabled for reduced-motion preferences. The image extends beyond the hero edges to keep them covered while moving. Other page heroes remain static. Service body text aligns with the left edge of the cards below it.
 - Header top strip, logo, button sizing, and mobile header adjustments: `src/styles/header-adjustments.css`.
 - Home hero image layers and five animated, interrupted breeze lines: `src/styles/hero.css`. Each moving dash has an even width and rounded ends. The center line is thickest and slowest; the outer lines are thinnest and fastest. Desktop stacks `public/images/hero-bg.webp`, the SVG lines, and the transparent `public/images/hero-family.webp`; mobile uses `public/images/hero-full.webp`.
 - Earlier shared styles and admin styles: `src/styles/globals.css`.
