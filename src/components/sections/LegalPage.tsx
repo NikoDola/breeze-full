@@ -1,6 +1,7 @@
 import PageHero from "./PageHero";
 import CtaBand from "./CtaBand";
 import Icon from "@/components/ui/Icon";
+import PublicEmail from "@/components/ui/PublicEmail";
 import { getSite } from "@/lib/cms/site";
 import type { LegalSection } from "@/lib/legal";
 
@@ -53,7 +54,7 @@ export default async function LegalPage({
               {site.addressLine}, {site.address.country}
               <br />
               Email:{" "}
-              <a href={site.emailHref}>{site.email}</a>
+              <PublicEmail email={site.email} href={site.emailHref} />
               <br />
               Phone: <a href={site.phoneHref}>{site.phone}</a>
             </p>

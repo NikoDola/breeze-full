@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSite } from "@/lib/cms/site";
 import { getPublishedGlobal } from "@/lib/cms/public";
 import Icon from "@/components/ui/Icon";
+import PublicEmail from "@/components/ui/PublicEmail";
 
 const footerLinks = [
   ["HVAC", "/services"], ["Promotions", "/promotions"],
@@ -26,7 +27,7 @@ export default async function TemplateFooter() {
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01z" /></svg>
           {site.phone}
         </a>
-        <a className="footer-email" href={site.emailHref}>{site.email}</a>
+        <PublicEmail className="footer-email" email={site.email} href={site.emailHref} />
         {site.socials.length > 0 && <nav className="footer-socials" aria-label="Social media">{site.socials.map(link => <a key={link.platform} href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`Breeze on ${link.label} (opens in a new tab)`}><Icon name="link" />{link.label}</a>)}</nav>}
       </div>
     </div>

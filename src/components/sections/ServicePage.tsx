@@ -1,14 +1,20 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import Icon from "@/components/ui/Icon";
 import PageHero from "./PageHero";
 import CtaBand from "./CtaBand";
 import ServiceNavigation from "./ServiceNavigation";
 import { services, type Service } from "@/lib/services";
 import { getSite } from "@/lib/cms/site";
+import PublicEmail from "@/components/ui/PublicEmail";
 
 export default async function ServicePage({ service }: { service: Service }) {
   const site = await getSite();
-  const contactText = (text: string) => text.replaceAll("{phone}", site.phone).replaceAll("{email}", site.email);
+  const contactText = (text: string) => {
+    const copy = text.replaceAll("{phone}", site.phone);
+    if (!copy.includes("{email}")) return copy;
+    return copy.split("{email}").map((part, index) => <Fragment key={index}>{index > 0 && <PublicEmail email={site.email} href={site.emailHref} />}{part}</Fragment>);
+  };
   const others = services.filter((s) => s.slug !== service.slug);
 
   return (

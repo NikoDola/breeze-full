@@ -274,7 +274,7 @@ try {
     assert.ok(html.includes('href="https://www.instagram.com/breeze_test/"'), path);
     // Original static data may remain in module payloads, but never visible service copy or links.
     assert.ok(!html.includes('href="tel:+16155239898"'), path);
-    if (path === "/commercial-industrial") assert.ok(html.includes("call +1 615 555 0123 or email cms-test@example.com."));
+    if (path === "/commercial-industrial") assert.ok(html.replace(/<[^>]*>/g, "").includes("call +1 615 555 0123 or email cms-test@example.com."));
     if (path === "/contact-us") assert.ok(html.includes('name="description" content="Call +1 615 555 0123 or email cms-test@example.com.'));
   }
   const globalReadsBefore = collectionReads.global;

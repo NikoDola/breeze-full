@@ -36,6 +36,8 @@ The `/why-choose-breeze` page renders `SmileSection`, `ServicesSection`, `BestSe
 
 Homepage reviews and service area inherit the shared `.section` vertical spacing: 105px on desktop and 75px at widths up to 700px. They use the same `.wrap` horizontal gutters as the preceding sections; avoid adding separate spacing overrides for these two sections.
 
+Public email links use `src/components/ui/PublicEmail.tsx` for an orange envelope matching the phone icon, including the footer, legal contact details, and service copy. The Contact us card retains its existing matching mail badge.
+
 The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer is `src/components/sections/SiteFooter.tsx`. The header owns the navigation links and the mobile menu state.
 
 ## Routes and content
@@ -57,7 +59,7 @@ The CSS is loaded in this order: `src/styles/globals.css`, `src/styles/template-
 
 - Landing-page layout, cards, and footer: `src/styles/template-2.css`.
 - Interior pages: `src/styles/interior.css`.
-- Public hover feedback uses colors, light-blue borders and shadows. Card frames, buttons, text and icons stay stationary. Service, promotion and gallery cards allow a small 4% zoom of only the image within its clipped frame on devices with hover support. Legacy `globals.css` does not add hover movement or image scaling.
+- Public hover feedback uses colors, light-blue borders and shadows. Card frames, buttons, text and icons stay stationary. Service, promotion and gallery cards allow a 10% zoom of only the image within its clipped frame on devices with hover support, with a smooth 600ms transition. Their 2px light-blue outline fades in only on hover; no outline is visible at rest. Legacy `globals.css` does not add hover movement or image scaling.
 - `/services` cards share equal row heights with a 600px minimum, fixed 195px image frames and bottom-aligned Read more links. Rows can grow together if wrapping or enlarged text requires more space. Repairs & Services uses the generated `/images/repairs-service-technician-v2.webp` in its cards and page hero; the original asset remains available elsewhere. See `docs/REPAIRS-IMAGE.md` for the generation prompt.
 - Client reviews and full-width service layout: `src/styles/reviews-and-services.css`. The desktop/mobile services picker uses `src/components/sections/service-navigation.module.css`.
 - Service hero images use `ParallaxHeroPhoto.tsx` and its CSS module for scroll movement (up to 120px), driven by the hero's viewport position. This specifically requested effect remains enabled with reduced-motion preferences; the exception is limited to service hero images. The image extends beyond the hero edges to keep them covered while moving. Other page heroes remain static. Service body text aligns with the left edge of the cards below it.
