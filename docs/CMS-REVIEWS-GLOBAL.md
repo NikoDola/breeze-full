@@ -95,6 +95,31 @@ Test output is stored in ignored `.local/collections-cms-check.log`,
 The original section HTML baseline remains unchanged. Source-file hashes were
 refreshed for the authorized contact wiring and previous approved CSS/card changes.
 
+### Preview verification — 2026-10-14
+
+Implementation commit: `20c0a33` on `cms-testing`. The Vercel Preview build is Ready
+in `iad1`. Test Worker version: `1f62f8f5-798b-4c94-ba29-d48baa3b68ca`.
+Its existing DB binding was verified as `breeze-test-db`
+(`bc8cb3a4-bf92-4be6-82d0-84738ec3a381`), with `breeze-test-assets` unchanged.
+The direct Wrangler D1 query was denied by the provider; existing schema readiness
+and subsequent D1 operations were verified through the authenticated test Worker.
+No schema change was needed.
+
+- Imported all 15 existing reviews and the existing contact details into new
+  documents; verified the old homepage/proof drafts and publications were unchanged.
+- Protected Preview admin contains Reviews and Global navigation; unauthenticated
+  editor requests return 401.
+- Published both unchanged baseline documents through the Next editor API.
+  Both version-1 revisions have confirmed delivery and no delivery errors.
+- Homepage and `/reviews` returned Vercel cache `HIT`; the homepage's existing
+  revision ID remained unchanged. No production resource or `main` was changed.
+
+Preview: https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app/admin-test
+
+Remote result: ignored `.local/collections-preview-results.json`.
+The complete edit/save/publish/restore and zero-Worker-read checks above were run
+locally; remote acceptance published only unchanged baseline content.
+
 ## Release order
 
 1. Deploy compatible Worker code to **breeze-test-api** with its existing
