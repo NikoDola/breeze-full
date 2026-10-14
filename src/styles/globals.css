@@ -1868,27 +1868,6 @@
     .header-block-3:is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
       visibility: visible;
     }
-    .experts-content-icon-2:is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
-      --tw-translate-x: calc(var(--spacing) * .5);
-      translate: var(--tw-translate-x) var(--tw-translate-y);
-    }
-    :is(.about-icon-3,.about-us-icon-3,.careers-form-icon-1,.cta-band-icon-2,.hero-icon-3,.promo-page-icon-2,.promotions-icon-2,.reviews-icon-3,.service-request-form-icon-1,.services-icon-1,.services-icon-2,.services-icon-3,.why-us-icon-2):is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
-      --tw-translate-x: var(--spacing);
-      translate: var(--tw-translate-x) var(--tw-translate-y);
-    }
-    .header-block-3:is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
-      --tw-translate-y: 0px;
-      translate: var(--tw-translate-x) var(--tw-translate-y);
-    }
-    :is(.gallery-image-1,.promotions-image-1,.services-image-1):is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
-      --tw-scale-x: 105%;
-      --tw-scale-y: 105%;
-      --tw-scale-z: 105%;
-      scale: var(--tw-scale-x) var(--tw-scale-y);
-    }
-    .header-icon-3:is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
-      rotate: 180deg;
-    }
     :is(.contact-badge-1,.contact-us-badge-1,.footer-badge-2,.service-page-badge-2,.stats-badge-1):is(:where(:is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.cta-band-button-2,.experts-content-button-1,.footer-link-1,.footer-link-2,.footer-link-3,.gallery-button-1,.header-block-2,.hero-button-1,.promo-page-button-2,.promotions-link-1,.reviews-button-1,.service-page-link-1,.service-request-form-button-1,.services-button-1,.services-link-1,.stats-button-1,.why-us-button-1)):hover *) {
       background-color: var(--color-brand-600);
     }
@@ -1923,14 +1902,6 @@
     color: var(--color-slate-400);
   }
   @media (hover:hover) {
-    :is(.about-button-1,.about-us-button-1,.careers-form-button-1,.contact-link-1,.contact-us-button-1,.contact-us-button-3,.cta-band-button-1,.emergency-bar-button-1,.emergency-button-1,.header-button-2,.hero-button-1,.not-found-button-1,.service-request-form-button-1,.why-us-button-1):hover {
-      --tw-translate-y: calc(var(--spacing) * -.5);
-      translate: var(--tw-translate-x) var(--tw-translate-y);
-    }
-    :is(.promotions-link-1,.services-link-1):hover {
-      --tw-translate-y: calc(var(--spacing) * -1);
-      translate: var(--tw-translate-x) var(--tw-translate-y);
-    }
     :is(.contact-link-1,.contact-us-button-1,.experts-content-button-1,.services-link-1):hover {
       border-color: var(--color-brand-200);
     }

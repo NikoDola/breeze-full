@@ -56,6 +56,7 @@ The CSS is loaded in this order: `src/styles/globals.css`, `src/styles/template-
 
 - Landing-page layout, cards, and footer: `src/styles/template-2.css`.
 - Interior pages: `src/styles/interior.css`.
+- Public hover feedback uses colors, borders and shadows. Cards, buttons, text, icons and images must keep their position and size on hover. Both the legacy rules in `globals.css` and current rules in `template-2.css`/`interior.css` follow this convention.
 - Client reviews and full-width service layout: `src/styles/reviews-and-services.css`. The desktop/mobile services picker uses `src/components/sections/service-navigation.module.css`.
 - Service hero images use `ParallaxHeroPhoto.tsx` and its CSS module for scroll movement (up to 120px), driven by the hero's viewport position. This specifically requested effect remains enabled with reduced-motion preferences; the exception is limited to service hero images. The image extends beyond the hero edges to keep them covered while moving. Other page heroes remain static. Service body text aligns with the left edge of the cards below it.
 - Header top strip, logo, button sizing, and mobile header adjustments: `src/styles/header-adjustments.css`.

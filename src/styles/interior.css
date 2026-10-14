@@ -153,8 +153,8 @@
 .about-us-icon-3 { width: 17px; height: 17px; }
 
 .services-layout-1 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
-.services-link-1 { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d2e3e2; border-radius: 34px; background: var(--paper); color: var(--navy); text-decoration: none; box-shadow: none; transition: transform .2s,border-color .2s; }
-.services-link-1:hover { transform: translateY(-5px); border-color: var(--teal); }
+.services-link-1 { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d2e3e2; border-radius: 34px; background: var(--paper); color: var(--navy); text-decoration: none; box-shadow: none; transition: border-color .2s,box-shadow .2s; }
+.services-link-1:hover { border-color: var(--teal); box-shadow: 0 8px 24px #071d3014; }
 .services-link-1:nth-child(even) { border-radius: 60px 26px 60px 26px; }
 .services-block-1 { position: relative; height: 195px; overflow: hidden; background: #c7e7e9; }
 .services-image-1 { width: 100%; height: 100%; object-fit: cover; }
@@ -183,8 +183,8 @@
 .gallery-layout-1 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
 .gallery-button-1 { position: relative; overflow: hidden; height: 260px; padding: 0; border: 0; border-radius: 31px; background: var(--navy); cursor: pointer; }
 .gallery-button-1:nth-child(3n+2) { border-radius: 55px 20px 55px 20px; }
-.gallery-image-1 { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
-.gallery-button-1:hover .gallery-image-1 { transform: scale(1.05); }
+.gallery-image-1 { width: 100%; height: 100%; object-fit: cover; }
+.gallery-button-1:hover { box-shadow: 0 8px 24px #071d3024; }
 .gallery-text-1 { position: absolute; inset: 0; background: linear-gradient(0deg,#071d30c7,transparent 55%); }
 .gallery-text-2 { position: absolute; left: 20px; right: 20px; bottom: 17px; display: flex; align-items: center; gap: 8px; color: white; text-align: left; font-size: 13px; font-weight: 800; }
 .gallery-icon-1 { width: 18px; height: 18px; color: var(--orange); }
@@ -199,8 +199,8 @@
 
 .promotions-layout-1 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 .promotions-link-1 { position: relative; overflow: hidden; min-height: 390px; border-radius: 38px; background: var(--navy); color: white; text-decoration: none; }
-.promotions-image-1 { width: 100%; height: 100%; min-height: 390px; object-fit: cover; transition: transform .3s; }
-.promotions-link-1:hover .promotions-image-1 { transform: scale(1.04); }
+.promotions-image-1 { width: 100%; height: 100%; min-height: 390px; object-fit: cover; }
+.promotions-link-1:hover { box-shadow: 0 8px 24px #071d3024; }
 .promotions-block-1 { position: absolute; inset: 0; background: linear-gradient(0deg,#071d30ee,#071d3044 70%); }
 .promotions-block-2 { position: absolute; left: 30px; right: 30px; bottom: 30px; }
 .promotions-badge-1 { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 30px; background: var(--orange); font-size: 12px; font-weight: 900; text-transform: uppercase; }
@@ -218,8 +218,8 @@
 .contact-us-heading-1 { margin: 0 0 18px; color: var(--navy); font-size: clamp(42px,4vw,59px); }
 .contact-us-copy-1 { font-size: 17px; line-height: 1.75; }
 .contact-us-layout-2 { display: grid; gap: 12px; margin: 28px 0; }
-.contact-us-button-1 { display: flex; gap: 15px; align-items: center; padding: 18px; border: 1px solid #d3e5e5; border-radius: 23px; background: var(--paper); color: var(--navy); text-decoration: none; transition: transform .2s,border-color .2s; }
-.contact-us-button-1:hover { transform: translateY(-3px); border-color: var(--teal); }
+.contact-us-button-1 { display: flex; gap: 15px; align-items: center; padding: 18px; border: 1px solid #d3e5e5; border-radius: 23px; background: var(--paper); color: var(--navy); text-decoration: none; transition: border-color .2s,box-shadow .2s; }
+.contact-us-button-1:hover { border-color: var(--teal); }
 .contact-us-badge-1 { display: grid; place-items: center; flex: none; width: 50px; height: 50px; border-radius: 17px; background: #d8f0f2; color: var(--teal); }
 .contact-us-icon-1 { width: 23px; height: 23px; }
 .contact-us-text-1 { display: grid; gap: 2px; min-width: 0; }
