@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { cmsOrigin, cmsScope } from "./scope";
+import { throttleEditor } from "./throttle";
 const equal = (a: string, b: string) => timingSafeEqual(createHash("sha256").update(a).digest(), createHash("sha256").update(b).digest());
 function credentials() {
   return cmsScope()?.kind === "live"
@@ -31,4 +32,15 @@ export function protectEditor(request: Request): Response | null {
     return Response.json({ error: "Invalid request origin." }, { status: 403, headers });
   }
   return null;
+}
+
+export async function protectEditorRequest(request: Request): Promise<Response | null> {
+  // Initial Basic-auth challenges do not spend a token. Reject disabled/wrong-host
+  // requests locally. Check the source bucket BEFORE comparing supplied credentials:
+  // a correct password must not turn a throttled guessing attempt into a success.
+  if (editorEnabled() && request.headers.get("host") === new URL(cmsOrigin()!).host && request.headers.has("authorization")) {
+    const limited = await throttleEditor(request);
+    if (limited) return limited;
+  }
+  return protectEditor(request);
 }

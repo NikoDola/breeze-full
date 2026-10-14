@@ -5,6 +5,7 @@ import {
 import { homeSeed, HOME_SOURCE_ID } from "../../../cms/shared/home-seed";
 import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets } from "./media";
 import { environmentEnabled } from "./environment";
+import { consumeRate, limitWorkerSource } from "./throttle";
 
 export interface Env {
   DB: D1Database;
@@ -13,6 +14,8 @@ export interface Env {
   CMS_WRITE_TOKEN?: string;
   MEDIA?: R2Bucket;
   CMS_UPLOAD_ORIGIN?: string;
+  AUTH_RATE_LIMITER?: RateLimit;
+  SERVICE_RATE_LIMITER?: RateLimit;
 }
 class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -20,12 +23,13 @@ class HttpError extends Error {
 type Revision = { id: string; draft_version: number; document_json: string; published_at: string };
 type Job = { id: string; revision_id: string; attempts: number };
 const json = (value: unknown, status = 200) => Response.json(value, {
-  status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
+  status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...(status === 429 ? { "Retry-After": "60" } : {}) },
 });
 const writesEnabled = (env: Env) => environmentEnabled(env) && env.CMS_WRITES_ENABLED === "true" && (env.CMS_WRITE_TOKEN?.length ?? 0) >= 32;
 
 async function authorize(request: Request, env: Env, health = false) {
   if (!environmentEnabled(env) || (env.CMS_WRITE_TOKEN?.length ?? 0) < 32 || (!health && !writesEnabled(env))) throw new HttpError(404, "Not found.");
+  if (!await limitWorkerSource(request, env)) throw new HttpError(429, "Too many requests. Wait 60 seconds, then try again.");
   const authorization = request.headers.get("authorization") ?? "";
   const candidate = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   if (!candidate || candidate.length > 512) throw new HttpError(401, "Unauthorized.");
@@ -171,12 +175,22 @@ export default {
         return row ? json(publication(row)) : json({ error: "Not published." }, 404);
       }
       if (!path.startsWith("/api/admin/")) return json({ error: "Not found." }, 404);
-      await authorize(request, env, ["/api/admin/health", "/api/admin/media/health"].includes(path) && request.method === "GET");
+      const throttleRequest = path === "/api/admin/auth/throttle" && request.method === "POST";
+      await authorize(request, env, throttleRequest || (["/api/admin/health", "/api/admin/media/health"].includes(path) && request.method === "GET"));
+      if (throttleRequest) {
+        if (request.headers.get("content-type") !== "application/json") throw new InputError("Expected JSON.");
+        let input: Record<string, unknown>;
+        try { input = record(JSON.parse(await readBody(request, 256))); }
+        catch (error) { if (error instanceof InputError) throw error; throw new InputError("Invalid JSON."); }
+        if (typeof input.key !== "string" || !/^[a-f0-9]{64}$/.test(input.key) || Object.keys(input).length !== 1) throw new InputError("Invalid rate limit key.");
+        return json(await consumeRate(env.AUTH_RATE_LIMITER, `${env.CMS_ENVIRONMENT}:next:${input.key}`));
+      }
       if (path === "/api/admin/media" || path.startsWith("/api/admin/media/")) return await mediaAdmin(request, env);
       if (request.method === "GET" && path === "/api/admin/health") {
         const columns = await env.DB.prepare("PRAGMA table_info(cms_publish_outbox)").all<{ name: string }>();
         return json({ environment: env.CMS_ENVIRONMENT, writesEnabled: writesEnabled(env),
-          schemaReady: columns.results.some(column => column.name === "lease_token"), deliveryOwner: "nextjs", pages: Object.keys(pages) });
+          schemaReady: columns.results.some(column => column.name === "lease_token"), deliveryOwner: "nextjs", pages: Object.keys(pages),
+          throttlingReady: Boolean(env.AUTH_RATE_LIMITER && env.SERVICE_RATE_LIMITER) });
       }
       if (request.method === "GET" && path === "/api/admin/proof") return json(await editorState(env, pageDefinition(url.searchParams.get("pageId") ?? undefined).id));
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);

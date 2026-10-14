@@ -1,4 +1,4 @@
-import { protectEditor } from "@/lib/cms/access";
+import { protectEditorRequest } from "@/lib/cms/access";
 import { cmsOrigin } from "@/lib/cms/scope";
 import { workerAdmin, workerOrigin } from "@/lib/cms/worker";
 import { InvalidImageError, processImage } from "@/lib/cms/process-image";
@@ -18,7 +18,7 @@ async function checked(response: Response) {
 class MediaRequestError extends Error { constructor(public status: number, message: string) { super(message); } }
 
 export async function GET(request: Request) {
-  const denied = protectEditor(request); if (denied) return denied;
+  const denied = await protectEditorRequest(request); if (denied) return denied;
   try {
     const url = new URL(request.url), path = url.pathname.slice("/api/cms/media".length);
     const image = path.match(/^\/([a-f0-9-]+)\/(thumb|master)$/);
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const denied = protectEditor(request); if (denied) return denied;
+  const denied = await protectEditorRequest(request); if (denied) return denied;
   try {
     if (new URL(request.url).pathname !== "/api/cms/media" || !request.headers.get("content-type")?.startsWith("application/json")) throw new InputError("Invalid media request.");
     const input = record(JSON.parse(await readBody(request)));

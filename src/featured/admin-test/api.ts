@@ -1,11 +1,11 @@
-import { protectEditor } from "@/lib/cms/access";
+import { protectEditorRequest } from "@/lib/cms/access";
 import { workerAdmin } from "@/lib/cms/worker";
 import { deliverPublication, preflight } from "@/lib/cms/delivery";
 import { cmsPageEnabled } from "@/lib/cms/scope";
 import { InputError, LEGACY_URL, importLegacy, pageDefinition, readBody, record, validatePageDocument, expectedVersion } from "../../../cms/shared/contract";
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
 export async function GET(request: Request) {
-  const denied = protectEditor(request); if (denied) return denied;
+  const denied = await protectEditorRequest(request); if (denied) return denied;
   try {
     const pageId = pageDefinition(new URL(request.url).searchParams.get("pageId") ?? "home").id;
     if (!cmsPageEnabled(pageId)) return json({ error: "This page is not enabled for CMS editing." }, 404);
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   }
 }
 export async function POST(request: Request) {
-  const denied = protectEditor(request); if (denied) return denied;
+  const denied = await protectEditorRequest(request); if (denied) return denied;
   try {
     if (!request.headers.get("content-type")?.startsWith("application/json")) throw new InputError("Expected JSON.");
     const input = record(JSON.parse(await readBody(request)));

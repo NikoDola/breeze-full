@@ -11,6 +11,14 @@ const mediaHostname = process.env.VERCEL && process.env.VERCEL_ENV === "producti
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      ...["/admin/:path*", "/admin-test/:path*", "/api/cms/editor/:path*", "/api/cms/media/:path*"].map(source => ({
+        source, headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'none'" }],
+      })),
+      { source: "/admin-test/preview", headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'self'" }] },
+    ];
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [{ protocol: "https", hostname: mediaHostname, port: "", pathname: "/media/**", search: "" },

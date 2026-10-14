@@ -105,6 +105,19 @@ try {
   assert.equal(frame.status, 200);
   assert.equal(frame.headers.get("content-security-policy"), "frame-ancestors 'self'");
   const frameHtml = await frame.text();
+  for (const [response, html] of [[adminPage, adminHtml], [frame, frameHtml]]) {
+    const policy = response.headers.get("content-security-policy-report-only");
+    assert.ok(policy && policy.includes("'strict-dynamic'") && !policy.includes("'unsafe-eval'"));
+    const nonce = policy.match(/'nonce-([^']+)'/)?.[1];
+    assert.ok(nonce);
+    const scripts = [...html.matchAll(/<script\b([^>]*)>/g)];
+    assert.ok(scripts.length > 0);
+    assert.ok(scripts.every(([, attributes]) => attributes.includes(`nonce="${nonce}"`)), `Next scripts missing nonce: ${scripts.filter(([, attributes]) => !attributes.includes(`nonce="${nonce}"`)).map(([, attributes]) => attributes).join(" | ")}`);
+    assert.ok(!response.headers.get("content-security-policy").includes("script-src"), "Script policy is report-only");
+  }
+  assert.notEqual(adminPage.headers.get("content-security-policy-report-only"), frame.headers.get("content-security-policy-report-only"));
+  assert.equal((await fetch(`${origin}/`)).headers.get("content-security-policy-report-only"), null, "Public cached pages are untouched");
+  check("Admin/preview report-only CSP has matching per-response Next script nonces; public pages remain unchanged");
   assert.equal((frameHtml.match(/class="site-header/g) ?? []).length, 1);
   assert.equal((frameHtml.match(/class="site-footer/g) ?? []).length, 1);
   check("Admin has its own navigation without public branding; the protected preview retains the complete website shell");

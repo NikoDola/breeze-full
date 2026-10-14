@@ -9,6 +9,13 @@ import { UndoRedo } from "@tiptap/extensions/undo-redo";
 import { Plugin } from "@tiptap/pm/state";
 import { Fragment, Slice, type Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { fromTiptap } from "./rich-text-adapter";
+import { MAX_BODY_BYTES } from "../../../cms/shared/contract";
+
+function oversizedPaste(...values: string[]) {
+  // Bound the strings before allocating UTF-8 buffers for multibyte text.
+  return values.reduce((size, value) => size + value.length, 0) > MAX_BODY_BYTES ||
+    values.reduce((size, value) => size + new TextEncoder().encode(value).length, 0) > MAX_BODY_BYTES;
+}
 
 // Fixed semantic mark: no user-provided style, color string or attributes.
 const Accent = Mark.create({
@@ -38,6 +45,26 @@ export function headingExtensions(onRejected: (message: string) => void = () => 
           catch (error) { queueMicrotask(() => onRejected(error instanceof Error ? error.message : "This heading is too long.")); return false; }
         },
         props: {
+          handleDOMEvents: {
+            paste(_view, event) {
+              const clipboard = event.clipboardData;
+              const message = clipboard?.files.length ? "Paste text into a heading; images are managed separately."
+                : oversizedPaste(clipboard?.getData("text/html") ?? "", clipboard?.getData("text/plain") ?? "")
+                  ? "The pasted content is too large for a heading." : null;
+              if (!message) return false;
+              event.preventDefault(); onRejected(message); return true;
+            },
+            drop(_view, event) { event.preventDefault(); return true; },
+          },
+          // Also guard programmatic paste and the browser's clipboard fallback before parsing.
+          transformPastedHTML(html) {
+            if (!oversizedPaste(html)) return html;
+            onRejected("The pasted content is too large for a heading."); return "";
+          },
+          transformPastedText(text) {
+            if (!oversizedPaste(text)) return text;
+            onRejected("The pasted content is too large for a heading."); return "";
+          },
           // ProseMirror parses clipboard HTML through the allowlisted schema first.
           // Flatten pasted paragraphs into inline runs with explicit line breaks.
           transformPasted(slice, view) {
@@ -58,8 +85,7 @@ export function headingExtensions(onRejected: (message: string) => void = () => 
           handlePaste(_view, event) {
             const clipboard = event.clipboardData;
             if (clipboard?.files.length) { onRejected("Paste text into a heading; images are managed separately."); return true; }
-            const size = (clipboard?.getData("text/html").length ?? 0) + (clipboard?.getData("text/plain").length ?? 0);
-            if (size > 48 * 1024) { onRejected("The pasted content is too large for a heading."); return true; }
+            if (oversizedPaste(clipboard?.getData("text/html") ?? "", clipboard?.getData("text/plain") ?? "")) { onRejected("The pasted content is too large for a heading."); return true; }
             return false;
           },
         },

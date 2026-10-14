@@ -10,6 +10,10 @@
     "CMS_UPLOAD_ORIGIN": "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app"
   },
   "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "ratelimits": [
+    { "name": "AUTH_RATE_LIMITER", "namespace_id": "2026101401", "simple": { "limit": 120, "period": 60 } },
+    { "name": "SERVICE_RATE_LIMITER", "namespace_id": "2026101402", "simple": { "limit": 600, "period": 60 } }
+  ],
   "d1_databases": [{
     "binding": "DB",
     "database_name": "breeze-test-db",

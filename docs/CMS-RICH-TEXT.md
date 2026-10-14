@@ -65,6 +65,10 @@ the UTF-8 payload size and reads current content, not a delayed preview snapshot
 
 ## Verification and release evidence
 
+For the subsequent paste-before-parse fix, native authentication throttling and
+admin report-only CSP rollout, see [CMS-SECURITY-HARDENING.md](CMS-SECURITY-HARDENING.md).
+The original feature-release evidence below is retained for the rollback record.
+
 - Compatibility commit: `ae7e0f7`.
 - Compatible Preview: `https://breeze-full-4z05cqvve-nikodolas-projects.vercel.app`.
 - Test Worker version: `0dc9650c-1340-4b68-8bbf-4ce3cef29d61`.

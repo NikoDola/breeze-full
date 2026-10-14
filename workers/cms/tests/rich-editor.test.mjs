@@ -29,12 +29,39 @@ test("rich-text editing: paste safety, limits, selection, undo, controlled state
   dom.window.scrollBy = () => {};
   t.after(async () => { await new Promise(resolve => setTimeout(resolve, 25)); dom.window.close(); for (const [key, descriptor] of saved) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key]; } });
   const { Editor } = require("@tiptap/core");
+  const { DOMParser: ProseMirrorParser } = require("@tiptap/pm/model");
   const { headingExtensions } = await load("src/featured/admin-test/rich-text-extensions.ts");
   const { toTiptap, fromTiptap } = await load("src/featured/admin-test/rich-text-adapter.ts");
   const { sameEditorDocument } = await load("cms/shared/editor-document.ts");
   const { editableHome } = await load("cms/shared/home.ts");
   const { homeSeed } = await load("cms/shared/home-seed.ts");
   const plain = text => ({ version: 1, content: text ? [{ type: "text", text }] : [] });
+
+  await t.test("oversized clipboard HTML/text and files stop before any ProseMirror parsing", () => {
+    let rejection = "", parses = 0;
+    const engine = new Editor({ element: document.createElement("div"), extensions: headingExtensions(message => { rejection = message; }), content: toTiptap(plain("Keep this")) });
+    const parser = ProseMirrorParser.fromSchema(engine.schema);
+    engine.setOptions({ editorProps: { clipboardParser: { parseSlice(...args) { parses++; return parser.parseSlice(...args); } } } });
+    try {
+      for (const data of [
+        { html: '<p>' + 'x'.repeat(50000) + '</p>' },
+        { text: 'x'.repeat(50000) },
+        { text: 'é'.repeat(25000) }, // UTF-8 bytes, not just JS string length.
+        { files: [{}] },
+      ]) {
+        rejection = "";
+        const event = new window.Event("paste", { bubbles: true, cancelable: true });
+        Object.defineProperty(event, "clipboardData", { value: { files: data.files ?? [], getData: type => type === "text/html" ? data.html ?? "" : data.text ?? "" } });
+        engine.view.dom.dispatchEvent(event);
+        assert.equal(event.defaultPrevented, true); assert.ok(rejection);
+        assert.equal(parses, 0); assert.equal(engine.getText(), "Keep this");
+      }
+      const event = new window.Event("paste", { bubbles: true, cancelable: true });
+      Object.defineProperty(event, "clipboardData", { value: { files: [], getData: type => type === "text/html" ? '<strong>OK</strong>' : 'OK' } });
+      engine.view.dom.dispatchEvent(event);
+      assert.equal(parses, 1); assert.ok(engine.getHTML().includes("<strong>OK</strong>"));
+    } finally { engine.destroy(); }
+  });
 
   await t.test("clipboard preserves supported formatting, flattens blocks and strips scripts/links/styles", () => {
     const engine = new Editor({ element: document.createElement("div"), extensions: headingExtensions(), content: toTiptap(plain("")), enableInputRules: false, enablePasteRules: false });

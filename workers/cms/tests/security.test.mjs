@@ -128,3 +128,65 @@ test("webhook HMAC expires and covers timestamp plus exact body", async () => {
   assert.equal(await verify(secret, old, body, await sign(secret, old, body)), false);
   assert.equal(await verify(secret, timestamp, body, "invalid"), false);
 });
+
+test("distributed editor gate limits before password comparison and survives outages without bypassing auth", async () => {
+  const { protectEditorRequest } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+  const { throttleKey } = await loadServerModule(new URL("../../../src/lib/cms/throttle.ts", import.meta.url));
+  const saved = { ...process.env }, originalFetch = globalThis.fetch, originalWarn = console.warn;
+  const password = randomBytes(32).toString("hex");
+  let calls = 0, success = true, outage = false;
+  try {
+    Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing", CMS_LIVE_ENABLED: "false",
+      CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app",
+      CMS_WORKER_URL: "https://breeze-test-api.nikodola.workers.dev", CMS_TEST_USERNAME: "tester", CMS_TEST_PASSWORD: password,
+      CMS_WRITE_TOKEN: randomBytes(32).toString("hex") });
+    console.warn = () => {};
+    const origin = process.env.CMS_TEST_ORIGIN;
+    const headers = { host: new URL(origin).host, origin, "x-cms-request": "editor", "x-vercel-forwarded-for": "203.0.113.5",
+      authorization: `Basic ${Buffer.from(`tester:${password}`).toString("base64")}` };
+    globalThis.fetch = async (url, init) => {
+      calls++; assert.equal(url, process.env.CMS_WORKER_URL + "/api/admin/auth/throttle");
+      assert.equal(init.headers.Authorization, `Bearer ${process.env.CMS_WRITE_TOKEN}`);
+      const body = JSON.parse(init.body); assert.match(body.key, /^[a-f0-9]{64}$/);
+      assert.ok(!init.body.includes(password) && !init.body.includes("203.0.113.5"));
+      if (outage) throw new Error("offline");
+      return Response.json({ success, degraded: false });
+    };
+    const request = extra => new Request(origin + "/api/cms/editor", { method: "POST", headers: { ...headers, ...extra } });
+    assert.equal(await protectEditorRequest(request()), null);
+    assert.equal((await protectEditorRequest(request({ authorization: "Basic wrong" }))).status, 401);
+    success = false;
+    const blocked = await protectEditorRequest(request());
+    assert.equal(blocked.status, 429); assert.equal(blocked.headers.get("retry-after"), "60");
+    assert.equal((await protectEditorRequest(request({ authorization: "Basic another-guess" }))).status, 429);
+    success = true; assert.equal(await protectEditorRequest(request()), null, "window recovery does not need account unlock");
+    outage = true;
+    assert.equal(await protectEditorRequest(request()), null, "limiter outage cannot lock out valid admins");
+    assert.equal((await protectEditorRequest(request({ authorization: "Basic wrong" }))).status, 401);
+    assert.equal((await protectEditorRequest(request({ origin: "https://evil.example" }))).status, 403);
+    const before = calls;
+    assert.equal((await protectEditorRequest(new Request(origin, { headers: { host: new URL(origin).host } }))).status, 401);
+    assert.equal(calls, before, "normal Basic challenge is free");
+    const key = throttleKey(new Headers(headers));
+    assert.equal(throttleKey(new Headers({ ...headers, "x-forwarded-for": "198.51.100.8", "x-real-ip": "198.51.100.8" })), key);
+    assert.notEqual(throttleKey(new Headers({ ...headers, "x-vercel-forwarded-for": "203.0.113.6" })), key);
+    assert.equal(throttleKey(new Headers({ ...headers, "x-vercel-forwarded-for": "fake, 203.0.113.5" })), null);
+    Object.assign(process.env, { VERCEL: "", VERCEL_ENV: "development", CMS_TEST_ORIGIN: "http://localhost:3000" });
+    assert.equal(throttleKey(new Headers(headers)), throttleKey(new Headers({ ...headers, "x-vercel-forwarded-for": "203.0.113.6" })));
+  } finally {
+    globalThis.fetch = originalFetch; console.warn = originalWarn;
+    for (const name of Object.keys(process.env)) if (!(name in saved)) delete process.env[name];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("report-only CSP permits admin preview/media and has no production unsafe-eval", async () => {
+  const { adminReportPolicy } = await loadServerModule(new URL("../../../src/lib/cms/csp.ts", import.meta.url));
+  const policy = adminReportPolicy("test-nonce", false, "https://breeze-test-api.nikodola.workers.dev");
+  assert.ok(policy.includes("'nonce-test-nonce' 'strict-dynamic'"));
+  assert.ok(!policy.includes("'unsafe-eval'"));
+  assert.ok(policy.includes("style-src 'self' 'unsafe-inline'"));
+  assert.ok(policy.includes("frame-src 'self' https://www.google.com"));
+  assert.ok(policy.includes("connect-src 'self' https://breeze-test-api.nikodola.workers.dev"));
+  assert.ok(adminReportPolicy("test", true).includes("'unsafe-eval'"));
+});

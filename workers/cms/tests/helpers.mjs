@@ -22,6 +22,10 @@ export async function createWorker(options = {}) {
     modules: true, script: await bundle(new URL("../src/index.ts", import.meta.url)),
     compatibilityDate: "2026-10-01", host: "127.0.0.1", port: 0,
     d1Databases: ["DB"], r2Buckets: ["MEDIA"], log: new Log(LogLevel.ERROR),
+    ratelimits: {
+      AUTH_RATE_LIMITER: { namespace_id: "1", simple: { limit: 120, period: 60 } },
+      SERVICE_RATE_LIMITER: { namespace_id: "2", simple: { limit: 600, period: 60 } },
+    },
     bindings: { CMS_ENVIRONMENT: "test", CMS_WRITES_ENABLED: "true", CMS_WRITE_TOKEN: token, ...bindings },
     ...rest,
   }));

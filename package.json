@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint src cms workers/cms/src next.config.mjs",
     "cms:check": "npm --prefix workers/cms run typecheck && npm --prefix workers/cms test",
     "cms:proof": "node workers/cms/tests/local-proof.mjs",
     "cms:preview-proof": "node --env-file=.local/cms-preview.env --env-file=.env.local workers/cms/tests/preview-proof.mjs",
@@ -36,7 +37,9 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "eslint": "10.12.0",
     "jsdom": "26.1.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "typescript-eslint": "8.71.2"
   }
 }
