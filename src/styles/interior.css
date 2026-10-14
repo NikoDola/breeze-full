@@ -209,6 +209,16 @@
   .promotions-link-1:hover .promotions-image-1,
   .gallery-button-1:hover .gallery-image-1 { transform: scale(1.1); }
 }
+/* Keep the explicitly requested card transitions visible under reduced motion.
+   The global motion preference still applies to every other site effect. */
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  :is(.service-image img,.services-image-1,.promotions-image-1,.gallery-image-1) {
+    transition-duration: .6s !important;
+  }
+  :is(.service-card,.services-link-1,.promotions-link-1,.gallery-button-1) {
+    transition-duration: .35s !important;
+  }
+}
 .promotions-block-1 { position: absolute; inset: 0; background: linear-gradient(0deg,#071d30ee,#071d3044 70%); }
 .promotions-block-2 { position: absolute; left: 30px; right: 30px; bottom: 30px; }
 .promotions-badge-1 { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 30px; background: var(--orange); font-size: 12px; font-weight: 900; text-transform: uppercase; }
