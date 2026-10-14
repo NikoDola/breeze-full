@@ -38,7 +38,7 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 
 ## Routes and content
 
-- Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`. `ServiceNavigation.tsx` displays other services above the content on desktop and in a native dialog opened by Show all services on mobile. Schedule/emergency cards sit below the full-width service content.
+- Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`. Schedule/emergency cards sit below the full-width service content, followed by `ServiceNavigation.tsx`. It displays other services on desktop and in a native dialog opened by Show all services on mobile.
 - `/reviews` (Client in the header) uses the homepage's shared `ReviewCard` with four columns on desktop, two on tablet and one on mobile. The three homepage reviewers appear first, followed by the remaining existing reviews. Long quotes expand through a native Read full review disclosure; all original testimonial text remains available.
 - Company and client routes, including `/about-us`, `/reviews`, `/gallery`, `/careers`, and `/contact-us`, have matching feature pages. Shared page blocks live in `src/components/sections/`.
 - Promotions use `src/featured/promotions/`, `src/featured/summer-promotions/`, and `src/featured/winter-promotions/`, with data in `src/lib/promotions.ts` and `src/content/promotions.json`.

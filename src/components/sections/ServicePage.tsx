@@ -22,7 +22,6 @@ export default function ServicePage({ service }: { service: Service }) {
 
       <section className="service-page-section-1">
         <div className="service-page-layout-1">
-          <ServiceNavigation services={others.map(({ slug, title, icon }) => ({ slug, title, icon }))} />
           {/* Body copy */}
           <div>
             <div className="service-page-card-1">
@@ -107,6 +106,7 @@ export default function ServicePage({ service }: { service: Service }) {
               </Link>
             </div>
           </div>
+          <ServiceNavigation services={others.map(({ slug, title, icon }) => ({ slug, title, icon }))} />
         </div>
       </section>
 
