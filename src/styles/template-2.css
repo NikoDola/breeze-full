@@ -69,3 +69,8 @@ section[id]{scroll-margin-top:95px}
 
 a[href^="tel:"] svg{color:var(--orange)}
 /* Reviews and service area inherit the shared .section spacing at every breakpoint. */
+
+/* Keep service-card labels still while zooming inside the photo frame. */
+.service-card,.service-card:hover{border-color:var(--aqua)}
+.service-image img{transition:transform .3s ease}
+@media(hover:hover){.service-card:hover .service-image img{transform:scale(1.04)}}

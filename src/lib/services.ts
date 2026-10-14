@@ -88,7 +88,7 @@ export const services: Service[] = [
     title: "Repairs & Services",
     tagline: "Yep. We Fix It.",
     icon: "wrench",
-    image: "/template-2/repair-technician.jpg",
+    image: "/images/repairs-service-technician-v2.webp",
     blurb:
       "When your heating or cooling system malfunctions, Breeze's home climate specialists are there in a jiffy, working to preserve your safety and restore optimal temperatures.",
     blocks: [

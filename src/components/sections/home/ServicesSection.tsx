@@ -3,7 +3,7 @@ import Link from "next/link";
 const serviceCards = [
   { title: "Heating", href: "/heating", image: "/template-2/heating.png" },
   { title: "Cooling", href: "/cooling", image: "/template-2/cooling-photo.jpg" },
-  { title: "Repairs & Services", href: "/repairs-and-services", image: "/template-2/repair-technician.jpg" },
+  { title: "Repairs & Services", href: "/repairs-and-services", image: "/images/repairs-service-technician-v2.webp" },
   { title: "Mini-split Systems", href: "/mini-split-systems", image: "/template-2/mini-split-photo.jpg" },
   { title: "Water heater solutions", href: "/water-heater-solutions", image: "/images/Guy-water-heating-solution-full.jpg" },
   { title: "Indoor quality", href: "/indoor-quality", image: "/images/Indoor-quality.png" },
