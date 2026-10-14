@@ -34,6 +34,8 @@ these original components in order. See [CMS-HOMEPAGE-MIGRATION.md](CMS-HOMEPAGE
 
 The `/why-choose-breeze` page renders `SmileSection`, `ServicesSection`, `BestSection`, and `StorySection` in that order beneath its hero, followed by `ExpertsContent`.
 
+Homepage reviews and service area inherit the shared `.section` vertical spacing: 105px on desktop and 75px at widths up to 700px. They use the same `.wrap` horizontal gutters as the preceding sections; avoid adding separate spacing overrides for these two sections.
+
 The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer is `src/components/sections/SiteFooter.tsx`. The header owns the navigation links and the mobile menu state.
 
 ## Routes and content
