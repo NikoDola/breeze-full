@@ -3,6 +3,7 @@ import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import PageHero from "./PageHero";
 import CtaBand from "./CtaBand";
+import ServiceNavigation from "./ServiceNavigation";
 import { services, type Service } from "@/lib/services";
 import { site } from "@/lib/site";
 
@@ -21,6 +22,7 @@ export default function ServicePage({ service }: { service: Service }) {
 
       <section className="service-page-section-1">
         <div className="service-page-layout-1">
+          <ServiceNavigation services={others.map(({ slug, title, icon }) => ({ slug, title, icon }))} />
           {/* Body copy */}
           <div>
             <div className="service-page-card-1">
@@ -29,6 +31,7 @@ export default function ServicePage({ service }: { service: Service }) {
                 alt={service.title}
                 width={1200}
                 height={640}
+                sizes="(max-width: 520px) calc(100vw - 32px), (max-width: 1288px) calc(100vw - 48px), 1240px"
                 className="service-page-image-1"
               />
             </div>
@@ -50,7 +53,9 @@ export default function ServicePage({ service }: { service: Service }) {
                 );
               })}
             </div>
+          </div>
 
+          <div className="service-page-callouts">
             {/* Schedule it */}
             <div className="service-page-card-2">
               <div className="service-page-layout-2">
@@ -82,30 +87,6 @@ export default function ServicePage({ service }: { service: Service }) {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Sidebar: other services */}
-          <aside className="service-page-aside-1">
-            <h2 className="service-page-heading-2">
-              Other services
-            </h2>
-            <nav className="service-page-nav-1">
-              {others.map((s) => (
-                <Link
-                  key={s.slug}
-                  href={`/${s.slug}`}
-                  className="service-page-link-1"
-                >
-                  <span className="service-page-badge-2">
-                    <Icon name={s.icon} className="service-page-icon-3" />
-                  </span>
-                  <span className="service-page-text-1">
-                    {s.title}
-                  </span>
-                </Link>
-              ))}
-            </nav>
-
             <div className="service-page-card-3">
               <span className="service-page-badge-3">
                 <Icon name="bolt" className="service-page-icon-4" />
@@ -125,7 +106,7 @@ export default function ServicePage({ service }: { service: Service }) {
                 <Icon name="arrow" className="service-page-icon-5" />
               </Link>
             </div>
-          </aside>
+          </div>
         </div>
       </section>
 

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import PageHero from "@/components/sections/PageHero";
 import CtaBand from "@/components/sections/CtaBand";
-import Icon from "@/components/ui/Icon";
+import ReviewCard from "@/components/ui/ReviewCard";
 import { reviews } from "@/lib/reviews";
+import { homeSeed } from "../../../cms/shared/home-seed";
 
 export const metadata: Metadata = {
   title: "Reviews",
@@ -11,6 +12,12 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
+  const featured = homeSeed.slots.reviews.content.items;
+  const featuredNames = new Set(featured.map(review => review.name));
+  const clientReviews = [
+    ...featured.map(review => ({ name: review.name, text: reviews.find(item => item.name === review.name)?.text ?? review.quote })),
+    ...reviews.filter(review => !featuredNames.has(review.name)),
+  ];
   return (
     <>
       <PageHero
@@ -21,41 +28,9 @@ export default function Page() {
         image="/images/Why-We-Should-At-Home.jpg"
       />
 
-      <section className="reviews-section-1">
-        <div className="reviews-block-1">
-          {reviews.map((r) => (
-            <figure
-              key={r.name}
-              className="reviews-figure-1"
-            >
-              <div className="reviews-layout-1">
-                <Icon
-                  name="quote"
-                  className="reviews-icon-1"
-                />
-                <span className="reviews-text-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Icon
-                      key={i}
-                      name="star"
-                      className="reviews-icon-2"
-                    />
-                  ))}
-                </span>
-              </div>
-
-              <blockquote className="reviews-copy-1">
-                {r.text}
-              </blockquote>
-
-              <figcaption className="reviews-figcaption-1">
-                <span className="reviews-badge-1">
-                  {r.name.charAt(0)}
-                </span>
-                <span className="reviews-text-2">{r.name}</span>
-              </figcaption>
-            </figure>
-          ))}
+      <section className="section reviews client-reviews" aria-label="Client reviews">
+        <div className="wrap review-grid">
+          {clientReviews.map(review => <ReviewCard key={review.name} name={review.name} quote={review.text} collapsible />)}
         </div>
       </section>
 

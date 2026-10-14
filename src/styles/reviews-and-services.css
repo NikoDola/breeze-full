@@ -1,0 +1,33 @@
+/* Client review cards and the service layout, scoped away from the homepage. */
+.service-page-section-1 { padding-top: 48px; }
+.service-page-layout-1 { display: block; }
+.service-page-block-1 { max-width: 900px; margin-inline: auto; }
+.service-page-callouts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; margin-top: 45px; }
+.service-page-card-2 { margin: 0; }
+.service-page-card-3 { margin: 0; padding: 32px; border-radius: 34px; background: var(--navy); color: white; }
+
+.client-reviews { padding: 70px 0 100px; }
+.client-reviews .review-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.client-reviews .review-card { width: 100%; min-height: 320px; padding: 26px; }
+.client-reviews .review-card:nth-child(3n+1) { background: var(--paper); }
+.client-reviews .review-card:nth-child(3n+2) { background: #d9eef0; }
+.client-reviews .review-card:nth-child(3n+3) { background: #ffdfbd; }
+.client-reviews .review-card blockquote { text-transform: none; }
+.review-details summary { cursor: pointer; list-style: none; }
+.review-details summary::-webkit-details-marker { display: none; }
+.review-details summary:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; border-radius: 4px; }
+.review-expand-label, .review-collapse-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 22px; font-size: 13px; font-weight: 750; }
+.review-collapse-label, .review-details[open] .review-expand-label, .review-card:has(.review-details[open]) .review-excerpt { display: none; }
+.review-details[open] .review-collapse-label { display: flex; margin-top: 22px; margin-bottom: 0; }
+
+@media (max-width: 1000px) {
+  .client-reviews .review-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 760px) {
+  .service-page-section-1 { padding-top: 32px; }
+  .service-page-callouts { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 520px) {
+  .service-page-card-3 { padding: 25px; }
+  .client-reviews .review-grid { grid-template-columns: minmax(0,1fr); }
+}

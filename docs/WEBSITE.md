@@ -38,7 +38,8 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 
 ## Routes and content
 
-- Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`.
+- Service routes such as `/heating`, `/cooling`, and `/mini-split-systems` live in matching `src/featured/<route>/page.tsx` files. They use `src/components/sections/ServicePage.tsx` and data in `src/lib/services.ts`. `ServiceNavigation.tsx` displays other services above the content on desktop and in a native dialog opened by Show all services on mobile. Schedule/emergency cards sit below the full-width service content.
+- `/reviews` (Client in the header) uses the homepage's shared `ReviewCard` with four columns on desktop, two on tablet and one on mobile. The three homepage reviewers appear first, followed by the remaining existing reviews. Long quotes expand through a native Read full review disclosure; all original testimonial text remains available.
 - Company and client routes, including `/about-us`, `/reviews`, `/gallery`, `/careers`, and `/contact-us`, have matching feature pages. Shared page blocks live in `src/components/sections/`.
 - Promotions use `src/featured/promotions/`, `src/featured/summer-promotions/`, and `src/featured/winter-promotions/`, with data in `src/lib/promotions.ts` and `src/content/promotions.json`.
 - `/admin-test` is the protected visual CMS editor in `src/featured/admin-test/`. `AdminShell.tsx` provides a Brzio-inspired desktop sidebar and a mobile dialog menu, with Homepage navigation, a Leave admin link and support contacts. It has no public header/footer. Homepage editing uses component-specific fields and a protected responsive `/admin-test/preview` iframe that keeps the public website shell. Its CSS modules are scoped to this workspace. `/admin` redirects there after authorization. The legacy JSON-write and filesystem-upload APIs return `410`; `ADMIN_PASSWORD` is no longer used. See `docs/CMS-HOMEPAGE-MIGRATION.md` and `docs/CMS-VISUAL-EDITOR.md`.
@@ -49,10 +50,11 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 
 ## Styling and DevTools
 
-The CSS is loaded in this order: `src/styles/globals.css`, `src/styles/template-2.css`, `src/styles/interior.css`, `src/styles/header-adjustments.css`, then `src/styles/hero.css`. Later files override earlier rules. No CSS framework is used.
+The CSS is loaded in this order: `src/styles/globals.css`, `src/styles/template-2.css`, `src/styles/interior.css`, `src/styles/reviews-and-services.css`, `src/styles/header-adjustments.css`, then `src/styles/hero.css`. Later files override earlier rules. No CSS framework is used.
 
 - Landing-page layout, cards, and footer: `src/styles/template-2.css`.
 - Interior pages: `src/styles/interior.css`.
+- Client reviews and full-width service layout: `src/styles/reviews-and-services.css`. The desktop/mobile services picker uses `src/components/sections/service-navigation.module.css`.
 - Header top strip, logo, button sizing, and mobile header adjustments: `src/styles/header-adjustments.css`.
 - Home hero image layers and five animated, interrupted breeze lines: `src/styles/hero.css`. Each moving dash has an even width and rounded ends. The center line is thickest and slowest; the outer lines are thinnest and fastest. Desktop stacks `public/images/hero-bg.webp`, the SVG lines, and the transparent `public/images/hero-family.webp`; mobile uses `public/images/hero-full.webp`.
 - Earlier shared styles and admin styles: `src/styles/globals.css`.
