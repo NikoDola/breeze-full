@@ -28,7 +28,7 @@ export const homeSectionRegistry = {
   },
   reviews: {
     type: "breeze.home-reviews", version: 1, label: "Reviews",
-    help: "The original review cards keep their five-star presentation. Add, remove, or reorder testimonials here.",
+    help: "Edit the section heading and introduction here. Manage testimonials and homepage favorites in Reviews in the sidebar.",
     fields: {
       heading: line("Heading — first line"), headingAccent: line("Heading — orange second line"), intro: paragraph("Introduction"),
       items: { kind: "array", label: "Testimonials", min: 1, max: 12,

@@ -3,9 +3,9 @@ import Link from "next/link";
 import PageHero from "./PageHero";
 import ServiceRequestForm from "./ServiceRequestForm";
 import Icon from "@/components/ui/Icon";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 
-export default function PromoPage({
+export default async function PromoPage({
   title,
   tagline,
   offer,
@@ -26,6 +26,7 @@ export default function PromoPage({
   otherHref: string;
   otherLabel: string;
 }) {
+  const site = await getSite();
   return (
     <>
       <PageHero

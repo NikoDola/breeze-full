@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { site } from "@/lib/site";
+import { useSite } from "./SiteContext";
 
 const hvacLinks = [
   ["Heating", "/heating"], ["Cooling", "/cooling"],
@@ -22,6 +22,7 @@ const aboutLinks = [
 ] as const;
 
 export default function TemplateHeader() {
+  const site = useSite();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<"hvac" | "about" | null>(null);

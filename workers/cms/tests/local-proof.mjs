@@ -46,10 +46,12 @@ try {
   check("Existing content copied into an isolated local D1 draft");
 
   let publicApiReads = 0, homeApiReads = 0, workerDraftRequests = 0;
+  const collectionReads = { reviews: 0, global: 0 };
   gateway = createServer(async (req, res) => {
     try {
       if (req.url === "/api/public/pages/cms-proof") publicApiReads++;
       if (req.url === "/api/public/pages/home") homeApiReads++;
+      for (const id of Object.keys(collectionReads)) if (req.url === `/api/public/pages/${id}`) collectionReads[id]++;
       if (req.url === "/api/admin/draft") workerDraftRequests++;
       const chunks = []; for await (const chunk of req) chunks.push(chunk);
       const body = Buffer.concat(chunks);
@@ -221,6 +223,74 @@ try {
   assert.equal((await editor()).publication.revisionId, state.publication.revisionId);
   assert.equal(await readFile(join(root, ".next-cms-proof/BUILD_ID"), "utf8"), buildId);
   check("Homepage original content restored by another publication without rebuild; proof revision unchanged");
+  const readPage = async path => {
+    const response = await fetch(origin + path); assert.equal(response.status, 200);
+    return { html: await response.text(), cache: response.headers.get("x-nextjs-cache") };
+  };
+  const originalReviews = await readPage("/reviews");
+  let library = await editor({ action: "import", pageId: "reviews" });
+  const reviewBaseline = structuredClone(library.draft.document);
+  library = await editor({ action: "publish", pageId: "reviews", expectedVersion: library.draft.version });
+  assert.ok(library.delivery?.confirmed_at, JSON.stringify(library.delivery));
+  const extractCards = html => [...html.matchAll(/<figure class="review-card">[\s\S]*?<\/figure>/g)].map(match => match[0]);
+  assert.deepEqual(extractCards((await readPage("/reviews")).html), extractCards(originalReviews.html));
+  assert.deepEqual(extractCards((await homePage()).html), extractCards(originalHome.html));
+  check("First review publication preserves exact homepage and Client review card HTML");
+  const reviewEdit = structuredClone(reviewBaseline);
+  reviewEdit.items.push({ id: "local-proof-review", name: "Isolated test reviewer", quote: "Verified review <script>literal</script>", homeQuote: "Verified homepage excerpt", visible: true });
+  reviewEdit.favoriteIds = ["local-proof-review", ...reviewEdit.favoriteIds.slice(0, 2)];
+  library = await editor({ action: "draft", pageId: "reviews", expectedVersion: library.draft.version, document: reviewEdit });
+  assert.ok(!(await readPage("/reviews")).html.includes("Isolated test reviewer"));
+  assert.ok(!(await homePage()).html.includes("Isolated test reviewer"));
+  library = await editor({ action: "publish", pageId: "reviews", expectedVersion: library.draft.version });
+  assert.ok(library.delivery?.confirmed_at, JSON.stringify(library.delivery));
+  const clientAfter = await readPage("/reviews");
+  assert.ok(clientAfter.html.includes("Verified review &lt;script&gt;literal&lt;/script&gt;"));
+  assert.ok(!clientAfter.html.includes("Verified review <script>"));
+  assert.ok((await homePage()).html.includes("Verified homepage excerpt"));
+  const reviewReadsBefore = collectionReads.reviews;
+  for (let i = 0; i < 3; i++) {
+    assert.equal((await homePage()).cache, "HIT"); assert.equal((await readPage("/reviews")).cache, "HIT");
+  }
+  assert.equal(collectionReads.reviews, reviewReadsBefore);
+  check("Reviews drafts remain private; favorite publish refreshes both routes, escapes HTML and serves cache hits without Worker reads");
+  let global = await editor({ action: "import", pageId: "global" });
+  const globalBaseline = structuredClone(global.draft.document);
+  const globalEdit = { ...globalBaseline, phone: "+1 615 555 0123", email: "cms-test@example.com", socials: [{ platform: "instagram", href: "https://www.instagram.com/breeze_test/" }] };
+  for (const path of ["/", "/contact-us", "/heating", "/commercial-industrial", "/emergency", "/careers", "/privacy-policy"]) await readPage(path);
+  const unsafeGlobal = { ...globalEdit, socials: [{ platform: "instagram", href: "javascript:alert(1)" }] };
+  const beforeRejected = workerDraftRequests;
+  const rejected = await fetch(`${origin}/api/cms/editor`, { method: "POST", headers,
+    body: JSON.stringify({ action: "draft", pageId: "global", expectedVersion: global.draft.version, document: unsafeGlobal }) });
+  assert.equal(rejected.status, 400); assert.equal(workerDraftRequests, beforeRejected);
+  global = await editor({ action: "draft", pageId: "global", expectedVersion: global.draft.version, document: globalEdit });
+  assert.ok(!(await homePage()).html.includes(globalEdit.email));
+  global = await editor({ action: "publish", pageId: "global", expectedVersion: global.draft.version });
+  assert.ok(global.delivery?.confirmed_at, JSON.stringify(global.delivery));
+  for (const path of ["/", "/contact-us", "/heating", "/commercial-industrial", "/emergency", "/careers", "/privacy-policy"]) {
+    const { html } = await readPage(path);
+    assert.ok(html.includes('href="tel:+16155550123"'), path);
+    assert.ok(html.includes('href="mailto:cms-test@example.com"'), path);
+    assert.ok(html.includes('href="https://www.instagram.com/breeze_test/"'), path);
+    // Original static data may remain in module payloads, but never visible service copy or links.
+    assert.ok(!html.includes('href="tel:+16155239898"'), path);
+    if (path === "/commercial-industrial") assert.ok(html.includes("call +1 615 555 0123 or email cms-test@example.com."));
+    if (path === "/contact-us") assert.ok(html.includes('name="description" content="Call +1 615 555 0123 or email cms-test@example.com.'));
+  }
+  const globalReadsBefore = collectionReads.global;
+  for (let i = 0; i < 3; i++) assert.equal((await readPage("/contact-us")).cache, "HIT");
+  assert.equal(collectionReads.global, globalReadsBefore);
+  check("Global publication refreshes cached site contact links, social profiles, service copy and contact metadata; repeat requests make zero Worker reads");
+  library = await editor({ action: "draft", pageId: "reviews", expectedVersion: library.draft.version, document: reviewBaseline });
+  library = await editor({ action: "publish", pageId: "reviews", expectedVersion: library.draft.version });
+  global = await editor({ action: "draft", pageId: "global", expectedVersion: global.draft.version, document: globalBaseline });
+  global = await editor({ action: "publish", pageId: "global", expectedVersion: global.draft.version });
+  assert.ok(library.delivery?.confirmed_at && global.delivery?.confirmed_at);
+  assert.equal((await editor({ action: "retry", pageId: "reviews" })).publication.revisionId, library.publication.revisionId);
+  assert.equal((await editor({ action: "retry", pageId: "global" })).publication.revisionId, global.publication.revisionId);
+  assert.deepEqual(extractCards((await homePage()).html), extractCards(originalHome.html));
+  assert.ok(!(await homePage()).html.includes(globalEdit.email));
+  check("Reviews and Global content restored through new revisions; manual retries preserve revision IDs and original design");
   results.media = await runMediaWorkflow({ origin, worker: workerOrigin, nextFetch: (path,options) => fetch(origin+path,options), editorHeaders: headers, check });
   assert.equal(await readFile(join(root, ".next-cms-proof/BUILD_ID"), "utf8"), buildId);
   results.buildIdUnchanged = true;

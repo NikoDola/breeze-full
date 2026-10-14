@@ -48,7 +48,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "To request emergency service or schedule a heating repair, call 615-523-9898. A qualified technician will be in touch before you know it!",
+      "To request emergency service or schedule a heating repair, call {phone}. A qualified technician will be in touch before you know it!",
   },
   {
     slug: "cooling",
@@ -81,7 +81,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "To request emergency service or schedule a cooling repair, call 615-523-9898. A qualified technician will be in touch before you know it!",
+      "To request emergency service or schedule a cooling repair, call {phone}. A qualified technician will be in touch before you know it!",
   },
   {
     slug: "repairs-and-services",
@@ -112,7 +112,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "To chat with a technician or request a service call, fill out our simple online form. For emergency repairs or immediate service, call 615-523-9898 anytime. You'll speak with a live person 24/7, because personal service is our specialty.",
+      "To chat with a technician or request a service call, fill out our simple online form. For emergency repairs or immediate service, call {phone} anytime. You'll speak with a live person 24/7, because personal service is our specialty.",
   },
   {
     slug: "indoor-quality",
@@ -142,7 +142,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "Breeze utilizes the AirAdvice for Homes™ program to assess and address indoor air quality. Designed to “make the invisible visible,” the system uncovers hidden indoor air quality and energy waste issues in your home. To learn more about the HomeAdvice Air Monitor, you can also give us a buzz at 615-523-9898 to schedule your IAQ appointment!",
+      "Breeze utilizes the AirAdvice for Homes™ program to assess and address indoor air quality. Designed to “make the invisible visible,” the system uncovers hidden indoor air quality and energy waste issues in your home. To learn more about the HomeAdvice Air Monitor, you can also give us a buzz at {phone} to schedule your IAQ appointment!",
   },
   {
     slug: "water-heater-solutions",
@@ -187,7 +187,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "For more information about our tankless water heaters or to schedule an estimate, call us today at 615-523-9898.",
+      "For more information about our tankless water heaters or to schedule an estimate, call us today at {phone}.",
   },
   {
     slug: "mini-split-systems",
@@ -208,7 +208,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "Call 615-523-9898 to schedule a Middle Tennessee mini-split system repair, maintenance service or installation—or to discuss this energy-efficient HVAC technology with our home climate experts.",
+      "Call {phone} to schedule a Middle Tennessee mini-split system repair, maintenance service or installation—or to discuss this energy-efficient HVAC technology with our home climate experts.",
   },
   {
     slug: "energy-audits",
@@ -239,7 +239,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "Ready to begin? Call 615-523-9898 to schedule your home energy audit, or to discuss a new, high-efficiency heating and cooling system with our talented technicians.",
+      "Ready to begin? Call {phone} to schedule your home energy audit, or to discuss a new, high-efficiency heating and cooling system with our talented technicians.",
   },
   {
     slug: "commercial-industrial",
@@ -283,7 +283,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "All commercial building requirements are not the same, and Breeze tailors each maintenance plan to meet your facility-specific needs. To request a commercial service or sales appointment, or get more information about our commercial products and services, call 615-523-9898 or email breezehc@gmail.com.",
+      "All commercial building requirements are not the same, and Breeze tailors each maintenance plan to meet your facility-specific needs. To request a commercial service or sales appointment, or get more information about our commercial products and services, call {phone} or email {email}.",
   },
   {
     slug: "residential",
@@ -296,7 +296,7 @@ export const services: Service[] = [
     blocks: [
       {
         type: "p",
-        text: "You're in luck: Breeze technicians are licensed, certified and trained to keep your Middle Tennessee home comfortable and safe during seasonal extremes. Whether you require system maintenance, service or new installations, you'll find our professionalism and quality unrivaled. Best of all, we proudly guarantee our workmanship—and we recommend products that offer high-performance, low-maintenance benefits. Just call 615-523-9898 or email our team today, and we'll send a trained, certified HVAC professional straight to your doorstep.",
+        text: "You're in luck: Breeze technicians are licensed, certified and trained to keep your Middle Tennessee home comfortable and safe during seasonal extremes. Whether you require system maintenance, service or new installations, you'll find our professionalism and quality unrivaled. Best of all, we proudly guarantee our workmanship—and we recommend products that offer high-performance, low-maintenance benefits. Just call {phone} or email our team today, and we'll send a trained, certified HVAC professional straight to your doorstep.",
       },
       {
         type: "h3",
@@ -318,7 +318,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "Addressing all of your indoor climate concerns, Breeze is Middle Tennessee's #1 choice for residential heating & cooling service. To chat with our team or schedule residential HVAC service in the Middle Tennessee area, call 615-523-9898 today.",
+      "Addressing all of your indoor climate concerns, Breeze is Middle Tennessee's #1 choice for residential heating & cooling service. To chat with our team or schedule residential HVAC service in the Middle Tennessee area, call {phone} today.",
   },
   {
     slug: "property-manager",
@@ -358,7 +358,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "To request an emergency repair, set up a maintenance agreement, or discuss rental property requirements, call 615-523-9898 today. We look forward to partnering with you!",
+      "To request an emergency repair, set up a maintenance agreement, or discuss rental property requirements, call {phone} today. We look forward to partnering with you!",
   },
   {
     slug: "comfort-club",
@@ -381,7 +381,7 @@ export const services: Service[] = [
       { type: "h3", text: "How it Works" },
       {
         type: "p",
-        text: "Joining Breeze's Comfort Club is affordable and convenient. First, fill out our service request form or call 615-523-9898 to schedule an inspection during normal business hours. A technician will assess your equipment for proper operation and set up a Comfort Club Agreement that is tailored to your system, comfort and budget requirements.",
+        text: "Joining Breeze's Comfort Club is affordable and convenient. First, fill out our service request form or call {phone} to schedule an inspection during normal business hours. A technician will assess your equipment for proper operation and set up a Comfort Club Agreement that is tailored to your system, comfort and budget requirements.",
       },
       { type: "h3", text: "About EZ-Pay" },
       {
@@ -394,7 +394,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "Fill out our service request form or call 615-523-9898 to schedule an inspection and set up your Comfort Club Agreement.",
+      "Fill out our service request form or call {phone} to schedule an inspection and set up your Comfort Club Agreement.",
   },
   {
     slug: "financing",
@@ -415,7 +415,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "Contact our team at 615-523-9898 to request a financing application today!",
+      "Contact our team at {phone} to request a financing application today!",
   },
   {
     slug: "wi-fi-and-learning-thermostats",
@@ -443,7 +443,7 @@ export const services: Service[] = [
       },
     ],
     scheduleIt:
-      "To request emergency service or schedule a thermostat installation, call 615-523-9898. A qualified technician will be in touch before you know it!",
+      "To request emergency service or schedule a thermostat installation, call {phone}. A qualified technician will be in touch before you know it!",
   },
 ];
 

@@ -4,9 +4,11 @@ import PageHero from "./PageHero";
 import CtaBand from "./CtaBand";
 import ServiceNavigation from "./ServiceNavigation";
 import { services, type Service } from "@/lib/services";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 
-export default function ServicePage({ service }: { service: Service }) {
+export default async function ServicePage({ service }: { service: Service }) {
+  const site = await getSite();
+  const contactText = (text: string) => text.replaceAll("{phone}", site.phone).replaceAll("{email}", site.email);
   const others = services.filter((s) => s.slug !== service.slug);
 
   return (
@@ -27,15 +29,15 @@ export default function ServicePage({ service }: { service: Service }) {
             <div className="service-page-block-1">
               {service.blocks.map((block, i) => {
                 if (block.type === "h3") {
-                  return <h3 key={i}>{block.text}</h3>;
+                  return <h3 key={i}>{contactText(block.text)}</h3>;
                 }
                 if (block.type === "p") {
-                  return <p key={i}>{block.text}</p>;
+                  return <p key={i}>{contactText(block.text)}</p>;
                 }
                 return (
                   <ul key={i}>
                     {block.items.map((item) => (
-                      <li key={item}>{item}</li>
+                      <li key={item}>{contactText(item)}</li>
                     ))}
                   </ul>
                 );
@@ -55,7 +57,7 @@ export default function ServicePage({ service }: { service: Service }) {
                     Schedule it
                   </h3>
                   <p className="service-page-copy-1">
-                    {service.scheduleIt}
+                    {contactText(service.scheduleIt)}
                   </p>
                   <div className="service-page-layout-3">
                     <a

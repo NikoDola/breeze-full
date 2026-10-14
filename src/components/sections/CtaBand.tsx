@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 
-export default function TemplateCtaBand() {
+export default async function TemplateCtaBand() {
+  const site = await getSite();
   return <section className="inner-cta">
     <div className="wrap inner-cta-grid">
       <div><p className="inner-kicker">A LITTLE BREEZE GOES A LONG WAY</p><h2>Let&apos;s make home feel <em>just right.</em></h2><p>Speak with a real person 24/7. We&apos;ll help you find the next step for your home or business.</p></div>

@@ -6,13 +6,14 @@ import Icon from "@/components/ui/Icon";
 import Input from "@/components/ui/Input";
 import SelectControl from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
-import { site } from "@/lib/site";
+import { useSite } from "./SiteContext";
 
 const expertise = ["HVAC", "ELECTRICAL", "OTHER"];
 const experience = ["Less than 1", "1-3 years", "3-5 years", "5+ years"];
 
 /** Mirrors the fields on breezehc.com/careers. Submits via a pre-filled email. */
 export default function CareersForm() {
+  const site = useSite();
   const [sent, setSent] = useState(false);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {

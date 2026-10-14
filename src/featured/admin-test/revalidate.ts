@@ -19,6 +19,8 @@ export async function POST(request: Request) {
     // Duplicate events are safe. Only manifest-defined paths and tags are accepted.
     revalidateTag(cmsCacheTag(event.pageId), { expire: 0 });
     revalidatePath(event.path);
+    if (event.pageId === "reviews") revalidatePath("/");
+    if (event.pageId === "global") revalidatePath("/", "layout");
     return Response.json({ ok: true, eventId: event.eventId }, { headers });
   } catch (error) {
     if (error instanceof InputError || error instanceof SyntaxError) return Response.json({ error: "Invalid event." }, { status: 400, headers });

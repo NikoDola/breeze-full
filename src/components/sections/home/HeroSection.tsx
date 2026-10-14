@@ -1,6 +1,6 @@
-import { site } from "@/lib/site";
+import { site as defaultSite, type SiteData } from "@/lib/site";
 
-export default function HeroSection() {
+export default function HeroSection({ site = defaultSite }: { site?: SiteData }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-photo" role="img" aria-label="A family relaxing together in a bright, comfortable home">

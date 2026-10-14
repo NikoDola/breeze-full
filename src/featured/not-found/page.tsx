@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const site = await getSite();
   return (
     <section className="not-found-section-1">
       <span className="not-found-badge-1">

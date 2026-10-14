@@ -33,7 +33,7 @@ export function cmsProofEnabled() {
   return Boolean(scope && scope.kind !== "live" && (process.env.CMS_PROOF_ENABLED === "true" ||
     (scope.kind === "local" && process.env.CMS_LOCAL_PROOF_BUILD === "true")));
 }
-export const cmsPageEnabled = (pageId: PageId) => pageId === "home" || cmsProofEnabled();
+export const cmsPageEnabled = (pageId: PageId) => pageId !== "cms-proof" || cmsProofEnabled();
 export function cmsCacheTag(pageId: PageId) {
   const scope = cmsScope();
   if (!scope) throw new Error("CMS deployment is disabled.");

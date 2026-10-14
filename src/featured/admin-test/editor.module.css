@@ -141,3 +141,15 @@
   .saveBar .actions button { width: 100%; min-width: 0; padding-inline: 8px; }
   .fields input, .fields textarea, .fields button { scroll-margin-block-end: 220px; }
 }
+.collectionItem { border: 1px solid #dce3e9; border-radius: 12px; margin-top: 14px; background: white; }
+.collectionItem summary { cursor: pointer; padding: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.collectionItem summary span { display: block; font-size: 12px; font-weight: 400; color: #596779; padding-top: 5px; }
+.collectionBody { padding: 0 18px 18px; }
+.checkField { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.checkField input { width: 18px; height: 18px; accent-color: #167154; }
+.favoriteRow { margin: 12px 0; }
+.collectionPreview { padding: 24px; background: #f7f0e5; overflow-wrap: anywhere; }
+.collectionPreview h3 { margin-bottom: 14px; }
+.collectionPreview p { margin: 12px 0; }
+.collectionPreview figure { margin: 16px 0; }
+.field select { width: 100%; padding: 13px; border: 1px solid #cbd4db; border-radius: 8px; color: #152238; background: white; font: inherit; }

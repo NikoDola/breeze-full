@@ -3,6 +3,8 @@ import {
   readBody, record, validatePageDocument, type Document, type DeliveryClaim, type PageId,
 } from "../../../cms/shared/contract";
 import { homeSeed, HOME_SOURCE_ID } from "../../../cms/shared/home-seed";
+import { createReviewsSeed, globalSeed } from "../../../cms/shared/collection-seeds";
+import { validateHomeDocument } from "../../../cms/shared/home";
 import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets } from "./media";
 import { environmentEnabled } from "./environment";
 import { consumeRate, limitWorkerSource } from "./throttle";
@@ -71,9 +73,10 @@ async function editorState(env: Env, pageId: PageId) {
   };
 }
 async function importContent(env: Env, pageId: PageId, source: unknown) {
-  const original = pageId === "home" ? homeSeed : source;
-  const document = pageId === "home" ? validatePageDocument(pageId, original) : importLegacy(original);
-  const sourceId = pageId === "home" ? HOME_SOURCE_ID : "home-hero", now = new Date().toISOString();
+  const currentHome = pageId === "reviews" ? await readPublication(env, "home") : null;
+  const original = pageId === "home" ? homeSeed : pageId === "reviews" ? createReviewsSeed(currentHome ? validateHomeDocument(JSON.parse(currentHome.document_json)) : homeSeed) : pageId === "global" ? globalSeed : source;
+  const document = pageId === "cms-proof" ? importLegacy(original) : validatePageDocument(pageId, original);
+  const sourceId = pageId === "home" ? HOME_SOURCE_ID : pageId === "cms-proof" ? "home-hero" : `${pageId}-baseline-v1`, now = new Date().toISOString();
   // All inserts are in one transaction; repeated imports never overwrite an edited draft.
   await env.DB.batch([
     env.DB.prepare("INSERT INTO cms_pages (id, slug, page_type) VALUES (?, ?, 'page') ON CONFLICT(id) DO NOTHING").bind(pageId, pages[pageId].slug),
@@ -169,7 +172,7 @@ export default {
       if (!environmentEnabled(env)) return json({ error: "Not found." }, 404);
       if (path.startsWith("/api/media/upload/")) return await mediaUpload(request, env);
       if (path.startsWith("/media/")) return await mediaPublic(request, env);
-      const publicMatch = path.match(/^\/api\/public\/pages\/(cms-proof|home)$/);
+      const publicMatch = path.match(/^\/api\/public\/pages\/(cms-proof|home|reviews|global)$/);
       if (request.method === "GET" && publicMatch) {
         const row = await readPublication(env, pageDefinition(publicMatch[1]).id);
         return row ? json(publication(row)) : json({ error: "Not published." }, 404);

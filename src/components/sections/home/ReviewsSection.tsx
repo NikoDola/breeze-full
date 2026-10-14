@@ -4,6 +4,7 @@ import RichTextContent from "@/components/ui/RichTextContent";
 import ReviewCard from "@/components/ui/ReviewCard";
 
 export default function ReviewsSection({ content = homeSeed.slots.reviews.content }: { content?: ReviewsContent }) {
+  if (!content.items.length) return null;
   return (
     <section className="section reviews" id="reviews" aria-labelledby="reviews-title"><div className="wrap">
       <div className="section-heading reviews-heading"><div><h2 id="reviews-title">{"headingAccent" in content ? <>{content.heading}<br /><em>{content.headingAccent}</em></> : <RichTextContent value={content.heading} />}</h2></div><p>{content.intro}</p></div>

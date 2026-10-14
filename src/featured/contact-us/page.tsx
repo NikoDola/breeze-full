@@ -2,14 +2,19 @@ import type { Metadata } from "next";
 import PageHero from "@/components/sections/PageHero";
 import ServiceRequestForm from "@/components/sections/ServiceRequestForm";
 import Icon from "@/components/ui/Icon";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSite();
+  return {
   title: "Contact us",
   description: `Call ${site.phone} or email ${site.email}. Breeze Heating & Cooling, ${site.addressLine}. A live person answers 24/7.`,
-};
+  };
+}
 
-const details = [
+export default async function Page() {
+  const site = await getSite();
+  const details = [
   {
     icon: "phone",
     label: "Call us now!",
@@ -33,7 +38,6 @@ const details = [
   },
 ];
 
-export default function Page() {
   return (
     <>
       <PageHero

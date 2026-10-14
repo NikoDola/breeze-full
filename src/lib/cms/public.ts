@@ -5,6 +5,7 @@ import { cmsOrigin, cmsCacheTag, cmsProofEnabled } from "./scope";
 import { workerOrigin } from "./worker";
 import { PAGE_ID, validatePageDocument, type Publication, type PageId, type ProofDocument } from "../../../cms/shared/contract";
 import type { HomeDocument } from "../../../cms/shared/home";
+import type { ReviewsDocument, GlobalDocument } from "../../../cms/shared/collections";
 // Metadata and page rendering share one request, including when the fetch uses
 // an AbortSignal (which opts out of Next's automatic fetch deduplication).
 const getPublication = cache(async (pageId: PageId): Promise<Publication | null> => {
@@ -23,7 +24,20 @@ const getPublication = cache(async (pageId: PageId): Promise<Publication | null>
 export const getPublishedProof = cache(async (): Promise<Publication & { document: ProofDocument }> => {
   if (!cmsProofEnabled()) notFound();
   const publication = await getPublication(PAGE_ID);
-  if (!publication || publication.document.schemaVersion === 2) notFound();
+  if (!publication || (publication.document.schemaVersion !== 1 && publication.document.schemaVersion !== 3)) notFound();
+  return { ...publication, document: publication.document };
+});
+
+export const getPublishedReviews = cache(async (): Promise<(Publication & { document: ReviewsDocument }) | null> => {
+  const publication = await getPublication("reviews");
+  if (!publication) return null;
+  if (publication.document.schemaVersion !== 4) throw new Error("Invalid reviews publication.");
+  return { ...publication, document: publication.document };
+});
+export const getPublishedGlobal = cache(async (): Promise<(Publication & { document: GlobalDocument }) | null> => {
+  const publication = await getPublication("global");
+  if (!publication) return null;
+  if (publication.document.schemaVersion !== 5) throw new Error("Invalid global publication.");
   return { ...publication, document: publication.document };
 });
 

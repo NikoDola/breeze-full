@@ -1,10 +1,10 @@
 import PageHero from "./PageHero";
 import CtaBand from "./CtaBand";
 import Icon from "@/components/ui/Icon";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 import type { LegalSection } from "@/lib/legal";
 
-export default function LegalPage({
+export default async function LegalPage({
   title,
   effectiveLabel,
   intro,
@@ -15,6 +15,7 @@ export default function LegalPage({
   intro?: string;
   sections: LegalSection[];
 }) {
+  const site = await getSite();
   return (
     <>
       <PageHero title={title} eyebrow="Legal" />

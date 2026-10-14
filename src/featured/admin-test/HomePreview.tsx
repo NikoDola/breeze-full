@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import HomeContent from "@/components/sections/home/HomeContent";
 import { homeSeed } from "../../../cms/shared/home-seed";
 import { validateHomeDocument, type HomeDocument } from "../../../cms/shared/home";
+import type { ReviewsDocument } from "../../../cms/shared/collections";
+import type { SiteData } from "@/lib/site";
 
-export default function HomePreview() {
+export default function HomePreview({ reviews, site }: { reviews?: ReviewsDocument; site: SiteData }) {
   const [content, setContent] = useState<HomeDocument>(homeSeed);
   useEffect(() => {
     function receive(event: MessageEvent) {
@@ -26,5 +28,5 @@ export default function HomePreview() {
       document.removeEventListener("submit", preventSubmit, true);
     };
   }, []);
-  return <HomeContent document={content} />;
+  return <HomeContent document={content} reviews={reviews} site={site} />;
 }

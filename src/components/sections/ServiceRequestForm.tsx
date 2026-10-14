@@ -7,9 +7,10 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
 import { services } from "@/lib/services";
-import { site } from "@/lib/site";
+import { useSite } from "./SiteContext";
 
 export default function TemplateServiceForm({ compact = false }: { compact?: boolean }) {
+  const site = useSite();
   const [prepared, setPrepared] = useState(false);
 
   useEffect(() => {

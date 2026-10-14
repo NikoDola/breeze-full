@@ -1,6 +1,7 @@
 import data from "@/content/site.json";
+import { socialPlatforms, type GlobalDocument } from "../../cms/shared/collections";
 
-// The editable source of truth lives in src/content/site.json (managed via /admin).
+// Source baseline; published Global settings override contact fields through getSite().
 // Derived fields (tel:/mailto: links, formatted address, maps URL) are computed
 // here so the client only ever edits the raw phone / email / address.
 
@@ -28,6 +29,14 @@ export const site = {
   owner: data.owner,
   socials: (data.socials ?? []) as Social[],
 };
+
+export type SiteData = typeof site;
+export function withGlobalSettings(global: GlobalDocument): SiteData {
+  const digits = global.phone.replace(/\D/g, "");
+  const phoneDigits = !global.phone.startsWith("+") && digits.length === 10 ? `1${digits}` : digits;
+  return { ...site, phone: global.phone, phoneHref: `tel:+${phoneDigits}`, email: global.email,
+    emailHref: `mailto:${encodeURIComponent(global.email).replace("%40", "@")}`, socials: global.socials.map(link => ({ ...link, label: socialPlatforms[link.platform].label })) };
+}
 
 export type NavItem = {
   label: string;

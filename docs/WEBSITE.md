@@ -15,7 +15,7 @@ Read this file before editing the site. The project is a Next.js 16 App Router s
 | `src/components/sections/home/` | Landing-page section components, assembled in `src/featured/home/page.tsx` and `src/featured/why-choose-breeze/page.tsx`. |
 | `src/components/ui/` | Reusable controls: `Button`, `Input`, `Select`, `Textarea`, and `Icon`. Controls preserve any CSS class passed by their parent. |
 | `src/styles/` | All global vanilla CSS. Import order is listed in `src/app/layout.tsx`. |
-| `src/lib/` and `src/content/` | Site data and derived helpers. Business contact details come from `src/content/site.json` through `src/lib/site.ts`; promotions come from `src/content/promotions.json` and `src/lib/promotions.ts`. |
+| `src/lib/` and `src/content/` | Site data and derived helpers. Published Global settings override the `src/content/site.json` contact baseline through `src/lib/cms/site.ts`; promotions come from `src/content/promotions.json` and `src/lib/promotions.ts`. |
 | `public/` | Images, logos, and other served assets. |
 
 ## Landing page sections
@@ -48,6 +48,7 @@ The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer
 - `/cms-proof` is temporarily disabled and returns 404 during normal use. Its navigation item, editor actions and invalidation are also disabled; editor requests without a page ID now target Homepage. Proof drafts, immutable revisions and images are preserved. Isolated `cms:proof` tests retain access; future Preview testing may opt in with `CMS_PROOF_ENABLED=true`. The client/Production site always keeps the proof disabled. See `docs/CMS-CLIENT-LAUNCH.md` and `docs/CMS-MILESTONE-1.md`.
 - The four editable homepage headings use a compact Tiptap editor on `cms-testing`. Template version 2 stores validated inline text/formatting; older template version 1 remains readable. The public renderer stays independent of Tiptap, and draft/publish/retry use the existing workflow. See `docs/CMS-RICH-TEXT.md` for security limits, verification and the required compatible release order.
 - The retained proof editor contains the R2 Images interface, which is unavailable while the proof is disabled. Media storage and APIs are preserved. See `docs/CMS-MEDIA.md` for media schema, API, validation, caching and test instructions.
+- Reviews and Global settings are separate sidebar documents using the same protected draft/publish/retry workflow. Reviews manages the full Client library and up to three homepage favorites; Global manages phone, email and approved social profile links. No SQL migration or new credentials are required. See `docs/CMS-REVIEWS-GLOBAL.md` for schemas, shared contact data, caching and verification.
 - The service and careers forms prepare an email in the visitor's mail application. Their behavior is in `src/components/sections/ServiceRequestForm.tsx` and `CareersForm.tsx`.
 
 ## Styling and DevTools

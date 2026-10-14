@@ -1,4 +1,5 @@
 import { validateHomeDocument, type HomeDocument } from "./home";
+import { validateReviews, validateGlobal, type ReviewsDocument, type GlobalDocument } from "./collections";
 import { InputError, record, text as string } from "./validation";
 import { validatePlacement, type ImageReference } from "./media";
 export { InputError, record } from "./validation";
@@ -9,6 +10,8 @@ export const CACHE_TAG = "cms:preview:cms-testing:page:cms-proof";
 export const pages = {
   "cms-proof": { id: "cms-proof", slug: "cms-proof", path: "/cms-proof", label: "CMS proof", cacheTag: CACHE_TAG },
   home: { id: "home", slug: "", path: "/", label: "Homepage", cacheTag: "cms:preview:cms-testing:page:home" },
+  reviews: { id: "reviews", slug: "reviews", path: "/reviews", label: "Reviews", cacheTag: "cms:preview:cms-testing:page:reviews" },
+  global: { id: "global", slug: "__global", path: "/", label: "Global settings", cacheTag: "cms:preview:cms-testing:page:global" },
 } as const;
 export type PageId = keyof typeof pages;
 export function pageDefinition(value: unknown = PAGE_ID) {
@@ -31,7 +34,7 @@ export type ProofDocument = {
   schemaVersion: 1 | 3; title: string; seoTitle: string; seoDescription: string;
   section: Section;
 };
-export type Document = ProofDocument | HomeDocument;
+export type Document = ProofDocument | HomeDocument | ReviewsDocument | GlobalDocument;
 export type Publication = { revisionId: string; version: number; document: Document; publishedAt: string };
 export type Draft = { version: number; document: Document; updatedAt: string };
 export type Delivery = {
@@ -51,9 +54,13 @@ export function safeRoute(value: string): boolean {
 }
 export function validateDocument(value: unknown): Document {
   if (record(value).schemaVersion === 2) return validateHomeDocument(value);
+  if (record(value).schemaVersion === 4) return validateReviews(value);
+  if (record(value).schemaVersion === 5) return validateGlobal(value);
   return validateProofDocument(value);
 }
 export function validatePageDocument(pageId: PageId, value: unknown): Document {
+  if (pageId === "reviews") return validateReviews(value);
+  if (pageId === "global") return validateGlobal(value);
   return pageId === "home" ? validateHomeDocument(value) : validateProofDocument(value);
 }
 export function validateProofDocument(value: unknown): ProofDocument {

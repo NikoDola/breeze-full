@@ -4,7 +4,7 @@ import PageHero from "@/components/sections/PageHero";
 import ServiceRequestForm from "@/components/sections/ServiceRequestForm";
 import Icon from "@/components/ui/Icon";
 import { emergency } from "@/lib/company";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
 
 export const metadata: Metadata = {
   title: "Emergency HVAC service",
@@ -12,7 +12,8 @@ export const metadata: Metadata = {
     "Breeze technicians are on-call at all hours. A real, live person answers 24/7/365 — fast, friendly and affordable emergency HVAC service in Middle Tennessee.",
 };
 
-export default function Page() {
+export default async function Page() {
+  const site = await getSite();
   return (
     <>
       <PageHero

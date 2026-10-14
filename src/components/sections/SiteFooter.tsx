@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { getSite } from "@/lib/cms/site";
+import { getPublishedGlobal } from "@/lib/cms/public";
+import Icon from "@/components/ui/Icon";
 
 const footerLinks = [
   ["HVAC", "/services"], ["Promotions", "/promotions"],
@@ -7,8 +9,9 @@ const footerLinks = [
   ["About us", "/about-us"], ["Gallery", "/gallery"],
 ] as const;
 
-export default function TemplateFooter() {
-  return <footer className="site-footer">
+export default async function TemplateFooter() {
+  const [site, publication] = await Promise.all([getSite(), getPublishedGlobal()]);
+  return <footer className="site-footer" data-cms-page={publication ? "global" : undefined} data-cms-revision={publication?.revisionId} data-cms-version={publication?.version}>
     <div className="wrap footer-main">
       <div>
         <Link href="/" aria-label="Breeze home"><img src="/template-2/breeze-logo-light.svg" alt="Breeze Heating & Cooling" width="211" height="41" /></Link>
@@ -24,6 +27,7 @@ export default function TemplateFooter() {
           {site.phone}
         </a>
         <a className="footer-email" href={site.emailHref}>{site.email}</a>
+        {site.socials.length > 0 && <nav className="footer-socials" aria-label="Social media">{site.socials.map(link => <a key={link.platform} href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`Breeze on ${link.label} (opens in a new tab)`}><Icon name="link" />{link.label}</a>)}</nav>}
       </div>
     </div>
     <div className="wrap footer-bottom">

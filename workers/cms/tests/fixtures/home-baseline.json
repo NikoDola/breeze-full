@@ -7,12 +7,13 @@
     "AreaSection": "<section class=\"section map-section\" id=\"area\" aria-labelledby=\"area-title\"><div class=\"wrap map-grid\"><div class=\"map-copy\"><h2 id=\"area-title\">Made for Middle <em>Tennessee.</em></h2><p>From Nashville to Brentwood and the communities around them, friendly comfort care is close to home.</p><a class=\"text-link\" href=\"https://www.google.com/maps/search/?api=1&amp;query=7175%20Nolensville%20Road%2C%20Nolensville%2C%20TN%2037135\" target=\"_blank\" rel=\"noopener noreferrer\">Explore Nashville on Google Maps <span aria-hidden=\"true\">↗</span></a></div><div class=\"map-frame\"><iframe title=\"Google Map of Nashville, Tennessee\" src=\"https://www.google.com/maps?q=Nashville%2C%20TN&amp;output=embed\" loading=\"lazy\" referrerPolicy=\"no-referrer-when-downgrade\" allowFullScreen=\"\"></iframe></div></div></section>"
   },
   "protectedFiles": {
-    "src/components/sections/home/HeroSection.tsx": "1155799b48f047af367b1af25f93640563d4fbee64994c946f4661bc4c729272",
-    "src/components/sections/ServiceRequestForm.tsx": "71656635b80a47b4f124e8fa5b4f30357eb30b7f21a3179ec6b859b421a27b93",
-    "src/styles/globals.css": "6e2f8fd829d35f04b551af0795d94f3844818758c04e9d04cb69e57441a2cebf",
-    "src/styles/template-2.css": "653475800c3645f2a5698fa86cfb3b38fcf705721e5a16b0d7db1a74ac612f74",
-    "src/styles/interior.css": "ec455bf908d843ec2b5bf24096bfd0f7c6982a082cd0a8aeb44836cd53823304",
+    "src/components/sections/home/HeroSection.tsx": "a5d62efb945ae98e60f18554784fdd2564adee7d3513623aee957113180ed836",
+    "src/components/sections/ServiceRequestForm.tsx": "f4ee341d44866c0e58d4989124c81dd7e9859534f9365c0a74f9431d0f3c82c4",
+    "src/styles/globals.css": "0bd2366b7fcb958e5f12cedc2945f13f20483fcda05e67aa3afdfc9926148318",
+    "src/styles/template-2.css": "137187f2618502a804e3231c724989a899d146cb731464647e5e03178c02d79f",
+    "src/styles/interior.css": "7d2c2bf244fdf82a337c4205813fcdc9f75a6295c79cda88b0f8a56e21f5f224",
     "src/styles/header-adjustments.css": "56dc40562ef72406c81de89f7473de0416de985526e821453636c6206545466a",
     "src/styles/hero.css": "070867ce626b63243aca0a866e0a3a9c813c014ef1eee9bf33fc0d5840c2f46d"
-  }
+  },
+  "protectedFilesNote": "Refreshed for approved public hover/card styling and published global contact wiring. Original section HTML remains unchanged."
 }

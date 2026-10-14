@@ -11,6 +11,7 @@ import { MAX_BODY_BYTES } from "../../../cms/shared/contract";
 import { sameEditorDocument } from "../../../cms/shared/editor-document";
 import ImageEditor from "./ImageEditor";
 import HomeFields from "./HomeFields";
+import { ReviewsFields, GlobalFields, CollectionPreview } from "./CollectionFields";
 import HomePreviewFrame from "./HomePreviewFrame";
 import { editorStatus, type Operation } from "./editor-state";
 import AdminShell from "./AdminShell";
@@ -135,10 +136,10 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     setEditorReset(value => value + 1);
   }
   const changeSection = (field: keyof Omit<Section, "images">, value: string) => {
-    setDocument(current => current && current.schemaVersion !== 2 ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
+    setDocument(current => current && (current.schemaVersion === 1 || current.schemaVersion === 3) ? { ...current, section: { ...current.section, [field]: value } } : current); setMessage("");
   };
   function changeDetails(field: "title" | "seoTitle" | "seoDescription", value: string) {
-    setDocument(current => current && current.schemaVersion !== 2 ? { ...current, [field]: value } : current); setMessage("");
+    setDocument(current => current && (current.schemaVersion === 1 || current.schemaVersion === 3) ? { ...current, [field]: value } : current); setMessage("");
   }
 
   return <AdminShell pageId={pageId} proofEnabled={proofEnabled} disabled={busy} onPageChange={next => {
@@ -160,13 +161,13 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
     {!document ? <section className={styles.emptyState} aria-busy={busy}>
       <span className={styles.emptyIcon}><Icon name="grid" /></span><h2>{operation === "load" ? "Loading content…" : state ? "Content not initialized" : "Content could not load"}</h2>
-      <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero stay in place." : "Bring your existing Breeze section into this editor to start a draft." : "Load the saved content to start editing."}</p>
+      <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero stay in place." : "Copy the existing website content into a draft. This does not publish or overwrite content." : "Load the saved content to start editing."}</p>
       {state && !state.draft ? <Button className={styles.primaryButton} disabled={busy} onClick={() => void act("import")}>{operation === "import" ? "Preparing content…" : "Copy existing content"}</Button> : !busy && <Button className={styles.secondaryButton} onClick={() => void load()}>Try again</Button>}
     </section> : <>
       <div className={styles.grid}>
         <section className={styles.editPanel} aria-label="Section editor">
           <div className={styles.panelHeading}><h2>Content</h2><span className={styles.smallBadge}>Draft {baseDraft?.version}</span></div>
-          {document.schemaVersion !== 2 && <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
+          {(document.schemaVersion === 1 || document.schemaVersion === 3) && <div className={styles.tabs} role="tablist" aria-label="Editing options">{tabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" role="tab" aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? styles.selectedTab : ""}
             onClick={() => setTab(item.id)} onKeyDown={event => {
               const index = tabs.findIndex(candidate => candidate.id === item.id);
               const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
@@ -174,7 +175,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
             }}><Icon name={item.icon} />{item.label}{item.id === "images" && <span>{document.section.images.length}</span>}</button>)}</div>}
           <form id="cms-editor-form" onSubmit={event => { event.preventDefault(); void act("draft"); }}>
             <fieldset disabled={busy} className={styles.fields}><legend className={styles.srOnly}>Section content</legend>
-              {document.schemaVersion === 2 ? <HomeFields document={document} disabled={busy} resetKey={editorReset} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
+              {document.schemaVersion === 2 ? <HomeFields document={document} disabled={busy} resetKey={editorReset} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 4 ? <ReviewsFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 5 ? <GlobalFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
               <div id="panel-content" role="tabpanel" aria-labelledby="tab-content" hidden={tab !== "content"}>
                 {fields.map(({ key, label, help, max, placeholder, multiline }) => <label className={styles.field} key={key}><span>{label}{key === "headline" && <span className={styles.required}> *</span>}</span><small id={`help-${key}`}>{help}</small>
                   {multiline ? <Textarea value={document.section[key]} maxLength={max} rows={6} placeholder={placeholder} aria-describedby={`help-${key}`} onChange={event => changeSection(key, event.target.value)} />
@@ -187,7 +188,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
                 <label className={styles.field}><span>Bottom note</span><small>Optional supporting text below the button.</small><Textarea value={document.section.bottom_note} maxLength={1000} rows={2} placeholder="Residential & commercial" onChange={event => changeSection("bottom_note", event.target.value)} /></label>
               </div>
               <div id="panel-images" role="tabpanel" aria-labelledby="tab-images" hidden={tab !== "images"}>
-                <ImageEditor images={document.section.images} disabled={busy} onBusyChange={setMediaBusy} onChange={images => { setDocument(current => current && current.schemaVersion !== 2 ? { ...current, schemaVersion: 3, section: { ...current.section, images } } : current); setMessage(""); }} />
+                <ImageEditor images={document.section.images} disabled={busy} onBusyChange={setMediaBusy} onChange={images => { setDocument(current => current && (current.schemaVersion === 1 || current.schemaVersion === 3) ? { ...current, schemaVersion: 3, section: { ...current.section, images } } : current); setMessage(""); }} />
               </div>
               <div id="panel-details" role="tabpanel" aria-labelledby="tab-details" hidden={tab !== "details"}>
                 <div className={styles.sectionIntro}><h3>Page & search details</h3><p>Give this section a name and choose how its test page appears in search results.</p></div>
@@ -207,10 +208,10 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
             <div className={styles.segmented} role="group" aria-label="Preview screen size">{(["desktop", "tablet", "mobile"] as const).map(size => <button key={size} type="button" aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size[0].toUpperCase() + size.slice(1)}</button>)}</div>
           </div>
           {previewDocument?.schemaVersion === 2 ? <HomePreviewFrame document={previewDocument} viewport={viewport} /> : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
-            <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / cms-proof</span><Icon name="shield" /></div>
-            {previewDocument && <CmsProofContent document={previewDocument} preview />}
+            <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / {pageId}</span><Icon name="shield" /></div>
+            {previewDocument && (previewDocument.schemaVersion === 4 || previewDocument.schemaVersion === 5) ? <CollectionPreview document={previewDocument} /> : previewDocument && <CmsProofContent document={previewDocument} preview />}
           </div></div>}
-          {!previewValid && <p className={styles.previewCaption}>Complete the required fields to update the homepage preview. It currently shows the last valid content.</p>}
+          {!previewValid && <p className={styles.previewCaption}>Complete the required fields before saving. The homepage preview keeps its last valid content.</p>}
           <p className={styles.previewCaption}>{previewMode === "draft" ? dirty ? "Showing your unsaved changes. Save a draft before publishing." : "Showing your saved draft." : state?.delivery?.confirmed_at ? "Showing the publication confirmed on the website." : "Showing the saved publication. Website delivery is still pending."} Preview buttons do not navigate.</p>
         </section>
       </div>

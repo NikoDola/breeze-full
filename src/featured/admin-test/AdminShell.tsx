@@ -8,6 +8,7 @@ import css from "./shell.module.css";
 // Extend this navigation as new admin features are introduced.
 const navigation = [
   { label: "Pages", items: [{ pageId: "home", icon: "home" }] },
+  { label: "Website", items: [{ pageId: "reviews", icon: "star" }, { pageId: "global", icon: "grid" }] },
 ] as const;
 
 function SupportContact() {

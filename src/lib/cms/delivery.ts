@@ -39,7 +39,7 @@ async function workerJson(path: string, body?: unknown) {
 }
 export async function preflight(pageId: PageId = PAGE_ID) {
   const health = await workerJson("health");
-  if (health.environment !== cmsScope()?.workerEnvironment || !health.schemaReady || health.deliveryOwner !== "nextjs" || (pageId === "home" && !health.pages?.includes("home"))) {
+  if (health.environment !== cmsScope()?.workerEnvironment || !health.schemaReady || health.deliveryOwner !== "nextjs" || !health.pages?.includes(pageId)) {
     throw new Error("CMS Worker or migration is not ready.");
   }
   const headers = await deploymentHeaders();

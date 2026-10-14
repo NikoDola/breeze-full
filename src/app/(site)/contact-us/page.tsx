@@ -1,1 +1,1 @@
-export { default, metadata } from "@/featured/contact-us/page";
+export { default, generateMetadata } from "@/featured/contact-us/page";
