@@ -77,8 +77,8 @@ Select an element in DevTools and search its class with `rg`. For example, `.hea
 The remaining-page CMS audit and proposed migration order are documented in
 [CMS-REMAINING-PAGES.md](CMS-REMAINING-PAGES.md). It covers services and company
 articles, promotions, careers cards, Global address/maps and the remaining public
-pages. It is implemented and seeded locally; the document records verification
-and the compatible production release steps still required.
+pages. It is implemented and released on `main`; the document records verification
+and links to the 2026-10-15 production release evidence and dated backup.
 
 1. Read the relevant local Next.js guide in `node_modules/next/dist/docs/` before changing framework code, as required by `AGENTS.md`.
 2. Edit the feature page for route-level content, a section component for a full visual block, or a UI component for a reusable control. Keep `src/app/` as route adapters.

@@ -1,7 +1,8 @@
 # Remaining pages: CMS audit and migration plan
 
-Audit date: 2026-10-15. Status: implemented and seeded locally; production release
-is pending. The audit below records the starting state and migration decisions.
+Audit date: 2026-10-15. Status: implemented and released to production on `main`.
+See `CMS-CLIENT-LAUNCH.md` for the dated backup, deployment and acceptance evidence.
+The audit below records the starting state and migration decisions.
 
 ## Implementation and local verification
 
@@ -41,7 +42,7 @@ is pending. The audit below records the starting state and migration decisions.
   publication revision markers, admin access and unauthenticated denial. No browser
   visual check was performed, following `codex.md`; the client should inspect layouts.
 
-### Release steps still required
+### Release procedure (completed for Production on 2026-10-15)
 
 1. Apply migration 0004 to the intended deployment's database; do not run a test
    command against the live binding. Back up/inspect existing drafts first.
@@ -54,7 +55,8 @@ is pending. The audit below records the starting state and migration decisions.
 4. Review form behavior with the client. Service and careers forms still prepare
    an email in the visitor's mail app; they do not submit to a server inbox.
 
-No production deployment or environment-variable change was made for this migration.
+Production was deployed after the client authorized the 2026-10-15 release and
+backup. Existing production environment variables and credentials were retained.
 
 ## Original audit
 

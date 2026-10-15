@@ -1,9 +1,8 @@
 # Breeze client CMS deployment
 
-The 2026-10-15 remaining-page migration is implemented and verified locally, but
-has not been released to this client deployment. Follow the migration-0004 and
-compatible Worker/Next release steps in `CMS-REMAINING-PAGES.md` before enabling
-the new page editors or publishing new Global/Reviews fields in production.
+The 2026-10-15 remaining-page migration is now released to this client deployment.
+Migration 0004, the compatible live Worker and the `main` production reader are
+active. Release evidence and rollback references are recorded below.
 
 Client launch authorized on 2026-10-13. This supersedes the earlier restriction
 against integrating `cms-testing` into `main` for this deployment. The public
@@ -179,3 +178,53 @@ Ignored evidence: `.local/cms-live-preflight.json`, `.local/cms-live-results.jso
 `.local/cms-live-history-check.json`, `.local/cms-live-media-copy-results.json`.
 The client can use the website and password-protected editor at the URLs above;
 the separate credential file is ready for private sharing.
+
+## Verified production release — 2026-10-15
+
+The client explicitly authorized a dated backup and promotion of `cms-testing`
+into `main`. Release commit `73f8163` was fast-forwarded into `main`; shared history
+was preserved. Vercel built the production release successfully in `iad1`:
+`dpl_7zDLRy5rzrJHu7fKxy3nSAp4mYL5`
+(`breeze-full-nhm0d9vxh-nikodolas-projects.vercel.app`).
+
+Backup and rollback references:
+
+- GitHub branch `backup/main-before-release-2026-10-15` preserves the previous
+  production commit `dd110776e9466b1bba8bfee2bd3f93d1022093e9`.
+- Previous Vercel deployment: `dpl_FRLR8nRrwStCuJVuemkLbVKHzRX4`
+  (`breeze-full-525puurmy-nikodolas-projects.vercel.app`).
+- Previous live Worker version: `179b15b4-6a0a-49a9-8562-3b53b6bfe451`.
+- Ignored `.local/release-2026-10-15/` contains the Git bundle, source snapshot
+  and hashes, live database SQL/JSON backup, restore verification, provider
+  metadata, production acceptance evidence and 34 original/processed media files
+  with checksums. Every database backup field/row was checked after a local restore.
+  Cloudflare's export endpoint rejected the current OAuth credential; a single
+  consistent read query supplied the verified logical database backup instead.
+
+Migration `0004_content_media.sql` was applied to the live database. The Worker
+was deployed with writes disabled, production readiness/OIDC/HMAC was confirmed,
+then publishing was enabled. Active Worker version:
+`9304cf8c-f5cd-4871-b0be-c399c14e51b2`.
+
+Twenty-five new content documents plus Reviews and Global were imported and
+published from verified local content. Existing production Home/proof drafts and
+publications were preserved. Production now includes the page editors, address/
+maps, footer social links, Careers repeaters, seasonal offers and gallery library.
+The existing production username/password and environment variables were retained.
+
+Acceptance covered the production password login and secure session, denied
+unauthenticated/wrong-origin requests, public routes and protected previews,
+publication markers, dependent-page delivery, retry and sign out. Gallery upload,
+processing, private preview, saved draft and restored publication passed using a
+copy of an existing website photo. The verification image was archived and the
+original gallery content restored through normal immutable revisions.
+
+All 19 pre-release revisions, both pre-release drafts and all 10 pre-release media
+rows remain identical. There are 47 revision rows after page initialization and
+gallery acceptance. Local verification included 63 CMS tests, type checks, lint
+and a production build. No browser visual inspection or performance benchmark was
+performed for this release. Forms still prepare email in the visitor's mail app.
+
+New page publications and schema-5 Global additions require the new reader.
+For an urgent rollback, review content compatibility before reverting to an old
+deployment; use the backup for recovery and preserve the current database/history.
