@@ -1,23 +1,32 @@
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
-import { bestInTown, sayYesToTheBest, longAndShort } from "@/lib/company";
+import { bestInTown as defaultBest, sayYesToTheBest as defaultExperts, longAndShort as defaultClosing } from "@/lib/company";
+import { contentText as t, type ContentRecord } from "../../../cms/shared/content";
+import navigation from "./service-navigation.module.css";
 
 /**
- * /why-choose-breeze, /meet-the-hvac-experts and /going-green publish identical
- * body copy on the live site, so they render this shared block.
+ * Feature sections for Why Choose Breeze. Its CMS copy is independent of the
+ * Experts and Going green articles rendered by ContentPageView.
  */
 export default function ExpertsContent({
   related,
+  article = false,
+  content,
 }: {
   related: { label: string; href: string }[];
+  article?: boolean;
+  content?: ContentRecord;
 }) {
+  const bestInTown = content ? { heading: t(content, "ownerHeading"), body: t(content, "ownerBody") } : defaultBest;
+  const sayYesToTheBest = content ? { heading: t(content, "expertHeading"), paragraphs: t(content, "expertBody").split("\n\n") } : defaultExperts;
+  const longAndShort = content ? { heading: t(content, "closingHeading"), paragraphs: t(content, "closingBody").split("\n\n") } : defaultClosing;
   return (
-    <section className="experts-content-section-1">
+    <section className={`experts-content-section-1${article ? " experts-content-article" : ""}`}>
       <div className="experts-content-layout-1">
-        <div>
+        <div className="experts-content-body">
           <div className="experts-content-layout-2">
-            <div className="experts-content-card-1">
+            {!article && <div className="experts-content-card-1">
               <Image
                 src="/images/Guy-working.jpg"
                 alt="A Breeze technician at work"
@@ -25,7 +34,7 @@ export default function ExpertsContent({
                 height={800}
                 className="experts-content-image-1"
               />
-            </div>
+            </div>}
             <div>
               <h2 className="experts-content-heading-1">
                 {bestInTown.heading}
@@ -69,7 +78,17 @@ export default function ExpertsContent({
           </div>
         </div>
 
-        <aside className="experts-content-aside-1">
+        {article ? <aside className={navigation.navigation}>
+          <div className={navigation.panel}>
+            <h2>Keep reading</h2>
+            <nav className={navigation.articleLinks} aria-label="Related pages">
+              {related.map(link => <Link key={link.href} href={link.href} className={navigation.link}>
+                <span className={navigation.icon}><Icon name="arrow" /></span>
+                <span>{link.label}</span>
+              </Link>)}
+            </nav>
+          </div>
+        </aside> : <aside className="experts-content-aside-1">
           <h2 className="experts-content-heading-4">
             Keep reading
           </h2>
@@ -90,7 +109,7 @@ export default function ExpertsContent({
               </Link>
             ))}
           </nav>
-        </aside>
+        </aside>}
       </div>
     </section>
   );

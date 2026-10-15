@@ -72,6 +72,14 @@
   padding: 8px 2rem;
 }
 
+.header-mobile-request {
+  display: none;
+}
+
+#service-form {
+  scroll-margin-top: 128px;
+}
+
 @media (max-width: 1150px) {
   .brand img {
     width: 145px;
@@ -79,6 +87,49 @@
 }
 
 @media (max-width: 930px) {
+  .site-header {
+    --header-topbar-height: 47.6px;
+  }
+
+  .site-header .brand img {
+    width: 153px;
+  }
+
+  .header-tagline,
+  .header-actions > .header-request {
+    display: none;
+  }
+
+  .header-topbar .header-request {
+    display: inline-flex;
+    justify-content: center;
+    background: transparent;
+    min-height: 36px;
+    padding: 5px 14px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .header-topbar .header-mobile-request span {
+    display: inline;
+    color: var(--orange);
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .header-topbar .header-call {
+    min-height: 44px;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .menu-toggle {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 0;
+  }
+
   .header-inner {
     min-height: 62px;
   }
@@ -92,10 +143,6 @@
 }
 
 @media (max-width: 700px) {
-  .site-header .brand img {
-    width: 132px;
-  }
-
   .header-request {
     width: auto;
     height: auto;
@@ -110,16 +157,8 @@
 }
 
 @media (max-width: 480px) {
-  .header-tagline {
-    font-size: 9px;
-  }
-
-  .header-tagline-smile {
-    font-size: 14px;
-  }
-
   .header-topbar .header-call {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .header-request {
@@ -127,9 +166,6 @@
     font-size: 11px;
   }
 
-  .site-header .brand img {
-    width: 115px;
-  }
 }
 
 @media (max-width: 360px) {
@@ -139,16 +175,8 @@
     gap: 4px;
   }
 
-  .header-tagline {
-    font-size: 8px;
-  }
-
-  .header-tagline-smile {
-    font-size: 12px;
-  }
-
   .header-topbar .header-call {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .header-topbar .call-symbol {
@@ -156,19 +184,8 @@
     height: 14px;
   }
 
-  .site-header .brand img {
-    width: 95px;
-  }
-
-  .header-request {
-    min-height: 36px;
-    padding: 7px 8px;
-    font-size: 10px;
-  }
-
-  .menu-toggle {
-    width: 38px;
-    height: 38px;
-    padding: 8px;
+  .header-topbar .header-request {
+    padding-inline: 12px;
+    font-size: 12px;
   }
 }

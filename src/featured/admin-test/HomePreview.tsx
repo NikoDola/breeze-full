@@ -2,17 +2,25 @@
 
 import { useEffect, useState } from "react";
 import HomeContent from "@/components/sections/home/HomeContent";
+import SiteHeader from "@/components/sections/SiteHeader";
+import SiteFooterContent from "@/components/sections/SiteFooterContent";
+import SiteProvider from "@/components/sections/SiteContext";
+import GlobalPreview from "./GlobalPreview";
 import { homeSeed } from "../../../cms/shared/home-seed";
 import { validateHomeDocument, type HomeDocument } from "../../../cms/shared/home";
-import type { ReviewsDocument } from "../../../cms/shared/collections";
-import type { SiteData } from "@/lib/site";
+import { validateGlobal, type ReviewsDocument } from "../../../cms/shared/collections";
+import { withGlobalSettings, type SiteData } from "@/lib/site";
 
-export default function HomePreview({ reviews, site }: { reviews?: ReviewsDocument; site: SiteData }) {
-  const [content, setContent] = useState<HomeDocument>(homeSeed);
+export default function HomePreview({ reviews, site, initialDocument = homeSeed, mode = "home" }: { reviews?: ReviewsDocument; site: SiteData; initialDocument?: HomeDocument; mode?: "home" | "global" }) {
+  const [content, setContent] = useState<HomeDocument>(initialDocument);
+  const [previewSite, setPreviewSite] = useState(site);
   useEffect(() => {
     function receive(event: MessageEvent) {
-      if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "breeze.cms.home-preview") return;
-      try { setContent(validateHomeDocument(event.data.document)); } catch { /* Keep the last valid preview while fields are incomplete. */ }
+      if (event.origin !== window.location.origin || event.source !== window.parent) return;
+      try {
+        if (event.data?.type === "breeze.cms.home-preview") setContent(validateHomeDocument(event.data.document));
+        else if (event.data?.type === "breeze.cms.global-preview") setPreviewSite(withGlobalSettings(validateGlobal(event.data.document)));
+      } catch { /* Keep the last valid preview while fields are incomplete. */ }
     }
     function preventNavigation(event: MouseEvent) {
       if ((event.target as Element).closest("a")) event.preventDefault();
@@ -28,5 +36,11 @@ export default function HomePreview({ reviews, site }: { reviews?: ReviewsDocume
       document.removeEventListener("submit", preventSubmit, true);
     };
   }, []);
-  return <HomeContent document={content} reviews={reviews} site={site} />;
+  return <SiteProvider value={previewSite}>
+    {mode === "global" ? <GlobalPreview site={previewSite} home={content} /> : <>
+      <SiteHeader />
+      <main id="main"><HomeContent document={content} reviews={reviews} site={previewSite} /></main>
+      <SiteFooterContent site={previewSite} />
+    </>}
+  </SiteProvider>;
 }

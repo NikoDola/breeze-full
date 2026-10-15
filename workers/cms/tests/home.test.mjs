@@ -82,5 +82,5 @@ test("home import, drafts, immutable publication and delivery remain isolated fr
   assert.equal((await db.prepare("SELECT COUNT(*) n FROM cms_revisions WHERE page_id = 'home'").first()).n, 1);
   assert.deepEqual((await db.prepare("SELECT * FROM cms_revisions WHERE page_id = 'cms-proof'").all()).results, oldRows.results);
   assert.equal((await (await admin(mf)).json()).delivery.confirmed_at, null, "confirming home must not retire proof jobs");
-  assert.equal((await admin(mf, "proof?pageId=about-us")).status, 400);
+  assert.equal((await admin(mf, "proof?pageId=unregistered-page")).status, 400);
 });

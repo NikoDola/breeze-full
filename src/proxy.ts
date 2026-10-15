@@ -2,11 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { protectEditorRequest } from "@/lib/cms/access";
 import { adminReportPolicy } from "@/lib/cms/csp";
 import { workerOrigin } from "@/lib/cms/worker";
+import { cmsOrigin } from "@/lib/cms/scope";
 export async function proxy(request: NextRequest) {
   const isPage = !request.nextUrl.pathname.startsWith("/api/");
   // API handlers authorize independently, once per request. Do not spend two
   // throttle tokens (proxy + handler) for one save, publication or image request.
-  const denied = isPage ? await protectEditorRequest(request) : null;
+  const isLogin = request.nextUrl.pathname === "/admin-test/login";
+  let denied = isPage && !isLogin ? await protectEditorRequest(request) : null;
+  if (denied?.status === 401 && request.nextUrl.pathname !== "/admin-test/preview" &&
+    request.headers.get("host") === new URL(cmsOrigin()!).host) {
+    denied = NextResponse.redirect(new URL("/admin-test/login", request.url));
+  }
   const requestHeaders = new Headers(request.headers);
   let policy: string | undefined;
   if (isPage) {
@@ -28,4 +34,4 @@ export async function proxy(request: NextRequest) {
   if (policy) response.headers.set("Content-Security-Policy-Report-Only", policy);
   return response;
 }
-export const config = { matcher: ["/admin/:path*", "/admin-test/:path*", "/api/cms/editor/:path*", "/api/cms/media/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/admin-test/:path*", "/api/cms/editor/:path*", "/api/cms/media/:path*", "/api/cms/session/:path*"] };

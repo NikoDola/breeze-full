@@ -2,7 +2,9 @@ import { reviews } from "../../src/lib/reviews";
 import site from "../../src/content/site.json";
 import { homeSeed } from "./home-seed";
 import type { HomeDocument } from "./home";
-import { validateReviews, type GlobalDocument, type ReviewItem } from "./collections";
+import { directionsLink } from "./location";
+import { defaultSharedCopy } from "./shared-copy";
+import { validateReviews, reviewPageDefaults, type GlobalDocument, type ReviewItem } from "./collections";
 
 // Seed only. Existing imports, drafts and immutable revisions are never overwritten.
 export function createReviewsSeed(home: HomeDocument = homeSeed) {
@@ -16,8 +18,11 @@ export function createReviewsSeed(home: HomeDocument = homeSeed) {
     used.add(existing.id);
     return existing.id;
   });
-  return validateReviews({ schemaVersion: 4, title: "Reviews", items, favoriteIds: favoriteIds.slice(0, 3) });
+  return validateReviews({ schemaVersion: 4, title: "Reviews", items, favoriteIds: favoriteIds.slice(0, 3), page: reviewPageDefaults });
 }
 
-// The old social URLs are platform homepages, not client profiles; publish real profiles through Global.
-export const globalSeed: GlobalDocument = { schemaVersion: 5, title: "Global settings", phone: site.phone, email: site.email, formRecipientEmail: site.email, socials: [] };
+// Approved profile URLs are source defaults; existing drafts and publications retain their own links.
+export const globalSeed: GlobalDocument = { schemaVersion: 5, title: "Global settings", phone: site.phone, email: site.email, formRecipientEmail: site.email,
+  address: site.address, mapsHref: directionsLink(site.address),
+  sharedCopy: defaultSharedCopy,
+  socials: site.socials.map(({ platform, href }) => ({ platform: platform as GlobalDocument["socials"][number]["platform"], href })) };

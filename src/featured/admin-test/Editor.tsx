@@ -11,7 +11,8 @@ import { MAX_BODY_BYTES } from "../../../cms/shared/contract";
 import { sameEditorDocument } from "../../../cms/shared/editor-document";
 import ImageEditor from "./ImageEditor";
 import HomeFields from "./HomeFields";
-import { ReviewsFields, GlobalFields, CollectionPreview } from "./CollectionFields";
+import ContentFields from "./ContentFields";
+import { ReviewsFields, GlobalFields } from "./CollectionFields";
 import HomePreviewFrame from "./HomePreviewFrame";
 import { editorStatus, type Operation } from "./editor-state";
 import AdminShell from "./AdminShell";
@@ -175,7 +176,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
             }}><Icon name={item.icon} />{item.label}{item.id === "images" && <span>{document.section.images.length}</span>}</button>)}</div>}
           <form id="cms-editor-form" onSubmit={event => { event.preventDefault(); void act("draft"); }}>
             <fieldset disabled={busy} className={styles.fields}><legend className={styles.srOnly}>Section content</legend>
-              {document.schemaVersion === 2 ? <HomeFields document={document} disabled={busy} resetKey={editorReset} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 4 ? <ReviewsFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 5 ? <GlobalFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
+              {document.schemaVersion === 6 ? <ContentFields document={document} disabled={busy} onBusyChange={setMediaBusy} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 2 ? <HomeFields document={document} disabled={busy} resetKey={editorReset} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 4 ? <ReviewsFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : document.schemaVersion === 5 ? <GlobalFields document={document} onChange={next => { setDocument(next); setMessage(""); }} /> : <>
               <div id="panel-content" role="tabpanel" aria-labelledby="tab-content" hidden={tab !== "content"}>
                 {fields.map(({ key, label, help, max, placeholder, multiline }) => <label className={styles.field} key={key}><span>{label}{key === "headline" && <span className={styles.required}> *</span>}</span><small id={`help-${key}`}>{help}</small>
                   {multiline ? <Textarea value={document.section[key]} maxLength={max} rows={6} placeholder={placeholder} aria-describedby={`help-${key}`} onChange={event => changeSection(key, event.target.value)} />
@@ -207,9 +208,9 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
             <div className={styles.segmented} role="group" aria-label="Preview content"><button type="button" aria-pressed={previewMode === "draft"} onClick={() => setPreviewMode("draft")}>Your draft</button><button type="button" aria-pressed={previewMode === "published"} disabled={!state?.publication} onClick={() => setPreviewMode("published")}>Published</button></div>
             <div className={styles.segmented} role="group" aria-label="Preview screen size">{(["desktop", "tablet", "mobile"] as const).map(size => <button key={size} type="button" aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size[0].toUpperCase() + size.slice(1)}</button>)}</div>
           </div>
-          {previewDocument?.schemaVersion === 2 ? <HomePreviewFrame document={previewDocument} viewport={viewport} /> : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
+          {previewDocument && (previewDocument.schemaVersion === 2 || previewDocument.schemaVersion === 4 || previewDocument.schemaVersion === 5 || previewDocument.schemaVersion === 6) ? <HomePreviewFrame document={previewDocument} viewport={viewport} /> : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
             <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / {pageId}</span><Icon name="shield" /></div>
-            {previewDocument && (previewDocument.schemaVersion === 4 || previewDocument.schemaVersion === 5) ? <CollectionPreview document={previewDocument} /> : previewDocument && <CmsProofContent document={previewDocument} preview />}
+            {previewDocument && <CmsProofContent document={previewDocument} preview />}
           </div></div>}
           {!previewValid && <p className={styles.previewCaption}>Complete the required fields before saving. The homepage preview keeps its last valid content.</p>}
           <p className={styles.previewCaption}>{previewMode === "draft" ? dirty ? "Showing your unsaved changes. Save a draft before publishing." : "Showing your saved draft." : state?.delivery?.confirmed_at ? "Showing the publication confirmed on the website." : "Showing the saved publication. Website delivery is still pending."} Preview buttons do not navigate.</p>

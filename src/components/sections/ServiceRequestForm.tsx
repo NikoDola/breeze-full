@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
-import { services } from "@/lib/services";
+import { serviceLabels } from "@/lib/service-labels";
 import { useSite } from "./SiteContext";
 
 export default function TemplateServiceForm({ compact = false }: { compact?: boolean }) {
@@ -49,7 +49,7 @@ export default function TemplateServiceForm({ compact = false }: { compact?: boo
       <div className="field"><label htmlFor="email">Email address <span>*</span></label><Input id="email" name="email" type="email" autoComplete="email" placeholder="jane@example.com" required /></div>
       <div className="field"><label htmlFor="service">Service needed <span>*</span></label><Select id="service" name="service" defaultValue="" required>
         <option value="" disabled>Select a service</option>
-        {services.map((service) => <option key={service.slug} value={service.title}>{service.title}</option>)}
+        {Object.entries(serviceLabels).map(([slug, title]) => <option key={slug} value={title}>{title}</option>)}
         <option value="Emergency service">Emergency service</option><option value="Other">Other</option>
       </Select></div>
       <div className="field field-wide"><label htmlFor="message">Tell us more <small>(optional)</small></label><Textarea id="message" name="message" rows={compact ? 3 : 4} placeholder="What is going on with your system?" /></div>

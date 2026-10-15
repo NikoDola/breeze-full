@@ -1,0 +1,66 @@
+{
+  "heating": {
+    "title": "Heating",
+    "description": "Keeping you warm and oh-so-cozy — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "cooling": {
+    "title": "Cooling",
+    "description": "Drink in that Cool, Breeze Air — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "repairs-and-services": {
+    "title": "Repairs & Services",
+    "description": "Yep. We Fix It. — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "indoor-quality": {
+    "title": "Indoor quality",
+    "description": "Breathe Easy with IAQ Innovation — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "water-heater-solutions": {
+    "title": "Water heater solutions",
+    "description": "Water Heater Solutions — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "mini-split-systems": {
+    "title": "Mini-split systems",
+    "description": "Safeguarding Your Comfort with Mini-Split Systems — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "energy-audits": {
+    "title": "Energy audits",
+    "description": "The Power of Home Energy Audits — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "commercial-industrial": {
+    "title": "Commercial & Industrial",
+    "description": "Commercial & Industrial Services in Middle Tennessee — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "residential": {
+    "title": "Residential",
+    "description": "The Answer to Your Perfect Home Climate — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "property-manager": {
+    "title": "Property manager",
+    "description": "Middle Tennessee Property Management Services — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "comfort-club": {
+    "title": "Comfort club",
+    "description": "Made in the Shade with Breeze's Comfort Club — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "financing": {
+    "title": "Financing",
+    "description": "HVAC Financing — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "wi-fi-and-learning-thermostats": {
+    "title": "Wi-Fi and Learning Thermostats",
+    "description": "Smart Control Over Every Degree — Breeze Heating & Cooling, Middle Tennessee."
+  },
+  "meet-the-hvac-experts": {
+    "title": "Meet the HVAC experts",
+    "description": "Breeze hires only the most qualified technicians. Every team member is certified by the North American Technician Excellence (NATE) organization."
+  },
+  "going-green": {
+    "title": "Going green",
+    "description": "The most energy-efficient products in the industry, installed right — so your system costs less to run and lasts longer."
+  },
+  "careers": {
+    "title": "Careers",
+    "description": "Join Breeze Heating & Cooling. Competitive pay, guaranteed 40 hours, paid holidays, retirement matching and in-house training on new equipment."
+  }
+}

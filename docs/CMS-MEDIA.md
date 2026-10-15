@@ -9,6 +9,14 @@ the test resources described below.
 
 ## Using the library
 
+2026-10-15 local extension: **Gallery** now exposes this library without enabling
+CMS proof. Each photo can use an approved source asset or an uploaded placement,
+with an editable caption. Apply additive migration `0004_content_media.sql` before
+releasing this feature: it validates ready image dimensions and records references
+for schema-6 content publications in the same transaction. Readiness and schema-6
+save/publication checks require both new triggers. Older proof media is unchanged.
+See `CMS-REMAINING-PAGES.md` for deployment status and release order.
+
 Open the branch Preview `/admin-test`, select **CMS proof**, then **Images**.
 Upload JPEG, PNG, WebP or AVIF files (10 MB, 24 MP, maximum 8192 pixels per side,
 still images only). The editor shows upload progress and validation status.

@@ -33,6 +33,7 @@ export default function HomeFields({ document, onChange, disabled, resetKey }: {
     </div>
     <div className={styles.sectionIntro}><h3>{schema.label}</h3><p>{schema.help}</p></div>
     {(Object.entries(schema.fields) as [string, Field][]).map(([key, field]) => {
+      if (slot === "area" && key === "mapsHref") return <p key={key} className={styles.notice}>Manage the business directions link in Global settings. The service-area map location below can show a wider region.</p>;
       if (slot === "reviews" && key === "items") return <p key={key} className={styles.notice}>Manage reviews and choose homepage favorites in Reviews in the sidebar. The homepage preview uses published favorites; review drafts have their own preview.</p>;
       if (field.kind === "text") return <TextControl key={`${slot}-${key}`} field={field} value={content[key] as string} onChange={value => change(key, value)} />;
       if (field.kind === "rich-text") return <RichTextEditor key={`${slot}-${key}-${resetKey}`} value={content[key] as RichText} label={field.label} help={field.help} disabled={disabled} onChange={value => change(key, value)} />;

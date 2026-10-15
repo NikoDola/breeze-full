@@ -30,7 +30,7 @@ export async function throttleEditor(request: Request): Promise<Response | null>
     if (typeof result.success !== "boolean" || result.degraded) throw new Error("Rate limit binding unavailable.");
     return result.success ? null : limited();
   } catch {
-    // A limiter outage must not lock out the client. Basic auth and CSRF still run.
+    // A limiter outage must not lock out the client. Authentication and CSRF still run.
     // No credential, IP, content, or request header is logged.
     console.warn(JSON.stringify({ event: "cms.auth.throttle-degraded" }));
     return null;

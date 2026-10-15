@@ -1,7 +1,5 @@
 import "@/styles/globals.css";
 import "@/styles/template-2.css";
-import "@/styles/interior.css";
-import "@/styles/reviews-and-services.css";
 import "@/styles/header-adjustments.css";
 import "@/styles/hero.css";
 

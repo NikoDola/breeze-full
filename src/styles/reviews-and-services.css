@@ -6,6 +6,15 @@
 .service-page-card-2 { margin: 0; }
 .service-page-card-3 { margin: 0; padding: 32px; border-radius: 34px; background: var(--navy); color: white; }
 
+/* Company articles follow the service pages' full-width reading layout. */
+.experts-content-article { padding-top: 48px; }
+.experts-content-article .experts-content-layout-1,
+.experts-content-article .experts-content-layout-2 { display: block; }
+.experts-content-article .experts-content-body { max-width: 900px; }
+.experts-content-article .experts-content-heading-1,
+.experts-content-article .experts-content-heading-2 { font-size: 34px; line-height: 1.14; }
+.experts-content-article .experts-content-block-1 { margin-top: 34px; }
+
 .client-reviews { padding: 70px 0 100px; }
 .client-reviews .review-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .client-reviews .review-card { width: 100%; min-height: 320px; padding: 26px; }
@@ -24,7 +33,7 @@
   .client-reviews .review-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 760px) {
-  .service-page-section-1 { padding-top: 32px; }
+  .service-page-section-1, .experts-content-article { padding-top: 32px; }
   .service-page-callouts { grid-template-columns: minmax(0,1fr); }
 }
 @media (max-width: 520px) {

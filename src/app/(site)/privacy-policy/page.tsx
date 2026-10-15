@@ -1,1 +1,1 @@
-export { default, metadata } from "@/featured/privacy-policy/page";
+export { default, generateMetadata } from "@/featured/privacy-policy/page";

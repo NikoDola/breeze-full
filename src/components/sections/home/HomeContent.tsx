@@ -18,6 +18,6 @@ export default function HomeContent({ document, publication, reviews, site }: {
     <SeasonsSection content={document.slots.seasons.content} publication={publication} />
     <ContactSection content={document.slots.contact.content} site={site} />
     <ReviewsSection content={reviews ? { ...document.slots.reviews.content, items: favoriteReviews(reviews) } : document.slots.reviews.content} />
-    <AreaSection content={document.slots.area.content} />
+    <AreaSection content={site?.globalLocation ? { ...document.slots.area.content, mapsHref: site.mapsHref } : document.slots.area.content} />
   </>;
 }

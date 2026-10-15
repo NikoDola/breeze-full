@@ -7,13 +7,14 @@
     "AreaSection": "<section class=\"section map-section\" id=\"area\" aria-labelledby=\"area-title\"><div class=\"wrap map-grid\"><div class=\"map-copy\"><h2 id=\"area-title\">Made for Middle <em>Tennessee.</em></h2><p>From Nashville to Brentwood and the communities around them, friendly comfort care is close to home.</p><a class=\"text-link\" href=\"https://www.google.com/maps/search/?api=1&amp;query=7175%20Nolensville%20Road%2C%20Nolensville%2C%20TN%2037135\" target=\"_blank\" rel=\"noopener noreferrer\">Explore Nashville on Google Maps <span aria-hidden=\"true\">↗</span></a></div><div class=\"map-frame\"><iframe title=\"Google Map of Nashville, Tennessee\" src=\"https://www.google.com/maps?q=Nashville%2C%20TN&amp;output=embed\" loading=\"lazy\" referrerPolicy=\"no-referrer-when-downgrade\" allowFullScreen=\"\"></iframe></div></div></section>"
   },
   "protectedFiles": {
-    "src/components/sections/home/HeroSection.tsx": "a5d62efb945ae98e60f18554784fdd2564adee7d3513623aee957113180ed836",
-    "src/components/sections/ServiceRequestForm.tsx": "26d830d66240d3bc06c2801be3b79169be42b798092aed30e3169d627232ebb1",
-    "src/styles/globals.css": "0bd2366b7fcb958e5f12cedc2945f13f20483fcda05e67aa3afdfc9926148318",
-    "src/styles/template-2.css": "1cf6c8c615149e05c97bd30cdfe5590a1e41ee1e88718566591d55ad3565d940",
-    "src/styles/interior.css": "fe55498f75da188e2f2f6488bc6ac5fe71887641d8bd5f71b678995b936ff6e1",
-    "src/styles/header-adjustments.css": "56dc40562ef72406c81de89f7473de0416de985526e821453636c6206545466a",
-    "src/styles/hero.css": "070867ce626b63243aca0a866e0a3a9c813c014ef1eee9bf33fc0d5840c2f46d"
+    "src/components/sections/home/HeroSection.tsx": "4850323400698f3f93c7dcebdfff390a6bb82bdc7d0535c826565d1e3e696860",
+    "src/components/sections/ServiceRequestForm.tsx": "b471cef794654ced6411344541dd2e588be2b4e35cdd21f3732902fa42a0acb6",
+    "src/styles/globals.css": "782b274b1bc7822503c8f80fb72898b1b072f167832f6ca206bade7dbc6b4370",
+    "src/styles/template-2.css": "11976899958593ec708ba0152922feafbe8e2c9f72d8111c956d9f28db9d449f",
+    "src/styles/interior.css": "c51ad21f7e5f93b2f5ffe9f1e3b7bcf1f64ddf828c450b9274b8991e1973f8db",
+    "src/styles/header-adjustments.css": "c89067e1131044ed1572a90c5de6a599e79de2f6cf2f4bfa52969d35135591e8",
+    "src/styles/hero.css": "070867ce626b63243aca0a866e0a3a9c813c014ef1eee9bf33fc0d5840c2f46d",
+    "src/styles/legacy-sections.css": "8500a220ed4cc601f2354f1cccc03eb406186e6c5c8ed3d10ccf0ec834227675"
   },
-  "protectedFilesNote": "Refreshed for approved public hover/card styling and published global contact wiring. Original section HTML remains unchanged."
+  "protectedFilesNote": "Refreshed for approved public hover/card styling, global contact wiring, footer social icons and homepage performance changes (responsive hero preload, shared service labels, route-scoped CSS). Global orange updated to #EF5A18 with matching translucent accents. Mobile header uses a taller contact strip and a menu toggle without a circular border. Original editable section HTML remains unchanged."
 }

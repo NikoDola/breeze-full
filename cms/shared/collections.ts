@@ -1,7 +1,10 @@
 import { exactKeys, InputError, record, text } from "./validation";
+import { validateAddress, validateMapsLink, type BusinessAddress } from "./location";
+import { validateSharedCopy, type SharedCopy } from "./shared-copy";
 
 export type ReviewItem = { id: string; name: string; quote: string; homeQuote: string; visible: boolean };
-export type ReviewsDocument = { schemaVersion: 4; title: string; items: ReviewItem[]; favoriteIds: string[] };
+export const reviewPageDefaults = { heading: "Reviews", eyebrow: "Our clients", tagline: "In their own words.", seoTitle: "Reviews", seoDescription: "What Middle Tennessee homeowners say about Breeze Heating & Cooling — in their own words." };
+export type ReviewsDocument = { schemaVersion: 4; title: string; items: ReviewItem[]; favoriteIds: string[]; page?: typeof reviewPageDefaults };
 export const socialPlatforms = {
   facebook: { label: "Facebook", hosts: ["facebook.com", "www.facebook.com", "fb.com"] },
   instagram: { label: "Instagram", hosts: ["instagram.com", "www.instagram.com"] },
@@ -12,7 +15,7 @@ export const socialPlatforms = {
 } as const;
 export type SocialPlatform = keyof typeof socialPlatforms;
 export type SocialLink = { platform: SocialPlatform; href: string };
-export type GlobalDocument = { schemaVersion: 5; title: string; phone: string; email: string; formRecipientEmail?: string; socials: SocialLink[] };
+export type GlobalDocument = { schemaVersion: 5; title: string; phone: string; email: string; formRecipientEmail?: string; address?: BusinessAddress; mapsHref?: string; sharedCopy?: SharedCopy; socials: SocialLink[] };
 
 function emailAddress(value: unknown, label: string) {
   const email = text(value, label, 254, true).trim();
@@ -22,7 +25,7 @@ function emailAddress(value: unknown, label: string) {
 
 export function validateReviews(value: unknown): ReviewsDocument {
   const doc = record(value);
-  exactKeys(doc, ["schemaVersion", "title", "items", "favoriteIds"], "reviews");
+  exactKeys(doc, ["schemaVersion", "title", "items", "favoriteIds", "page"], "reviews");
   if (doc.schemaVersion !== 4 || !Array.isArray(doc.items) || doc.items.length > 50) throw new InputError("Reviews supports up to 50 entries.");
   const ids = new Set<string>();
   const items = doc.items.map(value => {
@@ -41,12 +44,18 @@ export function validateReviews(value: unknown): ReviewsDocument {
     if (!items.some(item => item.id === id && item.visible)) throw new InputError("Homepage favorites must reference visible reviews.");
     return id;
   });
-  return { schemaVersion: 4, title: text(doc.title, "title", 200, true), items, favoriteIds };
+  let page: { page?: typeof reviewPageDefaults } = {};
+  if (Object.hasOwn(doc, "page")) {
+    const source = record(doc.page);
+    exactKeys(source, Object.keys(reviewPageDefaults), "Reviews page");
+    page = { page: Object.fromEntries(Object.keys(reviewPageDefaults).map(key => [key, text(source[key], key, key === "seoDescription" ? 500 : 200, key !== "seoDescription")])) as typeof reviewPageDefaults };
+  }
+  return { schemaVersion: 4, title: text(doc.title, "title", 200, true), items, favoriteIds, ...page };
 }
 
 export function validateGlobal(value: unknown): GlobalDocument {
   const doc = record(value);
-  exactKeys(doc, ["schemaVersion", "title", "phone", "email", "formRecipientEmail", "socials"], "global settings");
+  exactKeys(doc, ["schemaVersion", "title", "phone", "email", "formRecipientEmail", "address", "mapsHref", "sharedCopy", "socials"], "global settings");
   if (doc.schemaVersion !== 5) throw new InputError("Unsupported global settings version.");
   const phone = text(doc.phone, "phone", 40, true).trim();
   const digits = phone.replace(/\D/g, "");
@@ -69,7 +78,10 @@ export function validateGlobal(value: unknown): GlobalDocument {
       !(socialPlatforms[platform].hosts as readonly string[]).includes(url.hostname) || url.pathname === "/") throw new InputError(`Use a direct HTTPS ${socialPlatforms[platform].label} profile URL.`);
     return { platform, href };
   });
-  return { schemaVersion: 5, title: text(doc.title, "title", 200, true), phone, email, ...recipient, socials };
+  const address = Object.hasOwn(doc, "address") ? { address: validateAddress(doc.address) } : {};
+  const maps = Object.hasOwn(doc, "mapsHref") ? { mapsHref: validateMapsLink(doc.mapsHref) } : {};
+  const shared = Object.hasOwn(doc, "sharedCopy") ? { sharedCopy: validateSharedCopy(doc.sharedCopy) } : {};
+  return { schemaVersion: 5, title: text(doc.title, "title", 200, true), phone, email, ...recipient, ...address, ...maps, ...shared, socials };
 }
 
 export function favoriteReviews(document: ReviewsDocument) {

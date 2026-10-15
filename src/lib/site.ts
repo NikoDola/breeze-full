@@ -1,5 +1,7 @@
 import data from "@/content/site.json";
 import { socialPlatforms, type GlobalDocument } from "../../cms/shared/collections";
+import { addressText, directionsLink, locationEmbed } from "../../cms/shared/location";
+import { defaultSharedCopy } from "../../cms/shared/shared-copy";
 
 // Source baseline; published Global settings override contact fields through getSite().
 // Derived fields (tel:/mailto: links, formatted address, maps URL) are computed
@@ -25,6 +27,9 @@ export const site = {
   formRecipientHref: `mailto:${data.email}`,
   address: data.address,
   addressLine,
+  mapEmbed: locationEmbed(data.address),
+  globalLocation: false,
+  sharedCopy: defaultSharedCopy,
   mapsHref: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     addressLine
   )}`,
@@ -37,7 +42,9 @@ export function withGlobalSettings(global: GlobalDocument): SiteData {
   const digits = global.phone.replace(/\D/g, "");
   const phoneDigits = !global.phone.startsWith("+") && digits.length === 10 ? `1${digits}` : digits;
   const formRecipientEmail = global.formRecipientEmail ?? global.email;
-  return { ...site, phone: global.phone, phoneHref: `tel:+${phoneDigits}`, email: global.email,
+  const address = global.address ?? site.address;
+  return { ...site, address, globalLocation: Boolean(global.address || global.mapsHref), addressLine: addressText(address), mapEmbed: locationEmbed(address), mapsHref: global.mapsHref ?? directionsLink(address), phone: global.phone, phoneHref: `tel:+${phoneDigits}`, email: global.email,
+    sharedCopy: global.sharedCopy ?? defaultSharedCopy,
     formRecipientEmail, formRecipientHref: `mailto:${encodeURIComponent(formRecipientEmail).replace("%40", "@")}`,
     emailHref: `mailto:${encodeURIComponent(global.email).replace("%40", "@")}`, socials: global.socials.map(link => ({ ...link, label: socialPlatforms[link.platform].label })) };
 }

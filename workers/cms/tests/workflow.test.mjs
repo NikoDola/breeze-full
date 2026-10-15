@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { admin, createWorker, legacy, migrate } from "./helpers.mjs";
+import { admin, bundle, createWorker, legacy, migrate } from "./helpers.mjs";
+const { pages } = await import(`data:text/javascript;base64,${Buffer.from(await bundle(new URL("../../../cms/shared/contract.ts", import.meta.url))).toString("base64")}`);
 
 test("D1 workflow: migration, authorization, drafts, atomic immutable publication and retries", async t => {
   let outbound = 0;
@@ -117,7 +118,7 @@ test("credential preflight is read-only and works with writes disabled", async (
     await migrate(await mf.getD1Database("DB"));
     const response = await admin(mf, "health");
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { environment: "test", writesEnabled: false, schemaReady: true, deliveryOwner: "nextjs", pages: ["cms-proof", "home", "reviews", "global"], throttlingReady: true });
+    assert.deepEqual(await response.json(), { environment: "test", writesEnabled: false, schemaReady: true, deliveryOwner: "nextjs", pages: Object.keys(pages), throttlingReady: true });
     assert.equal((await mf.dispatchFetch("https://worker.test/api/admin/health")).status, 401);
     assert.equal((await admin(mf, "publish", { expectedVersion: 1 })).status, 404);
   } finally { await mf.dispose(); }

@@ -2,6 +2,13 @@
 
 ## Editing
 
+2026-10-15 local extension: Global also owns business address, Google Maps directions
+and shared contact-banner/service-callout copy. Reviews includes Client page headings
+and search settings. These are optional additions to schemas 5 and 4; older snapshots
+retain their source defaults. Global adds Contact location and Contact banner preview
+areas. Reviews previews its real Client layout and homepage favorites. See
+`CMS-REMAINING-PAGES.md` for local status and the required compatible release order.
+
 Open `/admin-test` and choose **Reviews** or **Global settings** in the sidebar.
 On first use, **Copy existing content** initializes a draft without publishing.
 Use **Save draft**, then **Publish draft**. Existing status indicators, conflict
@@ -19,15 +26,34 @@ documents but are superseded by the published Reviews library.
 
 Global controls the business phone, public email, separate form-recipient email,
 and footer social profiles. Public email is used for contact links and metadata;
-the form recipient is used by service requests and careers applications. Existing
-forms still open the visitor's mail application, so the recipient is visible there
+the form recipient is used by service requests and careers applications. Global
+settings previews only contact placements in the protected desktop/tablet/mobile
+iframe. Choose Footer, Header, Hero or Service request; Footer appears first.
+Contact location and Contact banner are also available for the new shared fields,
+using the same public components. Draft
+contact details and social links update without saving or publishing. Published
+uses the selected Global publication. Incomplete fields keep the last valid preview.
+
+Existing forms still open the visitor's mail application, so the recipient is visible there
 and in browser data; this is not a private server-side mail delivery system.
 Supported
 platforms: Facebook, Instagram, YouTube, LinkedIn, TikTok and X. Each platform can
 appear once. Only direct HTTPS profile URLs on approved platform hosts are accepted.
-The old generic Facebook/Instagram homepages were never displayed; they are not
-published as if they were client profiles. Add the client's actual profile URLs.
+The approved source defaults are `https://www.facebook.com/breezehc/` and
+`https://www.instagram.com/breeze_heating_and_cooling_/`. New Global imports use
+these profiles. Existing documents retain their own links; an empty published
+list deliberately hides socials. The footer renders accessible outline platform
+icons in a separate `.footer-socials` row below both phone and email. The outlines
+use navy `#071d30` and their backgrounds use the tagline color `#a7c2cb`.
 Admin developer-support contact details remain separate.
+
+Phone and email icons are part of the custom brand design and remain controlled
+by project code/assets and developer-maintained styles. Clients can edit contact
+text only; the CMS has no controls for replacing, removing or styling these icons.
+Global documents store no icon artwork, asset references or CSS overrides. Both
+Next and Worker reject extra icon/style fields before saving to D1 (SQLite).
+The existing schema already enforces this, so no database cleanup or migration
+is required.
 
 ## Storage and compatibility
 
@@ -86,13 +112,20 @@ elements carry publication markers used by the existing delivery verifier.
 
 `getSite()` supplies cached globals to server components. PublicLayout supplies
 the same values through SiteContext to the header and form email handlers.
-Homepage HeroSection keeps its developer-controlled markup/artwork; only its
+The Global preview reuses the public header, HeroSection, ContactSection and
+SiteFooterContent without duplicating the website's layouts. Homepage HeroSection
+keeps its developer-controlled markup/artwork; only its
 phone data is supplied through a prop. Form fields and behavior are unchanged.
 Service text uses `{phone}` / `{email}` placeholders for consistent contact copy.
 Without a published library/global document, the original website content remains.
 
 ## Verification
 
+- Contact-area preview update: production build, affected-file lint and 10 focused
+  collection/preview/homepage regression tests passed. The approved Facebook and
+  Instagram links were saved to the existing local Global draft through the
+  protected editor API, preserving its other fields. Visual review remains with
+  the user under `codex.md`.
 - `npm run cms:check`: 51 tests passed, including strict collection validation,
   authentication, idempotent import, draft privacy, cross-page isolation,
   immutable revisions, concurrency and delivery failure/retry.

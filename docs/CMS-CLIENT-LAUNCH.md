@@ -1,5 +1,10 @@
 # Breeze client CMS deployment
 
+The 2026-10-15 remaining-page migration is implemented and verified locally, but
+has not been released to this client deployment. Follow the migration-0004 and
+compatible Worker/Next release steps in `CMS-REMAINING-PAGES.md` before enabling
+the new page editors or publishing new Global/Reviews fields in production.
+
 Client launch authorized on 2026-10-13. This supersedes the earlier restriction
 against integrating `cms-testing` into `main` for this deployment. The public
 website's design, homepage hero and contact form remain developer-controlled.
@@ -30,14 +35,18 @@ without checking the target and the release checklist below.
 The public website requires no CMS credentials. `/admin` redirects to the editor
 at `/admin-test`. The editor, its iframe, media previews and all write APIs require
 a new, independent username and random password over HTTPS. Preview credentials
-do not authenticate on the client origin. Credentials are not stored in browser
-JavaScript, document JSON or Git. Origin/host checks and the mutation request
+do not authenticate on the client origin. Credentials are not persisted in browser
+application storage, client bundles, document JSON or Git. Origin/host checks and the mutation request
 header remain required in addition to authentication.
 
-This release uses a shared, protected client account. Individual accounts, MFA,
-roles, identity audit trails and an application logout remain follow-up work.
-HTTP Basic credentials can remain cached for the browser session; use a private
-window on shared computers. Rotate the Production password to revoke access.
+This release uses a shared, protected client account. The simple
+`/admin-test/login` page uses the existing credentials and an eight-hour signed
+HttpOnly session cookie, with SameSite=Strict and Secure on HTTPS. Sign out is
+available in the editor. Explicit Basic headers remain compatible with proof
+tools, while session cookies (including the sign-out marker) take precedence.
+Rotate the Production password to revoke all sessions. Individual accounts,
+MFA, roles and identity audit trails remain follow-up work. See
+[CMS-VISUAL-EDITOR.md](CMS-VISUAL-EDITOR.md#sign-in) for the session boundaries.
 
 `src/lib/cms/scope.ts` requires the live enable flag, Production environment,
 `main` branch, exact client hostname and exact live Worker URL together. Enabling

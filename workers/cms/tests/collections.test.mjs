@@ -60,6 +60,29 @@ test("strict collection validators reject manipulated fields, invalid favorites 
   assert.throws(() => validateGlobal({ ...globalSeed, socials: [...socials, ...socials] }));
 });
 
+test("contact artwork stays in project code and cannot be changed through global settings", () => {
+  const contact = { ...globalSeed, phone: "615-555-0123", email: "contact@example.com" };
+  assert.deepEqual(validateGlobal(contact), contact);
+  for (const field of ["phoneIcon", "emailIcon", "icons", "css", "style", "className"]) {
+    assert.throws(() => validateGlobal({ ...contact, [field]: "client override" }), /Unsupported field/);
+  }
+  assert.throws(() => validateGlobal({ ...contact, phone: { text: contact.phone, icon: "custom" } }));
+  assert.throws(() => validateGlobal({ ...contact, email: { text: contact.email, icon: "custom" } }));
+});
+
+test("contact icon and style overrides never reach D1 drafts", async t => {
+  const mf = await createWorker(); t.after(() => mf.dispose());
+  const db = await mf.getD1Database("DB"); await migrate(db);
+  const state = await (await admin(mf, "import", { pageId: "global" })).json();
+  const before = await db.prepare("SELECT * FROM cms_drafts WHERE page_id = 'global'").first();
+  for (const field of ["phoneIcon", "emailIcon", "icons", "css", "style", "className"]) {
+    const response = await admin(mf, "draft", { pageId: "global", expectedVersion: 1,
+      document: { ...state.draft.document, [field]: "client override" } });
+    assert.equal(response.status, 400, field);
+  }
+  assert.deepEqual(await db.prepare("SELECT * FROM cms_drafts WHERE page_id = 'global'").first(), before);
+});
+
 test("reviews/global reuse protected D1 drafts, immutable idempotent publishing and page-owned retries", async t => {
   const mf = await createWorker(); t.after(() => mf.dispose());
   const db = await mf.getD1Database("DB"); await migrate(db);

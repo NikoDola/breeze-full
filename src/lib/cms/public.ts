@@ -6,6 +6,7 @@ import { workerOrigin } from "./worker";
 import { PAGE_ID, validatePageDocument, type Publication, type PageId, type ProofDocument } from "../../../cms/shared/contract";
 import type { HomeDocument } from "../../../cms/shared/home";
 import type { ReviewsDocument, GlobalDocument } from "../../../cms/shared/collections";
+import { contentDefinitions, type ContentPageId, type ContentDocument } from "../../../cms/shared/content";
 // Metadata and page rendering share one request, including when the fetch uses
 // an AbortSignal (which opts out of Next's automatic fetch deduplication).
 const getPublication = cache(async (pageId: PageId): Promise<Publication | null> => {
@@ -19,6 +20,12 @@ const getPublication = cache(async (pageId: PageId): Promise<Publication | null>
   if (!response.ok) throw new Error("Published content is temporarily unavailable.");
   const value = await response.json() as Publication;
   return { ...value, document: validatePageDocument(pageId, value.document) };
+});
+
+export const getContentPage = cache(async (pageId: ContentPageId): Promise<{ document: ContentDocument; publication: Publication | null }> => {
+  const publication = await getPublication(pageId);
+  if (publication && publication.document.schemaVersion !== 6) throw new Error("Invalid page publication.");
+  return { document: publication ? publication.document as ContentDocument : contentDefinitions[pageId].seed, publication };
 });
 
 export const getPublishedProof = cache(async (): Promise<Publication & { document: ProofDocument }> => {

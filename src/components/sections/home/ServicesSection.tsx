@@ -1,3 +1,5 @@
+import { contentDefinitions, contentText as t, type ContentRecord } from "../../../../cms/shared/content";
+import type { ServiceSummary } from "../ContentPageView";
 import Link from "next/link";
 
 const serviceCards = [
@@ -9,13 +11,14 @@ const serviceCards = [
   { title: "Indoor quality", href: "/indoor-quality", image: "/images/Indoor-quality.png" },
 ];
 
-export default function ServicesSection() {
+export default function ServicesSection({ content: c = contentDefinitions["why-choose-breeze"].seed.content, services = [] }: { content?: ContentRecord; services?: ServiceSummary[] }) {
+  const cards = serviceCards.map(card => ({ ...card, title: services.find(service => "/" + service.slug === card.href)?.title ?? card.title }));
   return (
     <section className="section services" id="services" aria-labelledby="services-title">
       <div className="wrap">
-        <div className="section-heading services-heading"><div><h2 id="services-title">Professional<br /><em>HVAC Services</em></h2></div><p>All the ways we keep your home feeling just right, in one happy place.</p></div>
+        <div className="section-heading services-heading"><div><h2 id="services-title">{t(c, "servicesHeading")}<br /><em>{t(c, "servicesAccent")}</em></h2></div><p>{t(c, "servicesIntro")}</p></div>
         <div className="service-grid">
-          {serviceCards.map((card) => <Link className="service-card" href={card.href} key={card.href}><span className="service-image"><img src={card.image} alt="" loading="lazy" /></span><span className="service-name">{card.title}</span><span className="service-arrow" aria-hidden="true">↗</span></Link>)}
+          {cards.map((card) => <Link className="service-card" href={card.href} key={card.href}><span className="service-image"><img src={card.image} alt="" loading="lazy" /></span><span className="service-name">{card.title}</span><span className="service-arrow" aria-hidden="true">↗</span></Link>)}
         </div>
       </div>
     </section>

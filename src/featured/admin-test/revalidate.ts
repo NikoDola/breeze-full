@@ -2,6 +2,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { cmsOrigin, cmsCacheTag, cmsPageEnabled } from "@/lib/cms/scope";
 import { InputError, readBody, validateEvent } from "../../../cms/shared/contract";
 import { verify } from "../../../cms/shared/signature";
+import { contentDefinitions, isContentPage } from "../../../cms/shared/content";
 export async function POST(request: Request) {
   const secret = process.env.CMS_REVALIDATE_SECRET;
   const headers = { "Cache-Control": "no-store" };
@@ -21,6 +22,8 @@ export async function POST(request: Request) {
     revalidatePath(event.path);
     if (event.pageId === "reviews") revalidatePath("/");
     if (event.pageId === "global") revalidatePath("/", "layout");
+    if (isContentPage(event.pageId) && contentDefinitions[event.pageId].group === "HVAC") revalidatePath("/", "layout");
+    if (event.pageId === "promotions") { revalidatePath("/summer-promotions"); revalidatePath("/winter-promotions"); }
     return Response.json({ ok: true, eventId: event.eventId }, { headers });
   } catch (error) {
     if (error instanceof InputError || error instanceof SyntaxError) return Response.json({ error: "Invalid event." }, { status: 400, headers });

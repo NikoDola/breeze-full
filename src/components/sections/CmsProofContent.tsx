@@ -1,3 +1,4 @@
+import "@/styles/interior-page.css";
 import type { ProofDocument } from "../../../cms/shared/contract";
 import { safeRoute } from "../../../cms/shared/contract";
 import CmsSectionImages from "./CmsSectionImages";

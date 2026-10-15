@@ -1,1 +1,1 @@
-export { default, metadata } from "@/featured/comfort-club/page";
+export { default, generateMetadata } from "@/featured/comfort-club/page";

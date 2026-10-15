@@ -2,6 +2,7 @@ import { InputError, PREVIEW_ORIGIN, readBody, record, type Document } from "../
 import { assetIdPattern, imageSignature, MAX_UPLOAD_BYTES, readBytes, type MediaAsset } from "../../../cms/shared/media";
 import type { Env } from "./index";
 import { environmentEnabled } from "./environment";
+import { contentAssets } from "../../../cms/shared/content";
 
 class MediaError extends InputError { constructor(public status: number, message: string) { super(message); } }
 const json = (data: unknown, status = 200, headers = {}) => Response.json(data, { status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
@@ -175,10 +176,16 @@ export async function mediaAdmin(request: Request, env: Env): Promise<Response> 
 }
 
 export async function validateDraftAssets(env: Env, document: Document) {
-  if (document.schemaVersion !== 3) return;
-  for (const image of document.section.images) {
+  if (document.schemaVersion === 6 && !await contentMediaReady(env)) throw new MediaError(503, "Content migration is not ready. Apply migration 0004 before saving or publishing.");
+  const images = document.schemaVersion === 6 ? contentAssets(document) : document.schemaVersion === 3 ? document.section.images : [];
+  for (const image of images) {
     if (typeof image === "string") continue;
     const row = await asset(env, image.assetId);
     if (row.status !== "ready" || row.width !== image.width || row.height !== image.height) throw new InputError("An image is not ready or its dimensions changed. Select it again from the media library.");
   }
+}
+
+export async function contentMediaReady(env: Env): Promise<boolean> {
+  const row = await env.DB.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name IN ('content_media_validate_publication', 'content_media_capture_publication')").first<{ n: number }>();
+  return row?.n === 2;
 }

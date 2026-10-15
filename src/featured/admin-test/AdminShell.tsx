@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/ui/Icon";
 import { pages, type PageId } from "../../../cms/shared/contract";
 import css from "./shell.module.css";
+import { contentDefinitions, type ContentPageId } from "../../../cms/shared/content";
 
 // Extend this navigation as new admin features are introduced.
 const navigation = [
-  { label: "Pages", items: [{ pageId: "home", icon: "home" }] },
+  { label: "Pages", items: [{ pageId: "home", icon: "home" }, ...((Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === "Pages").map(pageId => ({ pageId, icon: contentDefinitions[pageId].icon })))] },
+  ...(["HVAC", "Company"] as const).map(label => ({ label, items: (Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === label).map(pageId => ({ pageId, icon: contentDefinitions[pageId].icon })) })),
   { label: "Website", items: [{ pageId: "reviews", icon: "star" }, { pageId: "global", icon: "grid" }] },
 ] as const;
 
@@ -30,6 +32,19 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
   const drawer = useRef<HTMLDialogElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
+
+  async function signOut() {
+    if (disabled || signingOut || !onLeave()) return;
+    setSigningOut(true); setSignOutError("");
+    try {
+      const response = await fetch("/api/cms/session", { method: "DELETE", credentials: "same-origin",
+        headers: { "x-cms-request": "editor" }, cache: "no-store" });
+      if (!response.ok) throw new Error("Sign-out failed.");
+      window.location.replace("/admin-test/login");
+    } catch { setSignOutError("Could not sign out. Please try again."); setSigningOut(false); }
+  }
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 901px)");
@@ -76,12 +91,16 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18" strokeLinecap="round" strokeLinejoin="round" /></svg>
           Leave admin
         </a>
+        <div className={css.accountActions}>
+        <button type="button" className={css.signOut} disabled={disabled || signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button>
         <button type="button" className={css.menuButton} ref={menuButton}
           aria-label="Open admin navigation" aria-controls="admin-mobile-navigation" aria-expanded={menuOpen}
           onClick={() => { drawer.current?.showModal(); setMenuOpen(true); }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" /></svg>
         </button>
+        </div>
       </header>
+      {signOutError && <p className={css.signOutError} role="alert">{signOutError}</p>}
       <main id="main" className={css.content}>{children}</main>
     </div>
     <dialog id="admin-mobile-navigation" ref={drawer} className={css.drawer} aria-labelledby="admin-navigation-title"

@@ -1,14 +1,5 @@
-import type { Metadata } from "next";
-import ServicePage from "@/components/sections/ServicePage";
-import { serviceBySlug } from "@/lib/services";
+import ContentPage from "@/featured/content-page/Page";
+import { contentMetadata } from "@/lib/cms/content";
 
-const service = serviceBySlug("indoor-quality")!;
-
-export const metadata: Metadata = {
-  title: "Indoor quality",
-  description: "Breathe Easy with IAQ Innovation — Breeze Heating & Cooling, Middle Tennessee.",
-};
-
-export default function Page() {
-  return <ServicePage service={service} />;
-}
+export const generateMetadata = () => contentMetadata("indoor-quality");
+export default function Page() { return <ContentPage pageId="indoor-quality" />; }

@@ -1,1 +1,1 @@
-export { default, metadata } from "@/featured/water-heater-solutions/page";
+export { default, generateMetadata } from "@/featured/water-heater-solutions/page";

@@ -1,3 +1,5 @@
+import { serviceLabels } from "./service-labels";
+
 /**
  * Every string in this file is the copy published on breezehc.com.
  * Keep it that way — edits here change what the site says.
@@ -24,7 +26,7 @@ export type Service = {
 export const services: Service[] = [
   {
     slug: "heating",
-    title: "Heating",
+    title: serviceLabels["heating"],
     tagline: "Keeping you warm and oh-so-cozy",
     icon: "flame",
     image: "/template-2/family-comfort.jpg",
@@ -52,7 +54,7 @@ export const services: Service[] = [
   },
   {
     slug: "cooling",
-    title: "Cooling",
+    title: serviceLabels["cooling"],
     tagline: "Drink in that Cool, Breeze Air",
     icon: "snowflake",
     image: "/template-2/cooling-photo.jpg",
@@ -85,7 +87,7 @@ export const services: Service[] = [
   },
   {
     slug: "repairs-and-services",
-    title: "Repairs & Services",
+    title: serviceLabels["repairs-and-services"],
     tagline: "Yep. We Fix It.",
     icon: "wrench",
     image: "/images/repairs-service-technician-v2.webp",
@@ -116,7 +118,7 @@ export const services: Service[] = [
   },
   {
     slug: "indoor-quality",
-    title: "Indoor quality",
+    title: serviceLabels["indoor-quality"],
     tagline: "Breathe Easy with IAQ Innovation",
     icon: "leaf",
     image: "/images/Why-We-Should-At-Home.jpg",
@@ -146,7 +148,7 @@ export const services: Service[] = [
   },
   {
     slug: "water-heater-solutions",
-    title: "Water heater solutions",
+    title: serviceLabels["water-heater-solutions"],
     tagline: "Water Heater Solutions",
     icon: "drop",
     image: "/images/Guy-water-heating-solution-full.jpg",
@@ -191,7 +193,7 @@ export const services: Service[] = [
   },
   {
     slug: "mini-split-systems",
-    title: "Mini-split systems",
+    title: serviceLabels["mini-split-systems"],
     tagline: "Safeguarding Your Comfort with Mini-Split Systems",
     icon: "grid",
     image: "/template-2/mini-split-photo.jpg",
@@ -212,7 +214,7 @@ export const services: Service[] = [
   },
   {
     slug: "energy-audits",
-    title: "Energy audits",
+    title: serviceLabels["energy-audits"],
     tagline: "The Power of Home Energy Audits",
     icon: "gauge",
     image: "/images/mass-energy-audit.png",
@@ -243,7 +245,7 @@ export const services: Service[] = [
   },
   {
     slug: "commercial-industrial",
-    title: "Commercial & Industrial",
+    title: serviceLabels["commercial-industrial"],
     tagline: "Commercial & Industrial Services in Middle Tennessee",
     icon: "building",
     image: "/images/commercial-and-industrial-icon-1.jpg",
@@ -287,7 +289,7 @@ export const services: Service[] = [
   },
   {
     slug: "residential",
-    title: "Residential",
+    title: serviceLabels["residential"],
     tagline: "The Answer to Your Perfect Home Climate",
     icon: "home",
     image: "/images/residental-full.jpg",
@@ -322,7 +324,7 @@ export const services: Service[] = [
   },
   {
     slug: "property-manager",
-    title: "Property manager",
+    title: serviceLabels["property-manager"],
     tagline: "Middle Tennessee Property Management Services",
     icon: "keys",
     image: "/images/property-manager.jpg",
@@ -362,7 +364,7 @@ export const services: Service[] = [
   },
   {
     slug: "comfort-club",
-    title: "Comfort club",
+    title: serviceLabels["comfort-club"],
     tagline: "Made in the Shade with Breeze's Comfort Club",
     icon: "shield",
     image: "/images/father-Copy.jpg",
@@ -398,7 +400,7 @@ export const services: Service[] = [
   },
   {
     slug: "financing",
-    title: "Financing",
+    title: serviceLabels["financing"],
     tagline: "HVAC Financing",
     icon: "tag",
     image: "/images/financing.jpg",
@@ -419,7 +421,7 @@ export const services: Service[] = [
   },
   {
     slug: "wi-fi-and-learning-thermostats",
-    title: "Wi-Fi and Learning Thermostats",
+    title: serviceLabels["wi-fi-and-learning-thermostats"],
     tagline: "Smart Control Over Every Degree",
     icon: "wifi",
     image: "/images/Wifi.jpg",

@@ -6,6 +6,36 @@ security limits, state handling, tests and compatible rollout requirements.
 
 ## Current admin shell
 
+The admin is a simple client control panel, not a marketing page. Do not add
+promotional panels, slogans or feature lists. Before authentication, show only
+necessary sign-in, navigation, help and error controls; do not describe admin
+capabilities, available content or internal details. See `codex.md`.
+
+### Sign in
+
+`/admin` and `/admin-test` redirect signed-out visitors to `/admin-test/login`.
+The simple, centered sign-in form replaces the browser's Basic-auth dialog.
+It uses the existing environment's admin username/password, with inline errors,
+password visibility and a support link. The editor's top bar includes Sign out,
+which respects its existing unsaved-change and busy-state checks.
+
+`POST /api/cms/session` checks the exact configured host/origin, the editor request
+header and the existing distributed limiter before checking credentials. It
+issues an eight-hour, signed HttpOnly cookie, SameSite=Strict and Path=/; HTTPS
+uses Secure and the `__Host-` cookie prefix. Signing keys are derived from the
+current credentials, write token and deployment scope, so credential rotation
+invalidates existing sessions. No new environment variables or SQL migrations
+are needed. Credentials are never stored in browser application storage.
+
+`DELETE /api/cms/session` sets an unauthenticated sign-out marker, preventing
+previously cached Basic credentials from overriding logout. Session cookies take
+precedence over legacy explicit Basic headers retained for existing proof tools.
+API authentication failures return JSON without `WWW-Authenticate`; the protected
+preview still refuses unauthenticated access. Sessions are stateless: logout
+clears access in that browser; rotating credentials revokes all issued sessions.
+
+### Workspace
+
 The editor now uses a compact, professional shell adapted from the existing
 Brzio admin UI in `Desktop/Junk code/brzio`. It has restrained typography,
 local surface/accent tokens, simple cards and a 240px desktop sidebar. The
@@ -30,8 +60,11 @@ respect the sidebar width.
 The public header/footer belong to `src/app/(site)/layout.tsx`; all public URLs,
 metadata and page content remain the same. The shared root only supplies HTML,
 fonts and metadata. Admin pages render without the public shell. The protected
-homepage preview explicitly uses `PublicLayout` so its iframe still shows the
-actual website, including navigation and footer. No backend, credential,
+homepage preview shows the complete website shell in a protected iframe. Global
+settings uses that iframe's contact-area mode, starting with the footer and
+offering the homepage header, hero, service request and footer as separate areas.
+Global draft values flow through the preview's site context to the shared public
+contact renderers and footer socials. No backend, credential,
 publication or cache configuration changes are involved in this UI update.
 
 The production HTTP proof checks the admin/public-preview separation alongside

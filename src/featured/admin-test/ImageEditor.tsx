@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import CmsImage from "@/components/sections/CmsImage";
@@ -33,14 +33,15 @@ function uploadFile(url: string, token: string, file: File, progress: (value: nu
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "Media request failed.";
 const placement = (asset: MediaAsset): MediaPlacement => ({ assetId: asset.id, width: asset.width!, height: asset.height!, alt: asset.default_alt || asset.filename.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "), decorative: false });
 
-export default function ImageEditor({ images, onChange, disabled, onBusyChange }: { images: ImageReference[]; onChange: (images: ImageReference[]) => void; disabled: boolean; onBusyChange: (busy: boolean) => void }) {
+export default function ImageEditor({ images, onChange, disabled, onBusyChange, limit = 12, allowPath = true, siteImages = cmsSiteImages }: { images: ImageReference[]; onChange: (images: ImageReference[]) => void; disabled: boolean; onBusyChange: (busy: boolean) => void; limit?: number; allowPath?: boolean; siteImages?: readonly { label: string; source: string }[] }) {
+  const uploadId = useId();
   const [assets, setAssets] = useState<MediaAsset[]>([]), [query, setQuery] = useState("");
   const [nextOffset, setNextOffset] = useState<number | null>(null), [loading, setLoading] = useState(false);
   const [error, setError] = useState(""), [notice, setNotice] = useState(""), [progress, setProgress] = useState<number | null>(null);
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null), [showLocal, setShowLocal] = useState(false);
   const [address, setAddress] = useState("");
   const fileInput = useRef<HTMLInputElement>(null), active = useRef(false), requestNumber = useRef(0);
-  const full = images.length >= 12;
+  const full = images.length >= limit;
   const load = useCallback(async (offset = 0) => {
     const number = ++requestNumber.current; setLoading(true);
     try {
@@ -93,19 +94,19 @@ export default function ImageEditor({ images, onChange, disabled, onBusyChange }
   function move(index: number, step: number) { const next = [...images]; [next[index], next[index+step]] = [next[index+step], next[index]]; onChange(next); }
   function edit(index: number, changes: Partial<MediaPlacement>) { onChange(images.map((image, at) => at === index && typeof image !== "string" ? { ...image, ...changes } : image)); }
   return <div>
-    <div className={styles.sectionIntro}><h3>Your media library</h3><p>Upload once, then reuse an image. This proof section supports a slider; other website components keep their own layouts.</p></div>
+    <div className={styles.sectionIntro}><h3>Your media library</h3><p>Upload once, then reuse an image. Select a photo and save your draft.</p></div>
     <div className={css.uploadBox}>
-      <label htmlFor="cms-media-files"><strong>Upload images</strong><span>JPEG, PNG, WebP or AVIF · up to 10 MB each</span></label>
-      <input id="cms-media-files" ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={disabled} onChange={event => void upload(Array.from(event.target.files ?? []).slice(0,12))} />
+      <label htmlFor={uploadId}><strong>Upload images</strong><span>JPEG, PNG, WebP or AVIF · up to 10 MB each</span></label>
+      <input id={uploadId} ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={disabled} onChange={event => void upload(Array.from(event.target.files ?? []).slice(0,12))} />
       <small>Still images up to 24 megapixels and 8192 pixels per side. Uploads stay private until published.</small>
       {progress !== null && <progress aria-label="Image upload progress" max={100} value={progress} />}
     </div>
     {error && <p className={css.referenceWarning} role="alert">{error}</p>}
     {notice && <p className={css.mediaNotice} role="status">{notice}</p>}
-    <div className={css.imageSummary}><h4>Selected images <span>{images.length} / 12</span></h4></div>
+    <div className={css.imageSummary}><h4>Selected images <span>{images.length} / {limit}</span></h4></div>
     <ol className={css.imageList}>{images.map((reference,index) => <li key={index}>
       <div className={css.imageCard}><div className={css.thumbnail}><CmsImage reference={reference} sizes="100px" thumbnail preview /></div><div className={css.imageFields}>
-        {typeof reference === "string" ? <><label className={css.imageLabel}>Existing image address<Input value={reference} disabled={disabled} maxLength={2048} onChange={event => onChange(images.map((image,at) => at === index ? event.target.value : image))} /></label><small className={css.help}>Legacy image. Choose a library image for alt-text controls.</small></> : <>
+        {typeof reference === "string" ? <><label className={css.imageLabel}>Existing image address<Input value={reference} disabled={disabled || !allowPath} maxLength={2048} onChange={event => onChange(images.map((image,at) => at === index ? event.target.value : image))} /></label><small className={css.help}>Existing site photo. You can replace it with a library image.</small></> : <>
           <label className={css.imageLabel}>Image {index+1} description<Input aria-label={`Image ${index+1} description`} value={reference.alt} maxLength={500} disabled={disabled || reference.decorative} placeholder="Describe what this image adds to the page" onChange={event => edit(index,{alt:event.target.value})} /></label>
           <label className={css.checkLabel}><input type="checkbox" checked={reference.decorative} disabled={disabled} onChange={event => edit(index,{decorative:event.target.checked,alt:""})} /> Decorative image (no description needed)</label>
           <small className={css.help}>{reference.width} × {reference.height} px</small>
@@ -137,11 +138,11 @@ export default function ImageEditor({ images, onChange, disabled, onBusyChange }
     {!assets.length && !loading && <p className={css.help}>{query ? "No matching images." : "Your uploaded images will appear here."}</p>}
     {nextOffset !== null && <Button type="button" className={styles.secondaryButton} disabled={disabled || loading} onClick={() => void load(nextOffset)}>Load more images</Button>}
     <div className={css.addImage}><Button type="button" className={styles.textButton} disabled={disabled} onClick={() => setShowLocal(!showLocal)}>{showLocal ? "Hide existing site images" : "Choose an existing site image"}</Button>
-      {showLocal && <><div className={css.library}>{cmsSiteImages.map(image => <button type="button" key={image.source} disabled={disabled || (full && replaceIndex===null)} onClick={() => choose(image.source)}><span className={css.libraryThumb}><CmsImage reference={image.source} sizes="180px" thumbnail /></span><span>{image.label}</span></button>)}</div>
-      <label className={styles.field}><span>Existing local image path</span><Input value={address} disabled={disabled} placeholder="/images/photo.webp" onChange={event => setAddress(event.target.value)} /></label>
+      {showLocal && <><div className={css.library}>{siteImages.map(image => <button type="button" key={image.source} disabled={disabled || (full && replaceIndex===null)} onClick={() => choose(image.source)}><span className={css.libraryThumb}><CmsImage reference={image.source} sizes="180px" thumbnail /></span><span>{image.label}</span></button>)}</div>
+      {allowPath && <><label className={styles.field}><span>Existing local image path</span><Input value={address} disabled={disabled} placeholder="/images/photo.webp" onChange={event => setAddress(event.target.value)} /></label>
       <Button type="button" className={styles.secondaryButton} disabled={disabled || !address || (full && replaceIndex===null)} onClick={() => {
         if (!address.startsWith("/") || !cmsImageSource(address)) { setError("Choose an existing /images/ or /template-2/ path."); return; } choose(address.trim()); setAddress("");
-      }}>Select existing image</Button></>}
+      }}>Select existing image</Button></>}</>}
     </div>
     <p className={css.help}>Removing or replacing an image changes this draft only. Original files and images used by published revisions are retained.</p>
   </div>;

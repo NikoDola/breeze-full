@@ -1,19 +1,5 @@
-import type { Metadata } from "next";
-import LegalPage from "@/components/sections/LegalPage";
-import { termsSections } from "@/lib/legal";
+import ContentPage from "@/featured/content-page/Page";
+import { contentMetadata } from "@/lib/cms/content";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions",
-  description:
-    "The terms governing your use of the Breeze Heating and Cooling website and services.",
-};
-
-export default function Page() {
-  return (
-    <LegalPage
-      title="Terms and Conditions"
-      effectiveLabel="Last updated: 2025"
-      sections={termsSections}
-    />
-  );
-}
+export const generateMetadata = () => contentMetadata("terms-and-conditions");
+export default function Page() { return <ContentPage pageId="terms-and-conditions" />; }

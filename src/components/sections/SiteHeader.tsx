@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSite } from "./SiteContext";
@@ -24,6 +24,8 @@ const aboutLinks = [
 export default function TemplateHeader() {
   const site = useSite();
   const pathname = usePathname();
+  const requestHref = pathname === "/" ? "#service-form" : "/contact-us#service-form";
+  const RequestLink = pathname === "/" ? "a" : Link;
   const [menuOpen, setMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<"hvac" | "about" | null>(null);
 
@@ -45,6 +47,19 @@ export default function TemplateHeader() {
   }, []);
 
   function closeMenu() { setMenuOpen(false); setOpenSubmenu(null); }
+
+  function requestService(event: ReactMouseEvent<HTMLAnchorElement>) {
+    closeMenu();
+    if (pathname !== "/" || event.defaultPrevented || event.button !== 0 ||
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const form = document.getElementById("service-form");
+    if (!form) return;
+    event.preventDefault();
+    if (window.location.hash !== "#service-form") {
+      window.history.pushState(window.history.state, "", "#service-form");
+    }
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   function submenu(key: "hvac" | "about", label: string, href: string, links: readonly (readonly [string, string])[]) {
     const expanded = openSubmenu === key;
@@ -68,6 +83,7 @@ export default function TemplateHeader() {
     <header className="site-header" id="top">
       <div className="header-topbar">
         <nav className="header-secondary-nav wrap" aria-label="Quick contact">
+          <RequestLink className="header-request header-mobile-request" href={requestHref} onClick={requestService}><span aria-hidden="true">↗</span> Request service</RequestLink>
           <span className="header-tagline">1st Class Service With A Smile. <span className="header-tagline-smile" aria-hidden="true">☺</span></span>
           <a className="header-call" href={site.phoneHref} aria-label={`Call Breeze at ${site.phone}`}>
             <span className="call-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01z" /></svg></span>
@@ -89,7 +105,7 @@ export default function TemplateHeader() {
           </ul>
         </nav>
         <div className="header-actions">
-          <Link className="header-request" href={pathname === "/" ? "#contact" : "/contact-us#service-form"} onClick={closeMenu}>Request service <span aria-hidden="true">↗</span></Link>
+          <RequestLink className="header-request" href={requestHref} onClick={requestService}>Request service <span aria-hidden="true">↗</span></RequestLink>
           <button className="menu-toggle" type="button" aria-controls="site-nav" aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => { setMenuOpen(!menuOpen); if (menuOpen) setOpenSubmenu(null); }}><span /><span /><span /></button>
         </div>
       </div>

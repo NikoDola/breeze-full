@@ -1,14 +1,5 @@
-import type { Metadata } from "next";
-import PromoPage from "@/components/sections/PromoPage";
-import { getPromo } from "@/lib/promotions";
+import ContentPage from "@/featured/content-page/Page";
+import { contentMetadata } from "@/lib/cms/content";
 
-const promo = getPromo("winter-promotions");
-
-export const metadata: Metadata = {
-  title: promo.title,
-  description: promo.metaDescription,
-};
-
-export default function Page() {
-  return <PromoPage {...promo} />;
-}
+export const generateMetadata = () => contentMetadata("promotions", "winter-promotions");
+export default function Page() { return <ContentPage pageId="promotions" offerSlug="winter-promotions" />; }

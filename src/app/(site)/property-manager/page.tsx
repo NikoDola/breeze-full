@@ -1,1 +1,1 @@
-export { default, metadata } from "@/featured/property-manager/page";
+export { default, generateMetadata } from "@/featured/property-manager/page";

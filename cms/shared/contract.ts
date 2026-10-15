@@ -2,12 +2,14 @@ import { validateHomeDocument, type HomeDocument } from "./home";
 import { validateReviews, validateGlobal, type ReviewsDocument, type GlobalDocument } from "./collections";
 import { InputError, record, text as string } from "./validation";
 import { validatePlacement, type ImageReference } from "./media";
+import { contentPages, isContentPage, validateContentDocument, type ContentDocument } from "./content";
 export { InputError, record } from "./validation";
 
 export const PAGE_ID = "cms-proof";
 export const PUBLIC_PATH = "/cms-proof";
 export const CACHE_TAG = "cms:preview:cms-testing:page:cms-proof";
 export const pages = {
+  ...contentPages,
   "cms-proof": { id: "cms-proof", slug: "cms-proof", path: "/cms-proof", label: "CMS proof", cacheTag: CACHE_TAG },
   home: { id: "home", slug: "", path: "/", label: "Homepage", cacheTag: "cms:preview:cms-testing:page:home" },
   reviews: { id: "reviews", slug: "reviews", path: "/reviews", label: "Reviews", cacheTag: "cms:preview:cms-testing:page:reviews" },
@@ -34,7 +36,7 @@ export type ProofDocument = {
   schemaVersion: 1 | 3; title: string; seoTitle: string; seoDescription: string;
   section: Section;
 };
-export type Document = ProofDocument | HomeDocument | ReviewsDocument | GlobalDocument;
+export type Document = ProofDocument | HomeDocument | ReviewsDocument | GlobalDocument | ContentDocument;
 export type Publication = { revisionId: string; version: number; document: Document; publishedAt: string };
 export type Draft = { version: number; document: Document; updatedAt: string };
 export type Delivery = {
@@ -53,12 +55,14 @@ export function safeRoute(value: string): boolean {
   try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password; } catch { return false; }
 }
 export function validateDocument(value: unknown): Document {
+  if (record(value).schemaVersion === 6) return validateContentDocument(value);
   if (record(value).schemaVersion === 2) return validateHomeDocument(value);
   if (record(value).schemaVersion === 4) return validateReviews(value);
   if (record(value).schemaVersion === 5) return validateGlobal(value);
   return validateProofDocument(value);
 }
 export function validatePageDocument(pageId: PageId, value: unknown): Document {
+  if (isContentPage(pageId)) return validateContentDocument(value, pageId);
   if (pageId === "reviews") return validateReviews(value);
   if (pageId === "global") return validateGlobal(value);
   return pageId === "home" ? validateHomeDocument(value) : validateProofDocument(value);

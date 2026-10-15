@@ -12,7 +12,7 @@ const expertise = ["HVAC", "ELECTRICAL", "OTHER"];
 const experience = ["Less than 1", "1-3 years", "3-5 years", "5+ years"];
 
 /** Mirrors the fields on breezehc.com/careers. Submits via a pre-filled email. */
-export default function CareersForm() {
+export default function CareersForm({ heading = "Please fill out our online form for employment" }: { heading?: string }) {
   const site = useSite();
   const [sent, setSent] = useState(false);
 
@@ -42,7 +42,7 @@ export default function CareersForm() {
       className="careers-form-form-1"
     >
       <h2 className="careers-form-heading-1">
-        Please fill out our online form for employment
+        {heading}
       </h2>
 
       <div className="careers-form-layout-1">

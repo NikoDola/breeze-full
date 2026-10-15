@@ -2,6 +2,7 @@ import "server-only";
 import { getVercelOidcToken } from "@vercel/oidc";
 import { PAGE_ID, pages, readBody, validateEvent, type DeliveryClaim, type PublishEvent, type PageId } from "../../../cms/shared/contract";
 import { confirmsPublication } from "../../../cms/shared/publication-marker";
+import { publicationPaths } from "../../../cms/shared/publication-paths";
 import { sign } from "../../../cms/shared/signature";
 import { cmsOrigin, cmsScope } from "./scope";
 import { workerAdmin } from "./worker";
@@ -65,11 +66,13 @@ export async function deliverPublication(pageId: PageId = PAGE_ID) {
     let confirmed = false;
     const verificationStart = performance.now();
     for (let attempt = 0; attempt < 3 && !confirmed; attempt++) {
-      const page = await fetch(`${cmsOrigin()}${event.path}`, { cache: "no-store", redirect: "error",
-        signal: AbortSignal.timeout(10000), headers: { ...headers, Pragma: "no-cache" } });
-      if (!page.ok) throw new Error("Public page is unavailable.");
-      const html = await readBody(page, 1024 * 1024);
-      confirmed = confirmsPublication(html, event);
+      const checks = await Promise.all(publicationPaths(event).map(async path => {
+        const page = await fetch(`${cmsOrigin()}${path}`, { cache: "no-store", redirect: "error",
+          signal: AbortSignal.timeout(10000), headers: { ...headers, Pragma: "no-cache" } });
+        if (!page.ok) throw new Error("Public page is unavailable.");
+        return confirmsPublication(await readBody(page, 1024 * 1024), event);
+      }));
+      confirmed = checks.every(Boolean);
       if (!confirmed && attempt < 2) await new Promise(resolve => setTimeout(resolve, 500));
     }
     if (!confirmed) throw new Error("Published snapshot is not visible yet.");

@@ -1,1 +1,1 @@
-export { default, metadata } from "@/featured/why-choose-breeze/page";
+export { default, generateMetadata } from "@/featured/why-choose-breeze/page";

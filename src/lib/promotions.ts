@@ -1,6 +1,6 @@
 import data from "@/content/promotions.json";
 
-// Editable source of truth: src/content/promotions.json (managed via /admin).
+// Source baseline and fixed design assets. Published promotion text comes from the CMS.
 
 export type Promo = {
   slug: string;

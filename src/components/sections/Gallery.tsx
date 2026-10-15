@@ -4,59 +4,61 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import Icon from "@/components/ui/Icon";
 
-export type Shot = { src: string; alt: string };
+export type Shot = { id: string; src: string; alt: string; caption: string; width: number; height: number; unoptimized?: boolean };
 
 export default function Gallery({ shots }: { shots: Shot[] }) {
-  const [active, setActive] = useState<number | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const active = shots.findIndex(shot => shot.id === activeId);
+  const activeShot = shots[active];
 
   useEffect(() => {
-    if (active === null) return;
+    if (!activeShot) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActive(null);
-      if (e.key === "ArrowRight") setActive((i) => ((i ?? 0) + 1) % shots.length);
-      if (e.key === "ArrowLeft")
-        setActive((i) => ((i ?? 0) - 1 + shots.length) % shots.length);
+      if (e.key === "Escape") setActiveId(null);
+      if (e.key === "ArrowRight") setActiveId(shots[(active + 1) % shots.length].id);
+      if (e.key === "ArrowLeft") setActiveId(shots[(active - 1 + shots.length) % shots.length].id);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, shots.length]);
+  }, [active, activeShot, shots]);
 
   return (
     <>
       <div className="gallery-layout-1">
-        {shots.map((shot, i) => (
+        {shots.map((shot) => (
           <button
-            key={shot.src}
-            onClick={() => setActive(i)}
+            key={shot.id}
+            onClick={() => setActiveId(shot.id)}
             className="gallery-button-1"
-            aria-label={`View ${shot.alt}`}
+            aria-label={`View ${shot.caption}`}
           >
             <Image
               src={shot.src}
+              unoptimized={shot.unoptimized}
               alt={shot.alt}
-              width={900}
-              height={675}
+              width={shot.width}
+              height={shot.height}
               className="gallery-image-1"
             />
             <span className="gallery-text-1" />
             <span className="gallery-text-2">
               <Icon name="image" className="gallery-icon-1" />
-              {shot.alt}
+              {shot.caption}
             </span>
           </button>
         ))}
       </div>
 
-      {active !== null && (
+      {activeShot && (
         <div
-          onClick={() => setActive(null)}
+          onClick={() => setActiveId(null)}
           role="dialog"
           aria-modal="true"
-          aria-label={shots[active].alt}
+          aria-label={activeShot.caption}
           className="gallery-layout-2"
         >
           <button
-            onClick={() => setActive(null)}
+            onClick={() => setActiveId(null)}
             aria-label="Close"
             className="gallery-button-2"
           >
@@ -77,14 +79,15 @@ export default function Gallery({ shots }: { shots: Shot[] }) {
             className="gallery-figure-1"
           >
             <Image
-              src={shots[active].src}
-              alt={shots[active].alt}
-              width={1600}
-              height={1200}
+              src={activeShot.src}
+              unoptimized={activeShot.unoptimized}
+              alt={activeShot.alt}
+              width={activeShot.width}
+              height={activeShot.height}
               className="gallery-image-2"
             />
             <figcaption className="gallery-figcaption-1">
-              {shots[active].alt} · {active + 1} / {shots.length}
+              {activeShot.caption} · {active + 1} / {shots.length}
             </figcaption>
           </figure>
         </div>

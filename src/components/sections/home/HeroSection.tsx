@@ -2,6 +2,10 @@ import { site as defaultSite, type SiteData } from "@/lib/site";
 
 export default function HeroSection({ site = defaultSite }: { site?: SiteData }) {
   return (
+    <>
+    <link rel="preload" as="image" href="/images/hero-full.webp" media="(max-width: 700px)" fetchPriority="high" />
+    <link rel="preload" as="image" href="/images/hero-bg.webp" media="(min-width: 700.01px)" fetchPriority="high" />
+    <link rel="preload" as="image" href="/images/hero-family.webp" media="(min-width: 700.01px)" fetchPriority="high" />
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-photo" role="img" aria-label="A family relaxing together in a bright, comfortable home">
         <svg className="hero-breeze" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -36,5 +40,6 @@ export default function HeroSection({ site = defaultSite }: { site?: SiteData })
         <div className="hero-sticker" aria-label="Over two decades of local comfort care"><span>20+</span><small>years keeping<br />Middle TN comfy</small></div>
       </div>
     </section>
+    </>
   );
 }

@@ -2,6 +2,12 @@
 
 Read `docs/WEBSITE.md` for the route and component map before editing.
 
+## Admin interface
+
+- The admin is a simple, practical client control panel, not a marketing page.
+- Before login, show only the controls and information needed to sign in, return to the website, or get sign-in help. Do not reveal admin capabilities, available content, or internal details.
+- Do not add promotional panels, slogans, feature lists, or descriptions of what the client can manage. Keep the login form centered and professional.
+
 ## Verification
 
 - For small visual changes limited to CSS, such as spacing, color, or animation, make the edit without running a browser check or production build. The user will inspect the page.

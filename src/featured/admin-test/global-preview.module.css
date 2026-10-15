@@ -1,0 +1,17 @@
+.preview { min-height: 100vh; background: #eef1f2; color: var(--ink); }
+.controls { padding: 24px; background: #fff; border-bottom: 1px solid #d5dfe2; }
+.controls h1 { margin: 0 0 8px; font: 700 25px/1.3 var(--body); letter-spacing: -.02em; }
+.controls p { margin: 0 0 18px; font-size: 15px; color: #5c7180; overflow-wrap: anywhere; }
+.locations { display: flex; flex-wrap: wrap; gap: 8px; }
+.locations button { padding: 10px 16px; border: 1px solid #cbd9de; border-radius: 8px; background: #fff; color: var(--navy); font-size: 15px; font-weight: 650; cursor: pointer; }
+.locations button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.placement { margin: 20px 0; }
+.label { margin: 0; padding: 14px 24px; font: 700 18px/1.4 var(--body); letter-spacing: 0; color: var(--navy); }
+.example { isolation: isolate; }
+.example > :global(.site-header) { position: relative; }
+@media(max-width:700px) {
+  .controls { padding: 20px 16px; }
+  .controls h1 { font-size: 22px; }
+  .label { padding-inline: 16px; font-size: 16px; }
+  .locations button { padding: 9px 12px; font-size: 14px; }
+}

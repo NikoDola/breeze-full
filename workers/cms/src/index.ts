@@ -5,7 +5,8 @@ import {
 import { homeSeed, HOME_SOURCE_ID } from "../../../cms/shared/home-seed";
 import { createReviewsSeed, globalSeed } from "../../../cms/shared/collection-seeds";
 import { validateHomeDocument } from "../../../cms/shared/home";
-import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets } from "./media";
+import { contentDefinitions, isContentPage } from "../../../cms/shared/content";
+import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets, contentMediaReady } from "./media";
 import { environmentEnabled } from "./environment";
 import { consumeRate, limitWorkerSource } from "./throttle";
 
@@ -74,7 +75,7 @@ async function editorState(env: Env, pageId: PageId) {
 }
 async function importContent(env: Env, pageId: PageId, source: unknown) {
   const currentHome = pageId === "reviews" ? await readPublication(env, "home") : null;
-  const original = pageId === "home" ? homeSeed : pageId === "reviews" ? createReviewsSeed(currentHome ? validateHomeDocument(JSON.parse(currentHome.document_json)) : homeSeed) : pageId === "global" ? globalSeed : source;
+  const original = isContentPage(pageId) ? contentDefinitions[pageId].seed : pageId === "home" ? homeSeed : pageId === "reviews" ? createReviewsSeed(currentHome ? validateHomeDocument(JSON.parse(currentHome.document_json)) : homeSeed) : pageId === "global" ? globalSeed : source;
   const document = pageId === "cms-proof" ? importLegacy(original) : validatePageDocument(pageId, original);
   const sourceId = pageId === "home" ? HOME_SOURCE_ID : pageId === "cms-proof" ? "home-hero" : `${pageId}-baseline-v1`, now = new Date().toISOString();
   // All inserts are in one transaction; repeated imports never overwrite an edited draft.
@@ -172,8 +173,9 @@ export default {
       if (!environmentEnabled(env)) return json({ error: "Not found." }, 404);
       if (path.startsWith("/api/media/upload/")) return await mediaUpload(request, env);
       if (path.startsWith("/media/")) return await mediaPublic(request, env);
-      const publicMatch = path.match(/^\/api\/public\/pages\/(cms-proof|home|reviews|global)$/);
+      const publicMatch = path.match(/^\/api\/public\/pages\/([a-z0-9-]+)$/);
       if (request.method === "GET" && publicMatch) {
+        if (!Object.hasOwn(pages, publicMatch[1])) return json({ error: "Not found." }, 404);
         const row = await readPublication(env, pageDefinition(publicMatch[1]).id);
         return row ? json(publication(row)) : json({ error: "Not published." }, 404);
       }
@@ -192,7 +194,7 @@ export default {
       if (request.method === "GET" && path === "/api/admin/health") {
         const columns = await env.DB.prepare("PRAGMA table_info(cms_publish_outbox)").all<{ name: string }>();
         return json({ environment: env.CMS_ENVIRONMENT, writesEnabled: writesEnabled(env),
-          schemaReady: columns.results.some(column => column.name === "lease_token"), deliveryOwner: "nextjs", pages: Object.keys(pages),
+          schemaReady: columns.results.some(column => column.name === "lease_token") && await contentMediaReady(env), deliveryOwner: "nextjs", pages: Object.keys(pages),
           throttlingReady: Boolean(env.AUTH_RATE_LIMITER && env.SERVICE_RATE_LIMITER) });
       }
       if (request.method === "GET" && path === "/api/admin/proof") return json(await editorState(env, pageDefinition(url.searchParams.get("pageId") ?? undefined).id));

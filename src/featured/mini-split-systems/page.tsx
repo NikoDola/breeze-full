@@ -1,14 +1,5 @@
-import type { Metadata } from "next";
-import ServicePage from "@/components/sections/ServicePage";
-import { serviceBySlug } from "@/lib/services";
+import ContentPage from "@/featured/content-page/Page";
+import { contentMetadata } from "@/lib/cms/content";
 
-const service = serviceBySlug("mini-split-systems")!;
-
-export const metadata: Metadata = {
-  title: "Mini-split systems",
-  description: "Safeguarding Your Comfort with Mini-Split Systems — Breeze Heating & Cooling, Middle Tennessee.",
-};
-
-export default function Page() {
-  return <ServicePage service={service} />;
-}
+export const generateMetadata = () => contentMetadata("mini-split-systems");
+export default function Page() { return <ContentPage pageId="mini-split-systems" />; }
