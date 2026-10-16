@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Breeze service request</title>
+  <style>html,body{margin:0;padding:0;background:#fff}#hcp-lead-iframe{display:block;width:100%;height:900px;border:0}</style>
+</head>
+<body>
+  <iframe id="hcp-lead-iframe" title="Housecall Pro service request" src="https://book.housecallpro.com/lead-form/Breeze-Heating-and-Cooling-LLC/c370368da67f40d6a0b374639708649e"></iframe>
+  <script>
+    // Keep the supplied script in its own document: it attaches its resize
+    // listener on window.load and otherwise misses Next.js client navigation.
+    (function () {
+      var frame = document.getElementById("hcp-lead-iframe");
+      var height = 900;
+      function send(data) { window.parent.postMessage(data, window.location.origin); }
+      window.addEventListener("message", function (event) {
+        if (event.source === window.parent && event.origin === window.location.origin && event.data && event.data.type === "breeze.hcp.measure") {
+          send({ type: "breeze.hcp.resize", height: height });
+          event.stopImmediatePropagation();
+          return;
+        }
+        if (event.source !== frame.contentWindow || event.origin !== "https://book.housecallpro.com" || !event.data) {
+          event.stopImmediatePropagation();
+          return;
+        }
+        if (event.data.type === "hcp:lead-capture-size") {
+          var value = event.data.value;
+          var valid = typeof value === "number" || (typeof value === "string" && /^\d+(\.\d+)?(px)?$/.test(value));
+          var size = valid ? parseFloat(value) : NaN;
+          if (!Number.isFinite(size) || size < 100 || size > 12000) {
+            event.stopImmediatePropagation();
+            return;
+          }
+          height = Math.ceil(size);
+          frame.style.height = height + "px";
+          send({ type: "breeze.hcp.resize", height: height });
+        } else if (event.data.type === "hcp:redirect") {
+          // Let the host page validate the destination before navigating.
+          event.stopImmediatePropagation();
+          send({ type: "breeze.hcp.redirect", url: event.data.url });
+        }
+      }, true);
+    })();
+  </script>
+  <!-- Supplied Housecall Pro lead capture script. -->
+  <script async src="https://online-booking.housecallpro.com/script.js?token=c370368da67f40d6a0b374639708649e&amp;orgName=Breeze-Heating-and-Cooling-LLC"></script>
+</body>
+</html>

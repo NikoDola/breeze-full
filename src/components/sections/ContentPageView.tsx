@@ -28,7 +28,7 @@ export default function ContentPageView({ document, site, services = [], offerSl
   if (definition.family === "emergency") return <EmergencyContent content={c} site={site} />;
   if (definition.family === "services") return <ServicesContent content={c} site={site} services={services} />;
   if (definition.family === "gallery") return <GalleryContent content={c} site={site} preview={preview} mediaOrigin={mediaOrigin} />;
-  if (definition.family === "legal") return <LegalContent site={site} title={t(c, "heading")} effectiveLabel={t(c, "effectiveLabel")} intro={t(c, "intro")} sections={items(c, "sections").map(section => ({ heading: t(section, "heading"), paragraphs: t(section, "paragraphs") ? t(section, "paragraphs").split("\n\n") : undefined, items: t(section, "items") ? t(section, "items").split("\n").filter(Boolean) : undefined }))} />;
+  if (definition.family === "legal") return <LegalContent site={site} title={t(c, "heading")} effectiveLabel={t(c, "effectiveLabel")} intro={t(c, "intro")} showIntegrationDisclosure={document.pageId === "privacy-policy"} sections={items(c, "sections").map(section => ({ heading: t(section, "heading"), paragraphs: t(section, "paragraphs") ? t(section, "paragraphs").split("\n\n") : undefined, items: t(section, "items") ? t(section, "items").split("\n").filter(Boolean) : undefined }))} />;
   function contactText(text: string) {
     const parts = text.replaceAll("{phone}", site.phone).split("{email}");
     return parts.length === 1 ? parts[0] : parts.map((part, index) => <Fragment key={index}>{index > 0 && <PublicEmail email={site.email} href={site.emailHref} />}{part}</Fragment>);

@@ -38,6 +38,8 @@ Homepage reviews and service area inherit the shared `.section` vertical spacing
 
 Public email links use `src/components/ui/PublicEmail.tsx` for an orange envelope matching the phone icon, including the footer, legal contact details, and service copy. The Contact us card retains its existing matching mail badge.
 
+Service requests use the client-supplied Housecall Pro embed through `ServiceRequestForm.tsx`; CMS previews display a placeholder. Microsoft Clarity is consent-gated in the public layout on Vercel Production. See [INTEGRATIONS.md](INTEGRATIONS.md) for ownership, privacy settings and launch confirmation steps.
+
 The shared header is `src/components/sections/SiteHeader.tsx`; the shared footer is `src/components/sections/SiteFooter.tsx`. The header owns the navigation links and the mobile menu state. At the mobile menu breakpoint (930px), its 47.6px top strip shows Request service beside the phone number, replacing the desktop tagline. The main row contains a 153px logo and a menu toggle without a circular border; narrower phones retain that logo size. The desktop request button stays in the main row. Homepage request links target `#service-form`, with smooth scrolling on click and clearance for the sticky header. Native anchors provide the fallback; cancelled clicks and modified clicks keep their normal behavior. Other routes use Next.js navigation to `/contact-us#service-form`.
 
 ## Routes and content

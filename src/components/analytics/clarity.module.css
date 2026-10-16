@@ -1,0 +1,9 @@
+.notice { position: fixed; z-index: 90; bottom: 16px; right: 16px; width: min(440px, calc(100% - 32px)); padding: 22px; border: 1px solid #b7c9cf; border-radius: 16px; background: #fffaf2; color: #092f43; box-shadow: 0 6px 28px #092f4326; }
+.notice h2 { margin: 0 0 10px; font-size: 20px; line-height: 1.3; }
+.notice p { margin: 0; font-size: 14px; line-height: 1.6; }
+.notice a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.actions button { padding: 10px 14px; border: 1px solid #092f43; border-radius: 8px; background: #fff; color: #092f43; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.actions button:hover { background: #d9f0f0; }
+.actions button:focus-visible, .privacyLink:focus-visible { outline: 2px solid #ff5b27; outline-offset: 4px; }
+.privacyLink { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

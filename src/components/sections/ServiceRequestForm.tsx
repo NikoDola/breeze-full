@@ -1,62 +1,43 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
-import Textarea from "@/components/ui/Textarea";
-import { serviceLabels } from "@/lib/service-labels";
+import { usePathname } from "next/navigation";
+import { HOUSECALL_PRO_FORM_URL, housecallHeight, housecallRedirect } from "@/lib/integrations/housecall-pro";
 import { useSite } from "./SiteContext";
+import styles from "./service-request-form.module.css";
 
-export default function TemplateServiceForm({ compact = false }: { compact?: boolean }) {
+export default function ServiceRequestForm({ compact = false }: { compact?: boolean }) {
   const site = useSite();
-  const [prepared, setPrepared] = useState(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const preview = usePathname().startsWith("/admin");
 
   useEffect(() => {
-    function selectService(event: MouseEvent) {
-      const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("[data-service]");
-      const select = document.querySelector<HTMLSelectElement>("#service");
-      if (link?.dataset.service && select) select.value = link.dataset.service;
+    if (preview) return;
+    function receive(event: MessageEvent) {
+      if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
+      if (event.data?.type === "breeze.hcp.resize") {
+        const height = housecallHeight(event.data.height);
+        if (height && frame.current) frame.current.style.height = `${height}px`;
+      } else if (event.data?.type === "breeze.hcp.redirect") {
+        const url = housecallRedirect(event.data.url, window.location.origin);
+        if (url) window.location.assign(url);
+      }
     }
-    document.addEventListener("click", selectService);
-    return () => document.removeEventListener("click", selectService);
-  }, []);
+    window.addEventListener("message", receive);
+    return () => window.removeEventListener("message", receive);
+  }, [preview]);
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const body = [
-      `Name: ${data.get("name")}`,
-      `Phone: ${data.get("phone")}`,
-      `Email: ${data.get("email")}`,
-      `Service needed: ${data.get("service")}`,
-      `SMS contact permission: ${data.get("sms_consent") === "yes" ? "Yes, for service request and appointment updates" : "No"}`,
-      "",
-      "Details:",
-      data.get("message") || "No additional details provided.",
-    ].join("\n");
-    window.location.href = `${site.formRecipientHref}?subject=${encodeURIComponent("Service request from Breeze website")}&body=${encodeURIComponent(body)}`;
-    setPrepared(true);
-  }
-
-  return <form className={`contact-form${compact ? " contact-form-compact" : ""}`} id="service-form" onSubmit={onSubmit}>
+  return <div className={`contact-form ${styles.container}${compact ? " contact-form-compact" : ""}`} id="service-form" data-clarity-mask="true">
     <h3>Request service</h3>
     <p className="form-intro">A few details and we&rsquo;ll be on our way.</p>
-    <div className="form-grid">
-      <div className="field"><label htmlFor="name">Your name <span>*</span></label><Input id="name" name="name" type="text" autoComplete="name" placeholder="Jane Smith" required /></div>
-      <div className="field"><label htmlFor="phone">Phone number <span>*</span></label><Input id="phone" name="phone" type="tel" autoComplete="tel" placeholder="(615) 555-0100" required /></div>
-      <div className="field"><label htmlFor="email">Email address <span>*</span></label><Input id="email" name="email" type="email" autoComplete="email" placeholder="jane@example.com" required /></div>
-      <div className="field"><label htmlFor="service">Service needed <span>*</span></label><Select id="service" name="service" defaultValue="" required>
-        <option value="" disabled>Select a service</option>
-        {Object.entries(serviceLabels).map(([slug, title]) => <option key={slug} value={title}>{title}</option>)}
-        <option value="Emergency service">Emergency service</option><option value="Other">Other</option>
-      </Select></div>
-      <div className="field field-wide"><label htmlFor="message">Tell us more <small>(optional)</small></label><Textarea id="message" name="message" rows={compact ? 3 : 4} placeholder="What is going on with your system?" /></div>
-    </div>
-    <div className="sms-consent"><Input id="sms-consent" name="sms_consent" type="checkbox" value="yes" /><label htmlFor="sms-consent">Yes, Breeze Heating &amp; Cooling may text me at the phone number above about my service request and appointment updates. This is optional. Message and data rates may apply. Reply STOP to opt out.</label></div>
-    <Button className="button orange submit-button" type="submit">Prepare service request <span aria-hidden="true">↗</span></Button>
-    <p className="form-note">Your email app will open with the request ready to send. See our <Link href="/privacy-policy">Privacy Policy</Link>.</p>
-    {prepared && <p className="form-status" role="status" aria-live="polite">Your email app is opening. Please send the prepared message to complete your request. You can also call {site.phone}.</p>}
-  </form>;
+    {preview ? <div className={styles.preview}>
+      <strong>Housecall Pro service request form</strong>
+      <p>The connected form appears here on the public website. Submissions are disabled in this preview.</p>
+    </div> : <>
+      <iframe ref={frame} className={styles.frame} src="/integrations/housecall-pro.html" title="Request service from Breeze Heating and Cooling" height={900} loading="lazy" onLoad={() => frame.current?.contentWindow?.postMessage({ type: "breeze.hcp.measure" }, window.location.origin)} />
+      <p className={`form-note ${styles.help}`}>Trouble viewing the form? <a href={HOUSECALL_PRO_FORM_URL} target="_blank" rel="noopener noreferrer">Open the service form in a new tab</a> or <a href={site.phoneHref}>call {site.phone}</a>.</p>
+    </>}
+    <p className={`form-note ${styles.help}`}>Your request is sent directly to Breeze through Housecall Pro. <Link href="/privacy-policy">Privacy Policy</Link>.</p>
+  </div>;
 }

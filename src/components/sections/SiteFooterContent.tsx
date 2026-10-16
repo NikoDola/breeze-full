@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { SiteData } from "@/lib/site";
 import Icon from "@/components/ui/Icon";
 import PublicEmail from "@/components/ui/PublicEmail";
+import { PrivacyChoices } from "@/components/analytics/ClarityProvider";
 
 const footerLinks = [
   ["HVAC", "/services"], ["Promotions", "/promotions"],
@@ -33,7 +34,7 @@ export default function SiteFooterContent({ site, publication }: { site: SiteDat
     </div>
     <div className="wrap footer-bottom">
       <span>© {new Date().getFullYear()} Breeze Heating &amp; Cooling</span>
-      <div><Link href="/privacy-policy">Privacy Policy</Link><Link href="/terms-and-conditions">Terms &amp; Conditions</Link></div>
+      <div><Link href="/privacy-policy">Privacy Policy</Link><Link href="/terms-and-conditions">Terms &amp; Conditions</Link><PrivacyChoices /></div>
     </div>
   </footer>;
 }
