@@ -150,8 +150,10 @@ the deployed database or bucket. A successful remote migration or disposable
 4. From the repository root, run
    `npm --prefix workers/cms run migrate:local`. This applies only missing local
    migrations, including `0003_media.sql`; never substitute `--remote` here.
-5. Start `npm --prefix workers/cms run dev`, then in another terminal run
-   `npm run dev -- --hostname localhost`. Restart after environment/config changes.
+5. Run `npm run dev -- --hostname localhost` from the repository root. It starts
+   the configured local Worker, waits for its public API, then starts Next in the
+   same terminal. Ctrl+C stops both. An already running Worker is reused and
+   remains running when Next stops. Restart after environment/config changes.
 6. Open `http://localhost:3000/admin-test`, choose **CMS proof → Images**.
    The authenticated Next health route is `/api/cms/media/health`; expect both
    readiness flags true and `uploadOrigin` equal to `http://localhost:3000`.

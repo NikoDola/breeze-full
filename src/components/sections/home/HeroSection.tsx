@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { site as defaultSite, type SiteData } from "@/lib/site";
 
 export default function HeroSection({ site = defaultSite }: { site?: SiteData }) {
@@ -31,7 +33,16 @@ export default function HeroSection({ site = defaultSite }: { site?: SiteData })
             <span className="hero-title-line"><em>better</em> with a</span>{" "}
             <span className="hero-title-line">little Breeze<span className="period">.</span></span>
           </h1>
-          <p className="hero-intro">Friendly heating and cooling care for the places and people that matter most.</p>
+          <div className="hero-trust">
+            <Link className="hero-google-reviews" href="/reviews" aria-label="Rated 5.0 out of 5 on Google from 167 reviews. Read our client reviews.">
+              <span className="hero-google-mark"><Image src="/images/google-g.png" width={24} height={24} alt="" loading="eager" /></span>
+              <span className="hero-google-details">
+                <span className="hero-google-rating"><strong>5.0</strong><span className="hero-google-stars" aria-hidden="true">★★★★★</span></span>
+                <span className="hero-google-count">167 Google reviews</span>
+              </span>
+            </Link>
+            <p className="hero-intro">Trusted by your neighbors.<br />Your comfort is in good hands.</p>
+          </div>
           <div className="hero-buttons">
             <a className="button orange" href="#contact">Let&apos;s get comfortable <span aria-hidden="true">↗</span></a>
             <a className="button ghost" href={site.phoneHref}>Call {site.phone}</a>

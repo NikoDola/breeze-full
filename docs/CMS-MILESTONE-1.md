@@ -139,14 +139,13 @@ The local timings are observations, not estimates of Vercel `iad1` performance. 
    ```
 
 4. Set `CMS_TEST_ENABLED=true` in `.env.local`. Keep only `CMS_WRITE_TOKEN` identical in both files. `CMS_REVALIDATE_SECRET` stays only in Next. Use `CMS_TEST_ORIGIN=http://localhost:3000` in Next and `CMS_UPLOAD_ORIGIN=http://localhost:3000` in the Worker's `.dev.vars`. The Worker URL is `http://127.0.0.1:8787`. Hostnames and ports must match your browser's URL exactly. See `CMS-MEDIA.md` for local media setup and recovery.
-5. Apply the migration **locally** and start the Worker:
+5. Apply the migration **locally**:
 
    ```powershell
    npm --prefix workers/cms run migrate:local
-   npm --prefix workers/cms run dev
    ```
 
-6. In a second terminal, start Next:
+6. Start the website and local Worker together from the repository root. The launcher waits for the Worker before starting Next; Ctrl+C stops both:
 
    ```powershell
    npm run dev -- --hostname localhost

@@ -95,6 +95,70 @@
   background: linear-gradient(90deg, rgba(1, 8, 23, .97) 0%, rgba(1, 8, 23, .9) 18%, rgba(1, 8, 23, .66) 44%, transparent 76%);
 }
 
+.hero-trust {
+  margin-bottom: 30px;
+}
+
+.hero-google-reviews {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.hero-google-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.hero-google-details {
+  display: grid;
+  gap: 3px;
+}
+
+.hero-google-rating {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.hero-google-rating strong {
+  font-weight: 800;
+}
+
+.hero-google-stars {
+  color: #fbbc04;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.hero-google-count {
+  color: #d5e5ed;
+  font-size: 13px;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-decoration-color: #8ea4b0;
+  text-underline-offset: 3px;
+}
+
+.hero-google-reviews:hover .hero-google-count {
+  color: var(--orange-light);
+  text-decoration-color: currentColor;
+}
+
+.hero-trust .hero-intro {
+  margin: 12px 0 0;
+  font-size: 17px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* This brand effect is explicitly requested, even when motion is reduced. */
   .hero-breeze-stroke {

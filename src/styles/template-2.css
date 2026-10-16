@@ -69,6 +69,7 @@ section[id]{scroll-margin-top:95px}
 
 a:is([href^="tel:"],[href^="mailto:"]) svg{color:var(--orange)}
 /* Reviews and service area inherit the shared .section spacing at every breakpoint. */
+.reviews-link{gap:20px;margin-top:28px;padding-bottom:6px;border-bottom-color:currentColor;font-size:14px}
 
 /* Keep service-card labels still while zooming inside the photo frame. */
 .service-card{border-color:transparent;outline:2px solid transparent;outline-offset:-2px;transition:background-color .35s ease,outline-color .35s ease,box-shadow .35s ease}
