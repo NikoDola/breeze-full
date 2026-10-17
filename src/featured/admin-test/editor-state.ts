@@ -10,9 +10,9 @@ export function editorStatus({ state, baseVersion, dirty, operation, now }: Stat
   const confirmed = Boolean(delivery?.confirmed_at);
   const deliveryLabel = confirmed ? "Visible on the website" : deliveryFailed ? "Website refresh failed" : leaseActive ? "Refreshing the website" : delivery?.invalidated_at ? "Awaiting page confirmation" : state?.publication ? "Website refresh pending" : "Website not updated yet";
   const deliveryDetail = confirmed ? "The published revision was confirmed on the public page." : deliveryFailed ? "Your publication is saved. You can safely retry delivery." : state?.publication ? "Your publication is saved while delivery completes." : "The public page updates after publication.";
-  let label = "Saved draft", detail = "Ready to publish when you are.", tone = "neutral";
+  let label = "Draft saved — not published", detail = "Publish changes to update the website.", tone = "neutral";
   if (!state?.draft) { label = "No content yet"; detail = "Copy your existing content to start editing."; }
-  else if (state.publication?.version === baseVersion && confirmed) { label = "Published"; detail = "Your saved content is visible on the website."; tone = "success"; }
+  else if (state.publication?.version === baseVersion && confirmed) { label = "Live on website"; detail = "This version is visible on the website."; tone = "success"; }
   if (deliveryFailed) { label = "Published · refresh failed"; detail = "Your publication is saved. Retry its website refresh below."; tone = "danger"; }
   else if (state?.publication && !confirmed) { label = "Published · refresh pending"; detail = "Your revision is saved. Website confirmation is pending."; tone = "warning"; }
   if (dirty) { label = "Unsaved changes"; detail = "Save a draft to keep your latest edits."; tone = "warning"; }

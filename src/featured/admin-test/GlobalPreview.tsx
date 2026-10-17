@@ -26,7 +26,7 @@ export default function GlobalPreview({ site, home }: { site: SiteData; home: Ho
   const [location, setLocation] = useState<(typeof locations)[number]["id"]>("footer");
   return <div className={styles.preview}>
     <div className={styles.controls}><h1>Where your contact details appear</h1>
-      <p>Choose an area to see your details in the website design. Form requests go to {site.formRecipientEmail}.</p>
+      <p>Choose an area to see your details in the website design. Service requests go through Housecall Pro; job applications use {site.formRecipientEmail}.</p>
       <div className={styles.locations} role="group" aria-label="Contact preview location">{locations.map(item => <button
         key={item.id} type="button" aria-pressed={location === item.id} onClick={() => setLocation(item.id)}>{item.label}</button>)}</div>
     </div>

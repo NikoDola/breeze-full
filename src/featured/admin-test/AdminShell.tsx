@@ -6,12 +6,17 @@ import { pages, type PageId } from "../../../cms/shared/contract";
 import css from "./shell.module.css";
 import { contentDefinitions, type ContentPageId } from "../../../cms/shared/content";
 
-// Extend this navigation as new admin features are introduced.
-const navigation = [
-  { label: "Pages", items: [{ pageId: "home", icon: "home" }, ...((Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === "Pages").map(pageId => ({ pageId, icon: contentDefinitions[pageId].icon })))] },
-  ...(["HVAC", "Company"] as const).map(label => ({ label, items: (Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === label).map(pageId => ({ pageId, icon: contentDefinitions[pageId].icon })) })),
-  { label: "Website", items: [{ pageId: "reviews", icon: "star" }, { pageId: "global", icon: "grid" }] },
-] as const;
+type NavigationItem = { type: "page"; id: PageId } | { type: "group"; label: string; ids: readonly PageId[] };
+const navigationItems: readonly NavigationItem[] = [
+  { type: "page", id: "home" },
+  { type: "group", label: "HVAC", ids: ["services", ...(Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === "HVAC")] },
+  { type: "page", id: "promotions" },
+  { type: "page", id: "emergency" },
+  { type: "group", label: "Client", ids: ["reviews", "gallery"] },
+  { type: "group", label: "About us", ids: ["about-us", "meet-the-hvac-experts", "contact-us", "why-choose-breeze", "going-green", "careers"] },
+  { type: "page", id: "global" },
+  { type: "group", label: "Legal", ids: ["privacy-policy", "terms-and-conditions"] },
+];
 
 function SupportContact() {
   return <div className={css.supportContact} aria-label="Admin support contact">
@@ -34,6 +39,8 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
+  const [search, setSearch] = useState("");
+  const [openGroups, setOpenGroups] = useState<string[]>(() => navigationItems.flatMap(item => item.type === "group" && item.ids.some(id => id === pageId) ? [item.label] : []));
 
   async function signOut() {
     if (disabled || signingOut || !onLeave()) return;
@@ -66,15 +73,29 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
   }
 
   function pageNavigation() {
+    const query = search.trim().toLowerCase();
+    const matches = (id: PageId) => pages[id].label.toLowerCase().includes(query) || (id === "promotions" && ("coupons".includes(query) || "offers".includes(query)));
+    const groupMatches = (group: Extract<NavigationItem, { type: "group" }>) => group.label.toLowerCase().includes(query) || group.ids.some(matches);
+    const pageButton = (id: PageId) => <button type="button" key={id} className={css.navItem}
+      aria-current={pageId === id ? "page" : undefined} disabled={disabled}
+      onClick={() => selectPage(id)}><Icon name={id === "home" ? "home" : id === "reviews" ? "star" : id === "global" ? "grid" : contentDefinitions[id as ContentPageId]?.icon ?? "image"} /><span>{pages[id].label}</span></button>;
     return <nav className={css.navigation} aria-label="Admin pages">
-      {[...navigation, ...(proofEnabled ? [{ label: "Tools", items: [{ pageId: "cms-proof" as const, icon: "grid" }] }] : [])].map(group => <div className={css.navGroup} key={group.label}>
-        <p className={css.groupLabel}>{group.label}</p>
-        {group.items.map(item => <button type="button" key={item.pageId} className={css.navItem}
-          aria-current={pageId === item.pageId ? "page" : undefined} disabled={disabled}
-          onClick={() => selectPage(item.pageId)}>
-          <Icon name={item.icon} /><span>{pages[item.pageId].label}</span>
-        </button>)}
-      </div>)}
+      <label className={css.searchLabel}>Find a page<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search pages" /></label>
+      {navigationItems.map(item => {
+        if (item.type === "page") return matches(item.id) ? pageButton(item.id) : null;
+        const group = item;
+        const ids = group.ids.filter(id => matches(id) || group.label.toLowerCase().includes(query));
+        return ids.length > 0 && <details className={css.navGroup} key={group.label} open={Boolean(query) || openGroups.includes(group.label)} onToggle={event => {
+          if (query) return;
+          const nextOpen = event.currentTarget.open;
+          setOpenGroups(current => nextOpen ? current.includes(group.label) ? current : [...current, group.label] : current.filter(label => label !== group.label));
+        }}>
+          <summary>{group.label}</summary>
+          <div className={css.groupItems}>{ids.map(pageButton)}</div>
+        </details>;
+      })}
+      {proofEnabled && matches("cms-proof") && <div className={css.navGroup}>{pageButton("cms-proof")}</div>}
+      {query && !navigationItems.some(item => item.type === "page" ? matches(item.id) : groupMatches(item)) && <p className={css.noResults}>No matching pages.</p>}
     </nav>;
   }
 
@@ -86,10 +107,9 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
     </aside>
     <div className={css.main}>
       <header className={css.topbar}>
-        <a href="/" className={css.leaveLink} aria-disabled={disabled || undefined}
-          onClick={event => { if (disabled || !onLeave()) event.preventDefault(); }}>
+        <a href="/" target="_blank" rel="noopener noreferrer" className={css.leaveLink}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Leave admin
+          View website
         </a>
         <div className={css.accountActions}>
         <button type="button" className={css.signOut} disabled={disabled || signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button>

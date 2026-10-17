@@ -10,10 +10,11 @@ export const PUBLIC_PATH = "/cms-proof";
 export const CACHE_TAG = "cms:preview:cms-testing:page:cms-proof";
 export const pages = {
   ...contentPages,
+  services: { ...contentPages.services, label: "Services overview" },
   "cms-proof": { id: "cms-proof", slug: "cms-proof", path: "/cms-proof", label: "CMS proof", cacheTag: CACHE_TAG },
   home: { id: "home", slug: "", path: "/", label: "Homepage", cacheTag: "cms:preview:cms-testing:page:home" },
   reviews: { id: "reviews", slug: "reviews", path: "/reviews", label: "Reviews", cacheTag: "cms:preview:cms-testing:page:reviews" },
-  global: { id: "global", slug: "__global", path: "/", label: "Global settings", cacheTag: "cms:preview:cms-testing:page:global" },
+  global: { id: "global", slug: "__global", path: "/", label: "Business details", cacheTag: "cms:preview:cms-testing:page:global" },
 } as const;
 export type PageId = keyof typeof pages;
 export function pageDefinition(value: unknown = PAGE_ID) {

@@ -33,12 +33,12 @@ function uploadFile(url: string, token: string, file: File, progress: (value: nu
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "Media request failed.";
 const placement = (asset: MediaAsset): MediaPlacement => ({ assetId: asset.id, width: asset.width!, height: asset.height!, alt: asset.default_alt || asset.filename.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "), decorative: false });
 
-export default function ImageEditor({ images, onChange, disabled, onBusyChange, limit = 12, allowPath = true, siteImages = cmsSiteImages }: { images: ImageReference[]; onChange: (images: ImageReference[]) => void; disabled: boolean; onBusyChange: (busy: boolean) => void; limit?: number; allowPath?: boolean; siteImages?: readonly { label: string; source: string }[] }) {
+export default function ImageEditor({ images, onChange, disabled, onBusyChange, limit = 12, allowPath = true, siteImages = cmsSiteImages, singlePicker = false }: { images: ImageReference[]; onChange: (images: ImageReference[]) => void; disabled: boolean; onBusyChange: (busy: boolean) => void; limit?: number; allowPath?: boolean; siteImages?: readonly { label: string; source: string }[]; singlePicker?: boolean }) {
   const uploadId = useId();
   const [assets, setAssets] = useState<MediaAsset[]>([]), [query, setQuery] = useState("");
   const [nextOffset, setNextOffset] = useState<number | null>(null), [loading, setLoading] = useState(false);
   const [error, setError] = useState(""), [notice, setNotice] = useState(""), [progress, setProgress] = useState<number | null>(null);
-  const [replaceIndex, setReplaceIndex] = useState<number | null>(null), [showLocal, setShowLocal] = useState(false);
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null), [showLocal, setShowLocal] = useState(singlePicker);
   const [address, setAddress] = useState("");
   const fileInput = useRef<HTMLInputElement>(null), active = useRef(false), requestNumber = useRef(0);
   const full = images.length >= limit;
@@ -79,8 +79,9 @@ export default function ImageEditor({ images, onChange, disabled, onBusyChange, 
     finally { active.current = false; onBusyChange(false); await load(); }
   }
   function choose(reference: ImageReference) {
-    if (disabled || (full && replaceIndex === null)) return;
-    if (replaceIndex !== null) onChange(images.map((image, index) => index === replaceIndex ? reference : image));
+    if (disabled || (full && replaceIndex === null && !singlePicker)) return;
+    if (singlePicker) onChange([reference]);
+    else if (replaceIndex !== null) onChange(images.map((image, index) => index === replaceIndex ? reference : image));
     else onChange([...images, reference]);
     setReplaceIndex(null); setError(""); setNotice("Image selected. Save draft to keep this change.");
   }
@@ -103,7 +104,7 @@ export default function ImageEditor({ images, onChange, disabled, onBusyChange, 
     </div>
     {error && <p className={css.referenceWarning} role="alert">{error}</p>}
     {notice && <p className={css.mediaNotice} role="status">{notice}</p>}
-    <div className={css.imageSummary}><h4>Selected images <span>{images.length} / {limit}</span></h4></div>
+    {!singlePicker && <><div className={css.imageSummary}><h4>Selected images <span>{images.length} / {limit}</span></h4></div>
     <ol className={css.imageList}>{images.map((reference,index) => <li key={index}>
       <div className={css.imageCard}><div className={css.thumbnail}><CmsImage reference={reference} sizes="100px" thumbnail preview /></div><div className={css.imageFields}>
         {typeof reference === "string" ? <><label className={css.imageLabel}>Existing image address<Input value={reference} disabled={disabled || !allowPath} maxLength={2048} onChange={event => onChange(images.map((image,at) => at === index ? event.target.value : image))} /></label><small className={css.help}>Existing site photo. You can replace it with a library image.</small></> : <>
@@ -120,11 +121,11 @@ export default function ImageEditor({ images, onChange, disabled, onBusyChange, 
       </div></div>
     </li>)}</ol>
     {!images.length && <p className={css.noImages}>No images selected. Upload or choose an image below.</p>}
-    {replaceIndex !== null && <p className={css.mediaNotice}>Replacing image {replaceIndex+1}. <button type="button" onClick={() => setReplaceIndex(null)}>Cancel</button></p>}
+    {replaceIndex !== null && <p className={css.mediaNotice}>Replacing image {replaceIndex+1}. <button type="button" onClick={() => setReplaceIndex(null)}>Cancel</button></p>}</>}
     <div className={css.libraryHeading}><h4>Uploaded images</h4><Button type="button" className={styles.textButton} disabled={disabled || loading} onClick={() => { setError(""); void load(); }}>Refresh library</Button></div>
     <label className={styles.field}><span>Find an image</span><Input type="search" value={query} disabled={disabled} placeholder="Search filenames or descriptions" onChange={event => setQuery(event.target.value)} /></label>
     <div className={css.library} aria-label="Uploaded media" aria-busy={loading}>{assets.map(asset => <div className={css.assetCard} key={asset.id}>
-      <button type="button" disabled={disabled || asset.status!=="ready" || (full && replaceIndex===null)} onClick={() => choose(placement(asset))} aria-label={`Select ${asset.filename}`}>
+      <button type="button" disabled={disabled || asset.status!=="ready" || (full && replaceIndex===null && !singlePicker)} onClick={() => choose(placement(asset))} aria-label={`Select ${asset.filename}`}>
         <span className={css.libraryThumb}>{asset.status === "ready" ? <CmsImage reference={placement(asset)} sizes="180px" thumbnail preview /> : <span className={css.assetPending}>{asset.status === "failed" ? "Needs attention" : "Processing"}</span>}</span>
         <span>{asset.filename}</span>
       </button>
@@ -138,7 +139,7 @@ export default function ImageEditor({ images, onChange, disabled, onBusyChange, 
     {!assets.length && !loading && <p className={css.help}>{query ? "No matching images." : "Your uploaded images will appear here."}</p>}
     {nextOffset !== null && <Button type="button" className={styles.secondaryButton} disabled={disabled || loading} onClick={() => void load(nextOffset)}>Load more images</Button>}
     <div className={css.addImage}><Button type="button" className={styles.textButton} disabled={disabled} onClick={() => setShowLocal(!showLocal)}>{showLocal ? "Hide existing site images" : "Choose an existing site image"}</Button>
-      {showLocal && <><div className={css.library}>{siteImages.map(image => <button type="button" key={image.source} disabled={disabled || (full && replaceIndex===null)} onClick={() => choose(image.source)}><span className={css.libraryThumb}><CmsImage reference={image.source} sizes="180px" thumbnail /></span><span>{image.label}</span></button>)}</div>
+      {showLocal && <><div className={css.library}>{siteImages.map(image => <button type="button" key={image.source} disabled={disabled || (full && replaceIndex===null && !singlePicker)} onClick={() => choose(image.source)}><span className={css.libraryThumb}><CmsImage reference={image.source} sizes="180px" thumbnail /></span><span>{image.label}</span></button>)}</div>
       {allowPath && <><label className={styles.field}><span>Existing local image path</span><Input value={address} disabled={disabled} placeholder="/images/photo.webp" onChange={event => setAddress(event.target.value)} /></label>
       <Button type="button" className={styles.secondaryButton} disabled={disabled || !address || (full && replaceIndex===null)} onClick={() => {
         if (!address.startsWith("/") || !cmsImageSource(address)) { setError("Choose an existing /images/ or /template-2/ path."); return; } choose(address.trim()); setAddress("");

@@ -17,6 +17,16 @@ export default function HomePreview({ reviews, site, initialDocument = homeSeed,
   useEffect(() => {
     function receive(event: MessageEvent) {
       if (event.origin !== window.location.origin || event.source !== window.parent) return;
+      if (event.data?.type === "breeze.cms.preview-focus") {
+        const ids: Record<string, string> = { seasons: "heating-cooling", contact: "contact", reviews: "reviews", area: "area" };
+        const id = ids[event.data.sectionId as string];
+        if (id) {
+          const section = document.getElementById(id);
+          section?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+          section?.animate([{ outline: "3px solid #ff5b27" }, { outline: "3px solid transparent" }], { duration: 1800 });
+        }
+        return;
+      }
       try {
         if (event.data?.type === "breeze.cms.home-preview") setContent(validateHomeDocument(event.data.document));
         else if (event.data?.type === "breeze.cms.global-preview") setPreviewSite(withGlobalSettings(validateGlobal(event.data.document)));

@@ -62,7 +62,7 @@ export function validateGlobal(value: unknown): GlobalDocument {
   if (!/^\+?[0-9 ()\-\.]+$/.test(phone) || digits.length < 7 || digits.length > 15) throw new InputError("Enter a valid phone number, including country code outside the US.");
   const email = emailAddress(doc.email, "public email address");
   // Optional only for older snapshots. Never rewrite historical JSON while reading it.
-  const recipient = Object.hasOwn(doc, "formRecipientEmail") ? { formRecipientEmail: emailAddress(doc.formRecipientEmail, "form recipient email address") } : {};
+  const recipient = Object.hasOwn(doc, "formRecipientEmail") ? { formRecipientEmail: emailAddress(doc.formRecipientEmail, "job application email address") } : {};
   if (!Array.isArray(doc.socials) || doc.socials.length > Object.keys(socialPlatforms).length) throw new InputError("Invalid social links.");
   const seen = new Set<string>();
   const socials = doc.socials.map(value => {

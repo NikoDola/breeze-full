@@ -5,13 +5,14 @@ import Textarea from "@/components/ui/Textarea";
 import { contentDefinitions, emptyContent, type ContentDocument, type ContentField, type ContentRecord } from "../../../cms/shared/content";
 import styles from "./editor.module.css";
 import ImageEditor from "./ImageEditor";
+import CmsImage from "@/components/sections/CmsImage";
 import { gallerySource } from "../../../cms/shared/additional-content";
 import type { ImageReference } from "../../../cms/shared/media";
 
 function PhotoField({ value, onChange, disabled, onBusyChange }: { value: ImageReference; onChange: (value: ImageReference) => void; disabled: boolean; onBusyChange: (busy: boolean) => void }) {
   const [open, setOpen] = useState(false);
-  return <div><button className={styles.secondaryButton} type="button" onClick={() => setOpen(!open)}>{open ? "Close photo selection" : "Choose or upload photo"}</button>
-    {open && <ImageEditor images={value ? [value] : []} onChange={next => onChange(next[0] ?? "")} disabled={disabled} onBusyChange={onBusyChange} limit={1} allowPath={false} siteImages={gallerySource.map(photo => ({ label: photo.caption, source: photo.image }))} />}
+  return <div className={styles.photoField}><div className={styles.photoCurrent}>{value && <CmsImage reference={value} sizes="100px" thumbnail preview />}<button className={styles.secondaryButton} type="button" onClick={() => setOpen(!open)}>{open ? "Close photo picker" : value ? "Replace photo" : "Choose photo"}</button></div>
+    {open && <ImageEditor images={value ? [value] : []} onChange={next => { onChange(next[0] ?? ""); setOpen(false); }} disabled={disabled} onBusyChange={onBusyChange} limit={1} allowPath={false} singlePicker siteImages={gallerySource.map(photo => ({ label: photo.caption, source: photo.image }))} />}
   </div>;
 }
 function Fields({ fields, content, onChange, disabled, onBusyChange }: { fields: Record<string, ContentField>; content: ContentRecord; onChange: (content: ContentRecord) => void; disabled: boolean; onBusyChange: (busy: boolean) => void }) {
@@ -27,7 +28,7 @@ function Fields({ fields, content, onChange, disabled, onBusyChange }: { fields:
     function move(index: number, step: number) { const next = [...items]; [next[index], next[index + step]] = [next[index + step], next[index]]; update(next); }
     return <div className={styles.repeatedGroup} key={key}><h3>{field.label}</h3>
       {items.map((item, index) => <details className={styles.collectionItem} key={item.id as string} open={items.length < 4}>
-        <summary>{index + 1}. {String(item.heading || item.caption || item.text || item.type || "New item").slice(0, 90)}</summary>
+        <summary className={key === "photos" ? styles.photoSummary : undefined}>{key === "photos" && item.image && <span className={styles.photoSummaryThumb}><CmsImage reference={item.image as ImageReference} sizes="80px" thumbnail preview /></span>}<span>{index + 1}. {String(item.heading || item.caption || item.text || item.type || "New item").slice(0, 90)}</span></summary>
         <div className={styles.collectionBody}><Fields fields={field.fields} content={item} disabled={disabled} onBusyChange={onBusyChange} onChange={next => update(items.map((entry, at) => at === index ? next : entry))} />
           {!field.fixedIds && <div className={styles.itemActions}>
             <button type="button" disabled={index === 0} aria-label={`Move ${field.label} item ${index + 1} earlier`} onClick={() => move(index, -1)}>Earlier</button>
@@ -36,19 +37,25 @@ function Fields({ fields, content, onChange, disabled, onBusyChange }: { fields:
           </div>}
         </div>
       </details>)}
-      {!field.fixedIds && <button type="button" className={styles.secondaryButton} disabled={items.length >= field.max} onClick={() => update([...items, { id: crypto.randomUUID(), ...emptyContent(field.fields) }])}>+ Add {field.label.toLowerCase() === "careers cards" ? "card" : "item"}</button>}
+      {!field.fixedIds && <button type="button" className={styles.secondaryButton} disabled={items.length >= field.max} onClick={() => update([...items, { id: crypto.randomUUID(), ...emptyContent(field.fields) }])}>+ Add {key === "photos" ? "photo" : field.label.toLowerCase() === "careers cards" ? "card" : "item"}</button>}
       <p className={styles.previewCaption}>{items.length} / {field.max}</p>
     </div>;
   })}</>;
 }
 export default function ContentFields({ document, onChange, disabled, onBusyChange }: { document: ContentDocument; onChange: (document: ContentDocument) => void; disabled: boolean; onBusyChange: (busy: boolean) => void }) {
   const [tab, setTab] = useState<"content" | "details">("content");
+  const pageFields = contentDefinitions[document.pageId].fields;
+  const introFields = Object.fromEntries(Object.entries(pageFields).filter(([key]) => ["heading", "eyebrow", "tagline"].includes(key)));
+  const bodyFields = Object.fromEntries(Object.entries(pageFields).filter(([key]) => !["heading", "eyebrow", "tagline"].includes(key)));
   return <>
     <div className={styles.sectionPicker} role="group" aria-label="Page fields"><button type="button" aria-pressed={tab === "content"} onClick={() => setTab("content")}>Page content</button><button type="button" aria-pressed={tab === "details"} onClick={() => setTab("details")}>Search settings</button></div>
-    {tab === "content" ? <Fields fields={contentDefinitions[document.pageId].fields} content={document.content} disabled={disabled} onBusyChange={onBusyChange} onChange={content => onChange({ ...document, content })} /> : <>
-      <label className={styles.field}><span>Internal page title</span><Input maxLength={200} value={document.title} onChange={event => onChange({ ...document, title: event.target.value })} /></label>
+    {tab === "content" ? <>{Object.keys(introFields).length > 0 && <><div className={styles.sectionIntro}><h3>Page introduction</h3><p>These fields appear near the top of the page.</p></div><Fields fields={introFields} content={document.content} disabled={disabled} onBusyChange={onBusyChange} onChange={content => onChange({ ...document, content })} /></>}
+      {Object.keys(bodyFields).length > 0 && <><div className={styles.sectionIntro}><h3>Main content</h3><p>Edit the sections people see as they scroll down.</p></div><Fields fields={bodyFields} content={document.content} disabled={disabled} onBusyChange={onBusyChange} onChange={content => onChange({ ...document, content })} /></>}</> : <>
+      <div className={styles.sectionIntro}><h3>Search result preview</h3><p>The title and description below can appear in search results. Search engines may choose different text.</p></div>
+      <div className={styles.searchSnippet}><strong>{document.seoTitle || document.title}</strong><span>{document.seoDescription}</span></div>
       <label className={styles.field}><span>Search title</span><Input maxLength={200} value={document.seoTitle} onChange={event => onChange({ ...document, seoTitle: event.target.value })} /></label>
       <label className={styles.field}><span>Search description</span><Textarea rows={3} maxLength={500} value={document.seoDescription} onChange={event => onChange({ ...document, seoDescription: event.target.value })} /></label>
+      <details className={styles.advancedField}><summary>Internal page label</summary><label className={styles.field}><span>Editor label</span><Input maxLength={200} value={document.title} onChange={event => onChange({ ...document, title: event.target.value })} /><small>Used to identify this page in the editor.</small></label></details>
     </>}
   </>;
 }

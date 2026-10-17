@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import dynamic from "next/dynamic";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
@@ -17,8 +16,7 @@ function TextControl({ field, value, onChange }: { field: TextField; value: stri
   </label>;
 }
 
-export default function HomeFields({ document, onChange, disabled, resetKey }: { document: HomeDocument; onChange: (document: HomeDocument) => void; disabled: boolean; resetKey: number }) {
-  const [slot, setSlot] = useState<HomeSlot>("seasons");
+export default function HomeFields({ document, onChange, disabled, resetKey, slot, onSlotChange, onOpenReviews }: { document: HomeDocument; onChange: (document: HomeDocument) => void; disabled: boolean; resetKey: number; slot: HomeSlot; onSlotChange: (slot: HomeSlot) => void; onOpenReviews: () => void }) {
   const schema = homeRichSectionRegistry[slot];
   const editable = editableHome(document);
   const content = editable.slots[slot].content as unknown as Record<string, unknown>;
@@ -29,12 +27,12 @@ export default function HomeFields({ document, onChange, disabled, resetKey }: {
   return <>
     <div className={styles.sectionIntro}><h3>Homepage sections</h3><p>The hero, contact form, and section order are maintained by your website developer.</p></div>
     <div className={styles.sectionPicker} role="group" aria-label="Homepage section">
-      {homeSlotOrder.map(key => <button key={key} type="button" aria-pressed={slot === key} onClick={() => setSlot(key)}>{homeSectionRegistry[key].label}</button>)}
+      {homeSlotOrder.map(key => <button key={key} type="button" aria-pressed={slot === key} onClick={() => onSlotChange(key)}>{homeSectionRegistry[key].label}</button>)}
     </div>
     <div className={styles.sectionIntro}><h3>{schema.label}</h3><p>{schema.help}</p></div>
     {(Object.entries(schema.fields) as [string, Field][]).map(([key, field]) => {
       if (slot === "area" && key === "mapsHref") return <p key={key} className={styles.notice}>Manage the business directions link in Global settings. The service-area map location below can show a wider region.</p>;
-      if (slot === "reviews" && key === "items") return <p key={key} className={styles.notice}>Manage reviews and choose homepage favorites in Reviews in the sidebar. The homepage preview uses published favorites; review drafts have their own preview.</p>;
+      if (slot === "reviews" && key === "items") return <div key={key} className={styles.externalSettings}><h4>Manage customer reviews</h4><p>Edit testimonials and choose up to three featured reviews for the homepage. The Google rating in the hero is separate from this review library.</p><button type="button" className={styles.secondaryButton} onClick={onOpenReviews}>Manage customer reviews</button></div>;
       if (field.kind === "text") return <TextControl key={`${slot}-${key}`} field={field} value={content[key] as string} onChange={value => change(key, value)} />;
       if (field.kind === "rich-text") return <RichTextEditor key={`${slot}-${key}-${resetKey}`} value={content[key] as RichText} label={field.label} help={field.help} disabled={disabled} onChange={value => change(key, value)} />;
       const items = content[key] as Record<string, string>[];

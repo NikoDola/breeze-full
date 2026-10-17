@@ -89,3 +89,9 @@ a:is([href^="tel:"],[href^="mailto:"]) svg{color:var(--orange)}
 .public-email svg{width:1em;height:1em;flex:none}
 .public-email span{overflow-wrap:anywhere;min-width:0}
 .footer-reach .public-email svg{width:23px;height:23px}
+
+/* Closed menus point forward; open menus point down. */
+.submenu-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:44px}
+.submenu-toggle span{display:none}
+.submenu-toggle::after{content:"";display:block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+.has-submenu.is-open .submenu-toggle::after{transform:rotate(45deg)}
