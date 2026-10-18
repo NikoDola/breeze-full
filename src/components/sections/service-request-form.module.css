@@ -1,5 +1,8 @@
 .container { min-width: 0; }
 .frame { display: block; width: 100%; border: 0; background: #fff; border-radius: 12px; }
+.embed { position: relative; }
+.placeholder { display: grid; justify-items: center; align-content: start; height: 900px; padding: 28px; border-radius: 12px; background: #fff; }
+.loading { position: absolute; top: 20px; left: 20px; right: 20px; margin: 0; padding: 12px; border-radius: 8px; background: #fff; color: var(--muted); text-align: center; font-size: 14px; pointer-events: none; }
 .help { overflow-wrap: anywhere; }
 .help a { text-underline-offset: 3px; }
 .preview { display: grid; align-content: center; gap: 12px; min-height: 360px; padding: 28px; border: 1px dashed #9bb2bc; border-radius: 12px; background: #fff; text-align: center; }

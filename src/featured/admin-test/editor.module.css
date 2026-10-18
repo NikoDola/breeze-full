@@ -75,6 +75,11 @@
 .searchSnippet { display: grid; gap: 5px; margin: 0 0 20px; padding: 16px; border: 1px solid var(--admin-line); border-radius: 8px; background: #fafaf7; overflow-wrap: anywhere; }
 .searchSnippet strong { color: #315aa0; font-size: 17px; font-weight: 500; }
 .searchSnippet span { color: var(--admin-secondary); font-size: 13px; line-height: 1.5; }
+.ogImageField { min-width: 0; margin-top: 24px; }
+.ogImagePreview { max-width: 440px; margin-bottom: 14px; }
+.ogImagePreview > div { height: auto; aspect-ratio: 1200 / 630; }
+.ogImagePreview > div img { object-fit: contain; }
+.ogImageField > .itemActions { margin-bottom: 18px; }
 .advancedField { margin-top: 20px; padding: 14px; border: 1px solid var(--admin-line); border-radius: 8px; }
 .advancedField summary { cursor: pointer; font-size: 12px; font-weight: 600; }
 .advancedField .field { margin: 14px 0 0; }

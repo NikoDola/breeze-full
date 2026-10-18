@@ -5,6 +5,7 @@ import Textarea from "@/components/ui/Textarea";
 import { contentDefinitions, emptyContent, type ContentDocument, type ContentField, type ContentRecord } from "../../../cms/shared/content";
 import styles from "./editor.module.css";
 import ImageEditor from "./ImageEditor";
+import OgImageField from "./OgImageField";
 import CmsImage from "@/components/sections/CmsImage";
 import { gallerySource } from "../../../cms/shared/additional-content";
 import type { ImageReference } from "../../../cms/shared/media";
@@ -55,6 +56,7 @@ export default function ContentFields({ document, onChange, disabled, onBusyChan
       <div className={styles.searchSnippet}><strong>{document.seoTitle || document.title}</strong><span>{document.seoDescription}</span></div>
       <label className={styles.field}><span>Search title</span><Input maxLength={200} value={document.seoTitle} onChange={event => onChange({ ...document, seoTitle: event.target.value })} /></label>
       <label className={styles.field}><span>Search description</span><Textarea rows={3} maxLength={500} value={document.seoDescription} onChange={event => onChange({ ...document, seoDescription: event.target.value })} /></label>
+      <OgImageField value={document.ogImage} onChange={ogImage => onChange({ ...document, ogImage })} disabled={disabled} onBusyChange={onBusyChange} />
       <details className={styles.advancedField}><summary>Internal page label</summary><label className={styles.field}><span>Editor label</span><Input maxLength={200} value={document.title} onChange={event => onChange({ ...document, title: event.target.value })} /><small>Used to identify this page in the editor.</small></label></details>
     </>}
   </>;

@@ -58,6 +58,7 @@ export default function TemplateHeader() {
     if (window.location.hash !== "#service-form") {
       window.history.pushState(window.history.state, "", "#service-form");
     }
+    form.dispatchEvent(new Event("breeze:load-service-form"));
     form.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 

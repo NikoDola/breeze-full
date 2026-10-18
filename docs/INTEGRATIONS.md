@@ -18,6 +18,38 @@ to use the separate job application flow.
 - A direct form link and telephone fallback remain available if the embed fails.
 - CMS previews show a placeholder to avoid submitting real leads while editing.
 
+### Loading and performance
+
+The booking iframe is not included in the initial HTML. `ServiceRequestForm`
+mounts it when the form comes within 200px of the viewport, when the visitor uses
+Request service, or when a `#service-form` / `#contact` deep link targets it. A
+manual load button and the direct booking/telephone links provide fallbacks.
+The placeholder reserves the original 900px frame height; once loaded, the frame
+stays mounted while scrolling so an unfinished request is retained. The existing
+validated resize/redirect bridge remains in use. CMS previews never activate it.
+
+Native `loading="lazy"` alone was not sufficient: the live homepage audit showed
+the booking app, reCAPTCHA and Stripe running during initial page load. This
+regression followed the Housecall Pro integration (commit `a524a23`). Deferring
+the iframe prevents that entire dependency chain from competing with the hero.
+Vendor cookie/storage warnings may still occur once the form is used; their
+cross-origin code and browser privacy permissions are not modified by the site.
+
+Regression checks:
+
+- `node --test workers/cms/tests/service-request.test.mjs` checks deferred loading,
+  scrolling, header actions, deep links, manual loading, resize validation and
+  preview isolation without contacting the vendor or submitting leads.
+- After `npm run build`, `node scripts/check-performance.mjs` checks generated
+  HTML for early vendor loads, hero preloads, route stylesheet budgets and a
+  homepage HTML size budget. It does not report a Lighthouse score.
+
+The existing external stylesheet strategy is retained. On this build, global
+CSS inlining increased gzipped homepage HTML from about 9.5 KB to 46 KB, and
+inner-page HTML to about 78 KB. Graph chunking added a homepage stylesheet request
+without reducing CSS bytes. Neither experiment improved the asset budget, so
+neither is enabled. The homepage still excludes interior and admin styles.
+
 Fields, required settings, styling inside the hosted form, notifications and CRM
 routing are controlled in Housecall Pro. Website select styling cannot change
 cross-origin form fields. Service-card links scroll to the form but cannot prefill

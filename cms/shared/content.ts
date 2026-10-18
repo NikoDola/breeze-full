@@ -6,12 +6,13 @@ import originalSeo from "./content-seo.json";
 import promotionSource from "../../src/content/promotions.json";
 import { additionalDefinitions, gallerySource, type AdditionalPageId } from "./additional-content";
 import { validatePlacement, type MediaPlacement } from "./media";
+import { validateSocialImage, type SocialImage } from "./seo";
 
 export type ContentRecord = { [key: string]: string | ContentRecord[] | MediaPlacement };
 export type ContentField = { kind: "image"; label: string } | { kind: "text"; label: string; max: number; multiline?: boolean; optional?: boolean; choices?: readonly string[] } |
   { kind: "list"; label: string; min: number; max: number; fields: Record<string, ContentField>; fixedIds?: readonly string[] };
 export type ContentPageId = keyof typeof serviceLabels | "meet-the-hvac-experts" | "going-green" | "careers" | "promotions" | AdditionalPageId;
-export type ContentDocument = { schemaVersion: 6; pageId: ContentPageId; title: string; seoTitle: string; seoDescription: string; content: ContentRecord };
+export type ContentDocument = SocialImage & { schemaVersion: 6; pageId: ContentPageId; title: string; seoTitle: string; seoDescription: string; content: ContentRecord };
 export type ContentDefinition = { label: string; family: "article" | "careers" | "promotions" | "about" | "why" | "contact" | "emergency" | "services" | "gallery" | "legal"; group: "HVAC" | "Company" | "Pages"; icon: string; image: string; fields: Record<string, ContentField>; seed: ContentDocument };
 const line = (label: string, max = 200, optional = false): ContentField => ({ kind: "text", label, max, optional });
 const copy = (label: string, optional = false): ContentField => ({ kind: "text", label, max: 10000, multiline: true, optional });
@@ -105,13 +106,13 @@ function validateContent(value: unknown, fields: Record<string, ContentField>, l
 }
 export function contentAssets(document: ContentDocument): MediaPlacement[] {
   const collect = (content: ContentRecord, fields: Record<string, ContentField>): MediaPlacement[] => Object.entries(fields).flatMap(([key, field]) => field.kind === "image" ? typeof content[key] === "string" ? [] : [content[key] as MediaPlacement] : field.kind === "list" ? (content[key] as ContentRecord[]).flatMap(item => collect(item, field.fields)) : []);
-  return collect(document.content, contentDefinitions[document.pageId].fields);
+  return [...collect(document.content, contentDefinitions[document.pageId].fields), ...(document.ogImage && typeof document.ogImage !== "string" ? [document.ogImage] : [])];
 }
 export function validateContentDocument(value: unknown, pageId?: string): ContentDocument {
   const doc = record(value);
-  exactKeys(doc, ["schemaVersion", "pageId", "title", "seoTitle", "seoDescription", "content"], "page");
+  exactKeys(doc, ["schemaVersion", "pageId", "title", "seoTitle", "seoDescription", "ogImage", "content"], "page");
   if (doc.schemaVersion !== 6 || typeof doc.pageId !== "string" || !isContentPage(doc.pageId) || (pageId && doc.pageId !== pageId)) throw new InputError("This content belongs to a different page or an unsupported template.");
   const content = validateContent(doc.content, contentDefinitions[doc.pageId].fields, contentDefinitions[doc.pageId].label);
   if (contentDefinitions[doc.pageId].family === "article" && Boolean(content.calloutHeading) !== Boolean(content.calloutBody)) throw new InputError("Complete both highlighted card fields, or leave both empty.");
-  return { schemaVersion: 6, pageId: doc.pageId, title: text(doc.title, "Internal page title", 200, true), seoTitle: text(doc.seoTitle, "Search title", 200, true), seoDescription: text(doc.seoDescription, "Search description", 500), content };
+  return { schemaVersion: 6, pageId: doc.pageId, title: text(doc.title, "Internal page title", 200, true), seoTitle: text(doc.seoTitle, "Search title", 200, true), seoDescription: text(doc.seoDescription, "Search description", 500), ...validateSocialImage(doc), content };
 }

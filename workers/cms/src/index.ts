@@ -6,7 +6,7 @@ import { homeSeed, HOME_SOURCE_ID } from "../../../cms/shared/home-seed";
 import { createReviewsSeed, globalSeed } from "../../../cms/shared/collection-seeds";
 import { validateHomeDocument } from "../../../cms/shared/home";
 import { contentDefinitions, isContentPage } from "../../../cms/shared/content";
-import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets, contentMediaReady } from "./media";
+import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets, contentMediaReady, ogMediaReady } from "./media";
 import { environmentEnabled } from "./environment";
 import { consumeRate, limitWorkerSource } from "./throttle";
 
@@ -194,7 +194,7 @@ export default {
       if (request.method === "GET" && path === "/api/admin/health") {
         const columns = await env.DB.prepare("PRAGMA table_info(cms_publish_outbox)").all<{ name: string }>();
         return json({ environment: env.CMS_ENVIRONMENT, writesEnabled: writesEnabled(env),
-          schemaReady: columns.results.some(column => column.name === "lease_token") && await contentMediaReady(env), deliveryOwner: "nextjs", pages: Object.keys(pages),
+          schemaReady: columns.results.some(column => column.name === "lease_token") && await contentMediaReady(env) && await ogMediaReady(env), deliveryOwner: "nextjs", pages: Object.keys(pages),
           throttlingReady: Boolean(env.AUTH_RATE_LIMITER && env.SERVICE_RATE_LIMITER) });
       }
       if (request.method === "GET" && path === "/api/admin/proof") return json(await editorState(env, pageDefinition(url.searchParams.get("pageId") ?? undefined).id));

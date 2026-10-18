@@ -177,7 +177,9 @@ export async function mediaAdmin(request: Request, env: Env): Promise<Response> 
 
 export async function validateDraftAssets(env: Env, document: Document) {
   if (document.schemaVersion === 6 && !await contentMediaReady(env)) throw new MediaError(503, "Content migration is not ready. Apply migration 0004 before saving or publishing.");
-  const images = document.schemaVersion === 6 ? contentAssets(document) : document.schemaVersion === 3 ? document.section.images : [];
+  const ogImage = document.schemaVersion === 4 || document.schemaVersion === 6 ? document.ogImage : null;
+  if (ogImage && typeof ogImage !== "string" && !await ogMediaReady(env)) throw new MediaError(503, "OG image migration is not ready. Apply migration 0005 before saving or publishing an uploaded OG image.");
+  const images = document.schemaVersion === 6 ? contentAssets(document) : document.schemaVersion === 3 ? document.section.images : ogImage ? [ogImage] : [];
   for (const image of images) {
     if (typeof image === "string") continue;
     const row = await asset(env, image.assetId);
@@ -187,5 +189,10 @@ export async function validateDraftAssets(env: Env, document: Document) {
 
 export async function contentMediaReady(env: Env): Promise<boolean> {
   const row = await env.DB.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name IN ('content_media_validate_publication', 'content_media_capture_publication')").first<{ n: number }>();
+  return row?.n === 2;
+}
+
+export async function ogMediaReady(env: Env): Promise<boolean> {
+  const row = await env.DB.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name IN ('og_media_validate_publication', 'og_media_capture_publication')").first<{ n: number }>();
   return row?.n === 2;
 }
