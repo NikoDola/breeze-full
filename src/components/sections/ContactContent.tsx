@@ -6,7 +6,7 @@ import ServiceRequestForm from "./ServiceRequestForm";
 import ContactLocation from "./ContactLocation";
 import { contentDefinitions } from "../../../cms/shared/content";
 const design = contentDefinitions["contact-us"];
-export default function ContactContent({ content: c, site }: { content: ContentRecord; site: SiteData }) {
+export default function ContactContent({ content: c, site, heroImage = design.image }: { content: ContentRecord; site: SiteData; heroImage?: string }) {
 
   const details = [
   {
@@ -34,7 +34,7 @@ export default function ContactContent({ content: c, site }: { content: ContentR
 
   return (
     <>
-      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={design.image} />
+      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={heroImage} />
 
       <section className="contact-us-section-1">
         <div className="contact-us-layout-1">

@@ -8,7 +8,7 @@ import { mediaDelivery } from "@/lib/cms/media-delivery";
 import type { ImageReference } from "../../../cms/shared/media";
 import { contentDefinitions } from "../../../cms/shared/content";
 const design = contentDefinitions["gallery"];
-export default function GalleryContent({ content: c, site, preview = false, mediaOrigin }: { content: ContentRecord; site: SiteData; preview?: boolean; mediaOrigin?: string }) {
+export default function GalleryContent({ content: c, site, preview = false, mediaOrigin, heroImage = design.image }: { content: ContentRecord; site: SiteData; preview?: boolean; mediaOrigin?: string; heroImage?: string }) {
   const shots = items(c, "photos").map(photo => {
     const image = photo.image as ImageReference, uploaded = typeof image !== "string";
     return { id: t(photo, "id"), caption: t(photo, "caption"),
@@ -20,7 +20,7 @@ export default function GalleryContent({ content: c, site, preview = false, medi
 
   return (
     <>
-      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={design.image} />
+      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={heroImage} />
 
       <section className="gallery-section-1">
         <Gallery shots={shots} />

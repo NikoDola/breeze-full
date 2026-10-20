@@ -12,6 +12,7 @@ export default function PromoPageContent({
   offer,
   code,
   image,
+  heroImage = image,
   icon,
   blurb,
   otherHref,
@@ -23,6 +24,7 @@ export default function PromoPageContent({
   offer: string;
   code?: string;
   image: string;
+  heroImage?: string;
   icon: string;
   blurb: string;
   otherHref: string;
@@ -35,7 +37,7 @@ export default function PromoPageContent({
         eyebrow="Promotions"
         tagline={tagline}
         icon={icon}
-        image={image}
+        image={heroImage}
       />
 
       <section className="promo-page-section-1">

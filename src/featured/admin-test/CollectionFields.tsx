@@ -11,6 +11,8 @@ import { site } from "@/lib/site";
 import { directionsLink, type BusinessAddress } from "../../../cms/shared/location";
 import type { SharedCopy } from "../../../cms/shared/shared-copy";
 import OgImageField from "./OgImageField";
+import HeroImageField from "./HeroImageField";
+import { reviewsHeroImage } from "../../../cms/shared/hero-image";
 
 export function ReviewsFields({ document, onChange, disabled, onBusyChange }: { document: ReviewsDocument; onChange: (document: ReviewsDocument) => void; disabled: boolean; onBusyChange: (busy: boolean) => void }) {
   const [openIds, setOpenIds] = useState<string[]>([]);
@@ -30,8 +32,9 @@ export function ReviewsFields({ document, onChange, disabled, onBusyChange }: { 
   }
   return <>
     <div className={styles.sectionIntro}><h3>Review library</h3><p>Star up to three reviews for the homepage. Starred reviews appear first; use their arrows to change the order. All visible reviews appear on the Client page. Changes go live only after publishing.</p></div>
-    <details className={styles.collectionItem}><summary>Reviews page headings and search settings</summary><div className={styles.collectionBody}>
+    <details className={styles.collectionItem}><summary>Reviews page hero, headings and search settings</summary><div className={styles.collectionBody}>
       {Object.entries(document.page ?? reviewPageDefaults).map(([key, value]) => <label className={styles.field} key={key}><span>{key.replace(/([A-Z])/g, " $1").replace(/^./, first => first.toUpperCase())}</span><Input value={value} maxLength={key === "seoDescription" ? 500 : 200} onChange={event => onChange({ ...document, page: { ...(document.page ?? reviewPageDefaults), [key]: event.target.value } })} /></label>)}
+      <HeroImageField value={document.heroImage} fallback={reviewsHeroImage} onChange={heroImage => onChange({ ...document, heroImage })} disabled={disabled} onBusyChange={onBusyChange} />
       <OgImageField value={document.ogImage} onChange={ogImage => onChange({ ...document, ogImage })} disabled={disabled} onBusyChange={onBusyChange} />
     </div></details>
     <div className={styles.reviewListHeading}><strong>All reviews</strong><span>{document.favoriteIds.length} of 3 starred</span></div>

@@ -7,14 +7,16 @@ import Icon from "@/components/ui/Icon";
 import type { SiteData } from "@/lib/site";
 import { contentText as t, contentItems as items, type ContentDocument } from "../../../cms/shared/content";
 import promotionSource from "@/content/promotions.json";
+import { heroImageSource } from "@/lib/cms/hero-image";
+import type { OfferHeroImages } from "../../../cms/shared/hero-image";
 
-export default function PromotionsContent({ document, site, offerSlug }: { document: ContentDocument; site: SiteData; offerSlug?: string }) {
+export default function PromotionsContent({ document, site, offerSlug, heroImage = "/images/summer-promotions.jpg", preview, mediaOrigin }: { document: ContentDocument; site: SiteData; offerSlug?: string; heroImage?: string; preview?: boolean; mediaOrigin?: string }) {
   const c = document.content;
   const promos = items(c, "offers").map(item => { const design = promotionSource.items.find(offer => offer.slug === t(item, "id"))!; return { href: '/' + design.slug, title: t(item, "heading"), tagline: t(item, "tagline"), offer: t(item, "offer"), image: design.image, icon: design.icon }; });
   if (offerSlug) {
     const item = items(c, "offers").find(item => item.id === offerSlug)!;
     const design = promotionSource.items.find(item => item.slug === offerSlug)!;
-    return <PromoPageContent site={site} title={t(item, "heading")} tagline={t(item, "tagline")} offer={t(item, "offer")} code={t(item, "code")} image={design.image} icon={design.icon} blurb={t(item, "body")} otherHref={design.otherHref} otherLabel={t(item, "relatedLabel")} />;
+    return <PromoPageContent site={site} title={t(item, "heading")} tagline={t(item, "tagline")} offer={t(item, "offer")} code={t(item, "code")} image={design.image} heroImage={heroImageSource(document.offerHeroImages?.[offerSlug as keyof OfferHeroImages], design.image, preview, mediaOrigin)} icon={design.icon} blurb={t(item, "body")} otherHref={design.otherHref} otherLabel={t(item, "relatedLabel")} />;
   }
   return (
     <>
@@ -23,7 +25,7 @@ export default function PromotionsContent({ document, site, offerSlug }: { docum
         eyebrow={t(c, "eyebrow")}
         tagline={t(c, "tagline")}
         icon="tag"
-        image="/images/summer-promotions.jpg"
+        image={heroImage}
       />
 
       <section className="promotions-section-1">

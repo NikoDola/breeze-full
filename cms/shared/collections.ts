@@ -2,10 +2,11 @@ import { exactKeys, InputError, record, text } from "./validation";
 import { validateAddress, validateMapsLink, type BusinessAddress } from "./location";
 import { validateSharedCopy, type SharedCopy } from "./shared-copy";
 import { validateSocialImage, type SocialImage } from "./seo";
+import { validateHeroImage, type HeroImage } from "./hero-image";
 
 export type ReviewItem = { id: string; name: string; quote: string; homeQuote: string; visible: boolean };
 export const reviewPageDefaults = { heading: "Reviews", eyebrow: "Our clients", tagline: "In their own words.", seoTitle: "Reviews", seoDescription: "What Middle Tennessee homeowners say about Breeze Heating & Cooling — in their own words." };
-export type ReviewsDocument = SocialImage & { schemaVersion: 4; title: string; items: ReviewItem[]; favoriteIds: string[]; page?: typeof reviewPageDefaults };
+export type ReviewsDocument = SocialImage & HeroImage & { schemaVersion: 4; title: string; items: ReviewItem[]; favoriteIds: string[]; page?: typeof reviewPageDefaults };
 export const socialPlatforms = {
   facebook: { label: "Facebook", hosts: ["facebook.com", "www.facebook.com", "fb.com"] },
   instagram: { label: "Instagram", hosts: ["instagram.com", "www.instagram.com"] },
@@ -26,7 +27,7 @@ function emailAddress(value: unknown, label: string) {
 
 export function validateReviews(value: unknown): ReviewsDocument {
   const doc = record(value);
-  exactKeys(doc, ["schemaVersion", "title", "items", "favoriteIds", "page", "ogImage"], "reviews");
+  exactKeys(doc, ["schemaVersion", "title", "items", "favoriteIds", "page", "ogImage", "heroImage"], "reviews");
   if (doc.schemaVersion !== 4 || !Array.isArray(doc.items) || doc.items.length > 50) throw new InputError("Reviews supports up to 50 entries.");
   const ids = new Set<string>();
   const items = doc.items.map(value => {
@@ -51,7 +52,7 @@ export function validateReviews(value: unknown): ReviewsDocument {
     exactKeys(source, Object.keys(reviewPageDefaults), "Reviews page");
     page = { page: Object.fromEntries(Object.keys(reviewPageDefaults).map(key => [key, text(source[key], key, key === "seoDescription" ? 500 : 200, key !== "seoDescription")])) as typeof reviewPageDefaults };
   }
-  return { schemaVersion: 4, title: text(doc.title, "title", 200, true), items, favoriteIds, ...page, ...validateSocialImage(doc) };
+  return { schemaVersion: 4, title: text(doc.title, "title", 200, true), items, favoriteIds, ...page, ...validateSocialImage(doc), ...validateHeroImage(doc) };
 }
 
 export function validateGlobal(value: unknown): GlobalDocument {

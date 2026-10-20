@@ -40,13 +40,15 @@
 .supportContact a[href^="tel:"] svg { color: var(--orange); }
 .contactLabel { display: block; color: var(--admin-muted); font-size: 10px; line-height: 1.6; }
 .navGroup { margin: 12px 0 0; }
-.navGroup > summary { display: flex; align-items: center; padding: 10px 12px; border-radius: 7px; color: var(--admin-secondary); font-size: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+.navGroup > summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 7px; color: var(--admin-secondary); font-size: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+.navGroup > summary svg, .breezeIcon { width: 17px; height: 17px; flex: none; }
+.breezeIcon { background: currentColor; mask: url("/template-2/breeze-badge.svg") center / contain no-repeat; }
 .navGroup > summary::-webkit-details-marker { display: none; }
 .navGroup > summary::after { content: ""; width: 7px; height: 7px; margin: 0 2px 0 auto; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); }
 .navGroup[open] > summary::after { margin-top: -4px; transform: rotate(45deg); }
 .navGroup > summary:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }
 .navGroup > summary:hover { background: #eeece6; }
-.groupItems { padding: 3px 0 4px 10px; }
+.groupItems { margin-left: 20px; padding: 3px 0 4px 8px; border-left: 1px solid var(--admin-line-strong); }
 .groupLabel { margin: 0 0 8px; padding: 0 10px; color: var(--admin-muted); font-size: 10px; font-weight: 600; line-height: 1.5; text-transform: uppercase; letter-spacing: .08em; }
 .navItem { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 3px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--admin-secondary); font: inherit; font-size: 13px; font-weight: 500; text-align: left; cursor: pointer; }
 .navItem:hover:not(:disabled) { background: #eeece6; color: var(--admin-text); }

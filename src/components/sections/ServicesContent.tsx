@@ -8,11 +8,11 @@ import type { SiteData } from "@/lib/site";
 import type { ServiceSummary } from "./ContentPageView";
 import { contentDefinitions } from "../../../cms/shared/content";
 const design = contentDefinitions["services"];
-export default function ServicesContent({ content: c, site, services }: { content: ContentRecord; site: SiteData; services: ServiceSummary[] }) {
+export default function ServicesContent({ content: c, site, services, heroImage = design.image }: { content: ContentRecord; site: SiteData; services: ServiceSummary[]; heroImage?: string }) {
 
   return (
     <>
-      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={design.image} />
+      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={heroImage} />
 
       <section className="services-section-1">
         <div className="services-layout-1">

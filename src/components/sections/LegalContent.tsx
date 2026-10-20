@@ -11,6 +11,7 @@ export default function LegalContent({
   effectiveLabel,
   intro,
   sections,
+  heroImage,
   showIntegrationDisclosure = false,
 }: {
   site: SiteData;
@@ -18,11 +19,12 @@ export default function LegalContent({
   effectiveLabel: string;
   intro?: string;
   sections: LegalSection[];
+  heroImage?: string;
   showIntegrationDisclosure?: boolean;
 }) {
   return (
     <>
-      <PageHero title={title} eyebrow="Legal" />
+      <PageHero title={title} eyebrow="Legal" image={heroImage} />
 
       <section className="legal-page-section-1">
         <p className="legal-page-copy-1">

@@ -17,7 +17,7 @@ export function editorStatus({ state, baseVersion, dirty, operation, now }: Stat
   else if (state?.publication && !confirmed) { label = "Published · refresh pending"; detail = "Your revision is saved. Website confirmation is pending."; tone = "warning"; }
   if (dirty) { label = "Unsaved changes"; detail = "Save a draft to keep your latest edits."; tone = "warning"; }
   if (operation) {
-    const labels = { load: "Loading content…", refresh: "Refreshing status…", import: "Preparing your content…", draft: "Saving draft…", publish: "Publishing your draft…", retry: "Retrying website refresh…" };
+    const labels = { load: "Loading content…", refresh: "Checking status…", import: "Preparing your content…", draft: "Saving draft…", publish: "Publishing your draft…", retry: "Retrying website refresh…" };
     label = labels[operation]; detail = operation === "publish" || operation === "retry" ? "Saving and confirming delivery to the website." : "Please wait a moment."; tone = "neutral";
   }
   return { label, detail, tone, leaseActive, deliveryFailed, deliveryLabel, deliveryDetail };

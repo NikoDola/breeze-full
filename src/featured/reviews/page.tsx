@@ -4,6 +4,8 @@ import { getSite } from "@/lib/cms/site";
 import { createReviewsSeed } from "../../../cms/shared/collection-seeds";
 import { reviewPageDefaults } from "../../../cms/shared/collections";
 import { pageMetadata } from "@/lib/cms/metadata";
+import { workerOrigin } from "@/lib/cms/worker";
+import { cmsOrigin } from "@/lib/cms/scope";
 
 export async function generateMetadata() {
   const publication = await getPublishedReviews();
@@ -12,5 +14,5 @@ export async function generateMetadata() {
 }
 export default async function Page() {
   const [publication, site] = await Promise.all([getPublishedReviews(), getSite()]);
-  return <ReviewsContent document={publication?.document ?? createReviewsSeed()} site={site} publication={publication ?? undefined} />;
+  return <ReviewsContent document={publication?.document ?? createReviewsSeed()} site={site} publication={publication ?? undefined} mediaOrigin={cmsOrigin() ? workerOrigin() : undefined} />;
 }

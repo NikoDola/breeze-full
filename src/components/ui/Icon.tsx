@@ -28,6 +28,7 @@ const paths: Record<string, React.ReactNode> = {
       <path d="M7 16v3M17 16v3M7 8h.01M11 8h.01M7 12h6" />
     </>
   ),
+  list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
   drop: (
     <path d="M12 2.5S5.5 9.5 5.5 14a6.5 6.5 0 0 0 13 0C18.5 9.5 12 2.5 12 2.5Z" />
   ),
@@ -56,6 +57,13 @@ const paths: Record<string, React.ReactNode> = {
     <>
       <path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.4 7.5 9.5 4.4-1.1 7.5-4.9 7.5-9.5V6L12 3Z" />
       <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  scales: (
+    <>
+      <path d="M12 3v18M8 21h8M3 7l9-3 9 3" />
+      <path d="m5 6-3 8h6L5 6Zm14 0-3 8h6l-3-8Z" />
+      <path d="M2 14a3 3 0 0 0 6 0M16 14a3 3 0 0 0 6 0" />
     </>
   ),
   wifi: (

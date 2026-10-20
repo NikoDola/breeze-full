@@ -80,6 +80,11 @@
 .ogImagePreview > div { height: auto; aspect-ratio: 1200 / 630; }
 .ogImagePreview > div img { object-fit: contain; }
 .ogImageField > .itemActions { margin-bottom: 18px; }
+.heroImageField { min-width: 0; margin-block: 24px; }
+.heroImagePreview { max-width: 440px; margin-bottom: 14px; }
+.heroImagePreview > div { height: auto; aspect-ratio: 16 / 5; }
+.heroImagePreview > div img { object-fit: cover; }
+.heroImageField > .itemActions { margin-bottom: 18px; }
 .advancedField { margin-top: 20px; padding: 14px; border: 1px solid var(--admin-line); border-radius: 8px; }
 .advancedField summary { cursor: pointer; font-size: 12px; font-weight: 600; }
 .advancedField .field { margin: 14px 0 0; }

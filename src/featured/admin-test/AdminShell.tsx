@@ -6,16 +6,16 @@ import { pages, type PageId } from "../../../cms/shared/contract";
 import css from "./shell.module.css";
 import { contentDefinitions, type ContentPageId } from "../../../cms/shared/content";
 
-type NavigationItem = { type: "page"; id: PageId } | { type: "group"; label: string; ids: readonly PageId[] };
+type NavigationItem = { type: "page"; id: PageId } | { type: "group"; label: string; icon: "wrench" | "users" | "breeze" | "scales"; ids: readonly PageId[] };
 const navigationItems: readonly NavigationItem[] = [
   { type: "page", id: "home" },
-  { type: "group", label: "HVAC", ids: ["services", ...(Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === "HVAC")] },
+  { type: "group", label: "HVAC", icon: "wrench", ids: ["services", ...(Object.keys(contentDefinitions) as ContentPageId[]).filter(id => contentDefinitions[id].group === "HVAC")] },
   { type: "page", id: "promotions" },
   { type: "page", id: "emergency" },
-  { type: "group", label: "Client", ids: ["reviews", "gallery"] },
-  { type: "group", label: "About us", ids: ["about-us", "meet-the-hvac-experts", "contact-us", "why-choose-breeze", "going-green", "careers"] },
+  { type: "group", label: "Client", icon: "users", ids: ["reviews", "gallery"] },
+  { type: "group", label: "About us", icon: "breeze", ids: ["about-us", "meet-the-hvac-experts", "contact-us", "why-choose-breeze", "going-green", "careers"] },
   { type: "page", id: "global" },
-  { type: "group", label: "Legal", ids: ["privacy-policy", "terms-and-conditions"] },
+  { type: "group", label: "Legal", icon: "scales", ids: ["privacy-policy", "terms-and-conditions"] },
 ];
 
 function SupportContact() {
@@ -90,7 +90,10 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
           const nextOpen = event.currentTarget.open;
           setOpenGroups(current => nextOpen ? current.includes(group.label) ? current : [...current, group.label] : current.filter(label => label !== group.label));
         }}>
-          <summary>{group.label}</summary>
+          <summary>
+            {group.icon === "breeze" ? <span className={css.breezeIcon} aria-hidden="true" /> : <Icon name={group.icon} />}
+            <span>{group.label}</span>
+          </summary>
           <div className={css.groupItems}>{ids.map(pageButton)}</div>
         </details>;
       })}

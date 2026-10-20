@@ -89,7 +89,8 @@ delivery, access checks, and deployment configuration are unchanged.
 - A persistent bottom action bar keeps **1. Save draft** and **2. Publish draft**
   visible while scrolling through fields, including on mobile. It shares the
   toolbar's action handlers and disabled states, and shows saving/error feedback.
-- Refresh status preserves unsaved edits. If a newer saved draft exists, saving
+- The toolbar shows Save draft and Publish changes. **Check status** appears only
+  in an error message and preserves unsaved edits. If a newer saved draft exists, saving
   and publishing are blocked until the user explicitly loads the latest version.
   Discarding edits asks for confirmation; leaving with unsaved edits warns.
 - Existing manual **Retry cache refresh** remains available after interrupted or

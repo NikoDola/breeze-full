@@ -6,13 +6,13 @@ import type { SiteData } from "@/lib/site";
 import ServiceRequestForm from "./ServiceRequestForm";
 import { contentDefinitions } from "../../../cms/shared/content";
 const design = contentDefinitions["emergency"];
-export default function EmergencyContent({ content: c, site }: { content: ContentRecord; site: SiteData }) {
+export default function EmergencyContent({ content: c, site, heroImage = design.image }: { content: ContentRecord; site: SiteData; heroImage?: string }) {
   const emergency = { tagline: t(c, "tagline"), paragraphs: t(c, "body").split("\n\n"), heading: t(c, "listHeading"), items: t(c, "items").split("\n").filter(Boolean) };
   const features = items(c, "features").map(item => ({ id: t(item, "id"), title: t(item, "heading"), body: t(item, "body") }));
 
   return (
     <>
-      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={design.image} />
+      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={heroImage} />
 
       {/* Loud call strip, immediately under the hero */}
       <section className="emergency-section-1">

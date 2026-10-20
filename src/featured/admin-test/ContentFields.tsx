@@ -9,6 +9,9 @@ import OgImageField from "./OgImageField";
 import CmsImage from "@/components/sections/CmsImage";
 import { gallerySource } from "../../../cms/shared/additional-content";
 import type { ImageReference } from "../../../cms/shared/media";
+import HeroImageField from "./HeroImageField";
+import promotionSource from "@/content/promotions.json";
+import type { OfferHeroImages } from "../../../cms/shared/hero-image";
 
 function PhotoField({ value, onChange, disabled, onBusyChange }: { value: ImageReference; onChange: (value: ImageReference) => void; disabled: boolean; onBusyChange: (busy: boolean) => void }) {
   const [open, setOpen] = useState(false);
@@ -51,6 +54,11 @@ export default function ContentFields({ document, onChange, disabled, onBusyChan
   return <>
     <div className={styles.sectionPicker} role="group" aria-label="Page fields"><button type="button" aria-pressed={tab === "content"} onClick={() => setTab("content")}>Page content</button><button type="button" aria-pressed={tab === "details"} onClick={() => setTab("details")}>Search settings</button></div>
     {tab === "content" ? <>{Object.keys(introFields).length > 0 && <><div className={styles.sectionIntro}><h3>Page introduction</h3><p>These fields appear near the top of the page.</p></div><Fields fields={introFields} content={document.content} disabled={disabled} onBusyChange={onBusyChange} onChange={content => onChange({ ...document, content })} /></>}
+      <HeroImageField value={document.heroImage} fallback={contentDefinitions[document.pageId].image} onChange={heroImage => onChange({ ...document, heroImage })} disabled={disabled} onBusyChange={onBusyChange} />
+      {document.pageId === "promotions" && <details className={styles.collectionItem}><summary>Seasonal page hero images</summary><div className={styles.collectionBody}>{promotionSource.items.map(offer => {
+        const id = offer.slug as keyof OfferHeroImages;
+        return <HeroImageField key={id} label={`${offer.title} hero image`} value={document.offerHeroImages?.[id]} fallback={offer.image} onChange={image => onChange({ ...document, offerHeroImages: { ...document.offerHeroImages, [id]: image } })} disabled={disabled} onBusyChange={onBusyChange} />;
+      })}</div></details>}
       {Object.keys(bodyFields).length > 0 && <><div className={styles.sectionIntro}><h3>Main content</h3><p>Edit the sections people see as they scroll down.</p></div><Fields fields={bodyFields} content={document.content} disabled={disabled} onBusyChange={onBusyChange} onChange={content => onChange({ ...document, content })} /></>}</> : <>
       <div className={styles.sectionIntro}><h3>Search result preview</h3><p>The title and description below can appear in search results. Search engines may choose different text.</p></div>
       <div className={styles.searchSnippet}><strong>{document.seoTitle || document.title}</strong><span>{document.seoDescription}</span></div>

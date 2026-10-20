@@ -7,7 +7,7 @@ import { contentText as t, contentItems as items, type ContentRecord } from "../
 import type { SiteData } from "@/lib/site";
 import { contentDefinitions } from "../../../cms/shared/content";
 const design = contentDefinitions["about-us"];
-export default function AboutContent({ content: c, site }: { content: ContentRecord; site: SiteData }) {
+export default function AboutContent({ content: c, site, heroImage = design.image }: { content: ContentRecord; site: SiteData; heroImage?: string }) {
   const welcomeBlurb = t(c, "intro"), nashvilleBest = t(c, "body");
   const bestInTown = { heading: t(c, "ownerHeading"), body: t(c, "ownerBody") };
   const blocks = items(c, "stories").map(item => ({ id: t(item, "id"), heading: t(item, "heading"), body: t(item, "body") }));
@@ -15,7 +15,7 @@ export default function AboutContent({ content: c, site }: { content: ContentRec
 
   return (
     <>
-      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={design.image} />
+      <PageHero title={t(c, "heading")} eyebrow={t(c, "eyebrow")} tagline={t(c, "tagline")} icon={design.icon} image={heroImage} />
 
       <section className="about-us-section-1">
         <div className="about-us-layout-1">

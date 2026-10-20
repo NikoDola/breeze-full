@@ -3,6 +3,7 @@ import { assetIdPattern, imageSignature, MAX_UPLOAD_BYTES, readBytes, type Media
 import type { Env } from "./index";
 import { environmentEnabled } from "./environment";
 import { contentAssets } from "../../../cms/shared/content";
+import { heroAssets } from "../../../cms/shared/hero-image";
 
 class MediaError extends InputError { constructor(public status: number, message: string) { super(message); } }
 const json = (data: unknown, status = 200, headers = {}) => Response.json(data, { status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
@@ -178,8 +179,10 @@ export async function mediaAdmin(request: Request, env: Env): Promise<Response> 
 export async function validateDraftAssets(env: Env, document: Document) {
   if (document.schemaVersion === 6 && !await contentMediaReady(env)) throw new MediaError(503, "Content migration is not ready. Apply migration 0004 before saving or publishing.");
   const ogImage = document.schemaVersion === 4 || document.schemaVersion === 6 ? document.ogImage : null;
+  const heroes = document.schemaVersion === 4 || document.schemaVersion === 6 ? heroAssets(document) : [];
+  if (heroes.length && !await heroMediaReady(env)) throw new MediaError(503, "Hero image migration is not ready. Apply migration 0006 before saving or publishing an uploaded hero image.");
   if (ogImage && typeof ogImage !== "string" && !await ogMediaReady(env)) throw new MediaError(503, "OG image migration is not ready. Apply migration 0005 before saving or publishing an uploaded OG image.");
-  const images = document.schemaVersion === 6 ? contentAssets(document) : document.schemaVersion === 3 ? document.section.images : ogImage ? [ogImage] : [];
+  const images = document.schemaVersion === 6 ? contentAssets(document) : document.schemaVersion === 3 ? document.section.images : [...(ogImage ? [ogImage] : []), ...heroes];
   for (const image of images) {
     if (typeof image === "string") continue;
     const row = await asset(env, image.assetId);
@@ -194,5 +197,10 @@ export async function contentMediaReady(env: Env): Promise<boolean> {
 
 export async function ogMediaReady(env: Env): Promise<boolean> {
   const row = await env.DB.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name IN ('og_media_validate_publication', 'og_media_capture_publication')").first<{ n: number }>();
+  return row?.n === 2;
+}
+
+export async function heroMediaReady(env: Env): Promise<boolean> {
+  const row = await env.DB.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name IN ('hero_media_validate_publication', 'hero_media_capture_publication')").first<{ n: number }>();
   return row?.n === 2;
 }

@@ -40,6 +40,6 @@ export async function POST(request: Request) {
     return json(await response.json(), response.status);
   } catch (error) {
     if (error instanceof InputError || error instanceof SyntaxError) return json({ error: error instanceof InputError ? error.message : "Invalid JSON." }, 400);
-    return json({ error: "CMS request could not complete. Refresh status before retrying; a draft or publication may already have been saved." }, 502);
+    return json({ error: "CMS request could not complete. Check status before retrying; a draft or publication may already have been saved." }, 502);
   }
 }

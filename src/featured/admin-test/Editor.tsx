@@ -79,8 +79,8 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     });
     let result;
     try { result = await response.json(); }
-    catch { throw new Error("The editor could not read the response. Refresh status to check whether your changes were saved."); }
-    if (!response.ok) throw new Error(result.error || `Request failed (${response.status}). Refresh status before trying again.`);
+    catch { throw new Error("The editor could not read the response. Check status to see whether your changes were saved."); }
+    if (!response.ok) throw new Error(result.error || `Request failed (${response.status}). Check status before trying again.`);
     return result;
   }, [pageId]);
   const load = useCallback(async () => {
@@ -129,7 +129,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
       if (action === "publish" && dirty) {
         const saved = await request({ action: "draft", document, expectedVersion: baseDraft?.version });
         setState(saved); setBaseDraft(saved.draft); setDocument(saved.draft?.document ?? null);
-        if (!saved.draft) throw new Error("The draft was not returned after saving. Refresh status before publishing.");
+        if (!saved.draft) throw new Error("The draft was not returned after saving. Check status before publishing.");
         const published = await request({ action: "publish", expectedVersion: saved.draft.version });
         setState(published);
         setMessage(published.delivery?.confirmed_at ? "Your changes are live on the website." : "Your changes were published. Website confirmation is pending.");
@@ -166,12 +166,11 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     <div className={styles.toolbar}>
       <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{newerDraft ? "A newer draft exists. Load it before saving or publishing." : busy ? status.detail : saveHelp}</span></div></div>
       <div className={styles.actions}>
-        <Button className={styles.secondaryButton} disabled={busy} onClick={() => void refresh()}><Icon name="clock" />{operation === "refresh" ? "Refreshing…" : "Refresh status"}</Button>
         {document && <><Button type="submit" form="cms-editor-form" className={styles.secondaryButton} disabled={saveDisabled}>{operation === "draft" ? "Saving draft…" : "Save draft"}</Button>
         <Button className={styles.primaryButton} disabled={publishDisabled} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "Publish changes"}</Button></>}
       </div>
     </div>
-    {error && <div className={`${styles.notice} ${styles.errorNotice}`} role="alert"><strong>We could not complete that action</strong><p>{error}</p><p>Refresh status before trying again. Your local edits will be kept.</p></div>}
+    {error && <div className={`${styles.notice} ${styles.errorNotice}`} role="alert"><strong>We could not complete that action</strong><p>{error}</p><p>Check status before trying again. Your local edits will be kept.</p><Button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => void refresh()}><Icon name="clock" />Check status</Button></div>}
     {message && <p className={`${styles.notice} ${styles.successNotice}`} role="status"><Icon name="check" />{message}</p>}
     {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
     {!document ? <section className={styles.emptyState} aria-busy={busy}>
