@@ -14,6 +14,12 @@ On first use, **Copy existing content** initializes a draft without publishing.
 Use **Save draft**, then **Publish draft**. Existing status indicators, conflict
 handling, unsaved-change warnings and **Retry cache refresh** apply to both.
 
+Business details displays Contact information, Location, Social profiles and
+Shared website text in one continuous form. Each section has a heading and
+horizontal divider; no section tabs hide fields. Contact banner and Service
+callouts also remain expanded within Shared website text. Saving and publishing
+continue to apply to the complete Global document.
+
 Reviews supports 50 entries within the existing 48 KiB request limit. Add genuine
 client reviews, edit their name/full text, optionally supply an original-wording
 homepage excerpt, hide/remove an entry, and choose up to three homepage favorites.

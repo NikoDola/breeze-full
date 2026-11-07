@@ -1,14 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Fragment } from "react";
 import { site as defaultSite, type SiteData } from "@/lib/site";
+import RichTextContent from "@/components/ui/RichTextContent";
+import { editableHero, homeHeroSeed, type HeroContent, type LegacyHeroContent } from "../../../../cms/shared/home-hero";
+import type { RichTextNode } from "../../../../cms/shared/rich-text";
 
-export default function HeroSection({ site = defaultSite }: { site?: SiteData }) {
+export default function HeroSection({ site = defaultSite, content: source = homeHeroSeed }: { site?: SiteData; content?: HeroContent | LegacyHeroContent }) {
+  const content = editableHero(source);
+  const headingLines: RichTextNode[][] = [[]];
+  for (const node of content.heading.content) {
+    if (node.type === "break") headingLines.push([]);
+    else headingLines[headingLines.length - 1].push(node);
+  }
+  const rating = Number(content.googleRating).toFixed(1);
+  const reviewLabel = `${content.googleReviewCount} Google ${content.googleReviewCount === "1" ? "review" : "reviews"}`;
   return (
     <>
     <link rel="preload" as="image" href="/images/hero-full.webp" media="(max-width: 700px)" fetchPriority="high" />
     <link rel="preload" as="image" href="/images/hero-bg.webp" media="(min-width: 700.01px)" fetchPriority="high" />
     <link rel="preload" as="image" href="/images/hero-family.webp" media="(min-width: 700.01px)" fetchPriority="high" />
-    <section className="hero" aria-labelledby="hero-title">
+    <section className="hero" id="hero" aria-labelledby="hero-title">
       <div className="hero-photo" role="img" aria-label="A family relaxing together in a bright, comfortable home">
         <svg className="hero-breeze" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <defs>
@@ -29,23 +41,24 @@ export default function HeroSection({ site = defaultSite }: { site?: SiteData })
       <div className="wrap hero-content">
         <div className="hero-copy">
           <h1 id="hero-title">
-            <span className="hero-title-line">Home feels</span>{" "}
-            <span className="hero-title-line"><em>better</em> with a</span>{" "}
-            <span className="hero-title-line">little Breeze<span className="period">.</span></span>
+            {headingLines.map((line, index) => <Fragment key={index}>{index > 0 && " "}<span className="hero-title-line">{line.length ? <RichTextContent value={{ version: 1, content: line }} /> : <br />}</span></Fragment>)}
           </h1>
           <div className="hero-trust">
-            <Link className="hero-google-reviews" href="/reviews" aria-label="Rated 5.0 out of 5 on Google from 167 reviews. Read our client reviews.">
+            <Link className="hero-google-reviews" href="/reviews" aria-label={`Rated ${rating} out of 5 on Google from ${content.googleReviewCount} ${content.googleReviewCount === "1" ? "review" : "reviews"}. Read our client reviews.`}>
               <span className="hero-google-mark"><Image src="/images/google-g.png" width={24} height={24} alt="" loading="eager" /></span>
               <span className="hero-google-details">
-                <span className="hero-google-rating"><strong>5.0</strong><span className="hero-google-stars" aria-hidden="true">★★★★★</span></span>
-                <span className="hero-google-count">167 Google reviews</span>
+                <span className="hero-google-rating"><strong>{rating}</strong><span className="hero-google-stars" aria-hidden="true" style={{ position: "relative", display: "inline-block" }}>
+                  <span style={{ opacity: 0.3 }}>★★★★★</span>
+                  <span style={{ position: "absolute", inset: 0, width: `${Number(rating) * 20}%`, overflow: "hidden", whiteSpace: "nowrap" }}>★★★★★</span>
+                </span></span>
+                <span className="hero-google-count">{reviewLabel}</span>
               </span>
             </Link>
-            <p className="hero-intro">Trusted by your neighbors.<br />Your comfort is in good hands.</p>
+            <p className="hero-intro">{content.intro.split(/\r?\n/).map((line, index) => <Fragment key={index}>{index > 0 && <br />}{line}</Fragment>)}</p>
           </div>
           <div className="hero-buttons">
-            <a className="button orange" href="#contact">Let&apos;s get comfortable <span aria-hidden="true">↗</span></a>
-            <a className="button ghost" href={site.phoneHref}>Call {site.phone}</a>
+            <a className="button orange" href="#contact">{content.buttonText} <span aria-hidden="true">↗</span></a>
+            <a className="button ghost" href={site.phoneHref}>{content.phoneButtonText} {site.phone}</a>
           </div>
         </div>
         <div className="hero-sticker" aria-label="Over two decades of local comfort care"><span>20+</span><small>years keeping<br />Middle TN comfy</small></div>

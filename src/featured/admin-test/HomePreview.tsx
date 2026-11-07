@@ -18,7 +18,7 @@ export default function HomePreview({ reviews, site, initialDocument = homeSeed,
     function receive(event: MessageEvent) {
       if (event.origin !== window.location.origin || event.source !== window.parent) return;
       if (event.data?.type === "breeze.cms.preview-focus") {
-        const ids: Record<string, string> = { seasons: "heating-cooling", contact: "contact", reviews: "reviews", area: "area" };
+        const ids: Record<string, string> = { hero: "hero", seasons: "heating-cooling", contact: "contact", reviews: "reviews", area: "area" };
         const id = ids[event.data.sectionId as string];
         if (id) {
           const section = document.getElementById(id);

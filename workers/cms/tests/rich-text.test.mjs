@@ -26,7 +26,7 @@ test("inline validation rejects executable/unknown structure and bounds complexi
 
 test("normalization is stable and conversion preserves history without changing schemaVersion 3", () => {
   const original = JSON.stringify(homeSeed), converted = editableHome(homeSeed);
-  assert.equal(converted.schemaVersion, 2); assert.equal(converted.templateVersion, 2);
+  assert.equal(converted.schemaVersion, 2); assert.equal(converted.templateVersion, 3);
   assert.deepEqual(validateHomeDocument(homeSeed), homeSeed);
   assert.deepEqual(validateHomeDocument(converted), converted);
   assert.deepEqual(editableHome(converted), converted);

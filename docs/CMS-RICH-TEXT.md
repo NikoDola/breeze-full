@@ -1,5 +1,9 @@
 # Homepage rich text
 
+Homepage template version 3 retains the rich headings described here and adds
+separate hero text controls. See [CMS-HOMEPAGE-HERO.md](CMS-HOMEPAGE-HERO.md) for
+the current contract and rollout compatibility.
+
 ## Contract and compatibility
 
 The homepage retains `schemaVersion: 2`. Template version 1 and its section

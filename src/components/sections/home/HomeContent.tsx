@@ -14,7 +14,7 @@ export default function HomeContent({ document, publication, reviews, site }: {
   reviews?: ReviewsDocument; site?: SiteData;
 }) {
   return <>
-    <HeroSection site={site} />
+    <HeroSection site={site} content={document.templateVersion === 3 ? document.slots.hero.content : undefined} />
     <SeasonsSection content={document.slots.seasons.content} publication={publication} />
     <ContactSection content={document.slots.contact.content} site={site} />
     <ReviewsSection content={reviews ? { ...document.slots.reviews.content, items: favoriteReviews(reviews) } : document.slots.reviews.content} />

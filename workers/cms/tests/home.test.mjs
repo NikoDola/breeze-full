@@ -12,7 +12,8 @@ const { homeSeed } = await load("../../../cms/shared/home-seed.ts");
 const { validatePageDocument, validateEvent } = await load("../../../cms/shared/contract.ts");
 const { confirmsPublication } = await load("../../../cms/shared/publication-marker.ts");
 
-test("homepage seed renders the original markup; hero, form and public CSS are unchanged", async () => {
+// The editable hero has its own artwork/default-copy regression in home-hero.test.mjs.
+test("homepage seed renders the original section markup; form and public CSS are unchanged", async () => {
   const baseline = JSON.parse(await readFile(new URL("./fixtures/home-baseline.json", import.meta.url), "utf8"));
   const require = createRequire(resolve(root, "package.json"));
   for (const [name, slot] of Object.entries({ SeasonsSection: "seasons", ContactSection: "contact", ReviewsSection: "reviews", AreaSection: "area" })) {

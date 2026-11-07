@@ -32,7 +32,7 @@ export default function GlobalPreview({ site, home }: { site: SiteData; home: Ho
     </div>
     {location === "footer" && <Placement title="Footer · Every page"><SiteFooterContent site={site} /></Placement>}
     {location === "header" && <Placement title="Header · Every page"><SiteHeader /></Placement>}
-    {location === "hero" && <Placement title="Homepage · Hero call button"><HeroSection site={site} /></Placement>}
+    {location === "hero" && <Placement title="Homepage · Hero call button"><HeroSection site={site} content={home.templateVersion === 3 ? home.slots.hero.content : undefined} /></Placement>}
     {location === "request" && <Placement title="Homepage · Service request"><ContactSection content={home.slots.contact.content} site={site} /></Placement>}
     {location === "location" && <Placement title="Contact us · Business location"><p>{site.addressLine}, {site.address.country}</p><ContactLocation site={site} /></Placement>}
     {location === "cta" && <Placement title="Shared contact banner"><CtaBandContent site={site} /></Placement>}

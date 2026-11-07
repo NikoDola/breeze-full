@@ -1,5 +1,8 @@
 # Homepage migration — version 2
 
+This document records the original homepage migration. For current editable hero
+fields and homepage template version 3, see [CMS-HOMEPAGE-HERO.md](CMS-HOMEPAGE-HERO.md).
+
 This slice migrates only `/` on `cms-testing`, using `breeze-test-api` and
 `breeze-test-db`. Production and all version-1 historical revisions remain
 unchanged. Read this document after `CMS-SOL-HANDOFF.md`; it supersedes that

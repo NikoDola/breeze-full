@@ -9,12 +9,15 @@ import { contentDefinitions, isContentPage } from "../../../cms/shared/content";
 import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets, contentMediaReady, ogMediaReady, heroMediaReady } from "./media";
 import { environmentEnabled } from "./environment";
 import { consumeRate, limitWorkerSource } from "./throttle";
+import { monitorStatus } from "./monitor";
 
 export interface Env {
   DB: D1Database;
   CMS_ENVIRONMENT: string;
   CMS_WRITES_ENABLED: string;
   CMS_WRITE_TOKEN?: string;
+  CMS_MONITOR_TOKEN?: string;
+  CMS_MONITOR_SITE_ID?: string;
   MEDIA?: R2Bucket;
   CMS_UPLOAD_ORIGIN?: string;
   AUTH_RATE_LIMITER?: RateLimit;
@@ -171,6 +174,7 @@ export default {
     try {
       const url = new URL(request.url), path = url.pathname;
       if (!environmentEnabled(env)) return json({ error: "Not found." }, 404);
+      if (path === "/api/monitor/status") return await monitorStatus(request, env);
       if (path.startsWith("/api/media/upload/")) return await mediaUpload(request, env);
       if (path.startsWith("/media/")) return await mediaPublic(request, env);
       const publicMatch = path.match(/^\/api\/public\/pages\/([a-z0-9-]+)$/);

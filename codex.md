@@ -4,9 +4,18 @@ Read `docs/WEBSITE.md` for the route and component map before editing.
 
 ## Admin interface
 
+- **Required:** Keep each heading or sentence in one field. For text with colored
+  words or emphasis, use the existing rich text editor and the website's approved
+  Default/Orange controls. Never split a heading into line, word, accent or color
+  inputs. Authors change formatting, line breaks and punctuation in that editor.
 - The admin is a simple, practical client control panel, not a marketing page.
 - Before login, show only the controls and information needed to sign in, return to the website, or get sign-in help. Do not reveal admin capabilities, available content, or internal details.
 - Do not add promotional panels, slogans, feature lists, or descriptions of what the client can manage. Keep the login form centered and professional.
+
+## CSS formatting
+
+- Write authored CSS as expanded blocks with two-space indentation and one declaration per line. Keep closing braces on their own lines and separate rules with blank lines. Do not compress rules into a single line.
+- Preserve selectors, declaration order and values when reformatting existing styles.
 
 ## Verification
 

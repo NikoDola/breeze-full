@@ -3,15 +3,16 @@
 import dynamic from "next/dynamic";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import { homeSectionRegistry, homeRichSectionRegistry, homeSlotOrder, editableHome, type HomeDocument, type HomeSlot, type Field, type TextField } from "../../../cms/shared/home";
+import { homeRichSectionRegistry, homeSlotOrder, editableHome, type HomeDocument, type HomeSlot, type Field, type TextField } from "../../../cms/shared/home";
 import type { RichText } from "../../../cms/shared/rich-text";
+import HomeSectionSelect from "./HomeSectionSelect";
 import styles from "./editor.module.css";
 const RichTextEditor = dynamic(() => import("./RichTextEditor"), { ssr: false, loading: () => <p role="status">Loading heading editor…</p> });
 
 function TextControl({ field, value, onChange }: { field: TextField; value: string; onChange: (value: string) => void }) {
   return <label className={styles.field}><span>{field.label}</span>
     {field.multiline ? <Textarea value={value} maxLength={field.max} rows={4} onChange={event => onChange(event.target.value)} />
-      : <Input value={value} maxLength={field.max} onChange={event => onChange(event.target.value)} />}
+      : <Input value={value} maxLength={field.max} inputMode={field.format === "google-rating" ? "decimal" : field.format === "review-count" ? "numeric" : undefined} onChange={event => onChange(event.target.value)} />}
     {field.help && <small>{field.help}</small>}
   </label>;
 }
@@ -25,11 +26,8 @@ export default function HomeFields({ document, onChange, disabled, resetKey, slo
     onChange({ ...editable, slots: { ...editable.slots, [slot]: { ...editable.slots[slot], content: { ...content, [key]: value } } } } as HomeDocument);
   }
   return <>
-    <div className={styles.sectionIntro}><h3>Homepage sections</h3><p>The hero, contact form, and section order are maintained by your website developer.</p></div>
-    <div className={styles.sectionPicker} role="group" aria-label="Homepage section">
-      {homeSlotOrder.map(key => <button key={key} type="button" aria-pressed={slot === key} onClick={() => onSlotChange(key)}>{homeSectionRegistry[key].label}</button>)}
-    </div>
-    <div className={styles.sectionIntro}><h3>{schema.label}</h3><p>{schema.help}</p></div>
+    <HomeSectionSelect value={slot} onChange={onSlotChange} disabled={disabled} />
+    <div className={styles.sectionIntro}><h3>{homeSlotOrder.indexOf(slot) + 1}. {schema.label}</h3><p>{schema.help}</p></div>
     {(Object.entries(schema.fields) as [string, Field][]).map(([key, field]) => {
       if (slot === "area" && key === "mapsHref") return <p key={key} className={styles.notice}>Manage the business directions link in Global settings. The service-area map location below can show a wider region.</p>;
       if (slot === "reviews" && key === "items") return <div key={key} className={styles.externalSettings}><h4>Manage customer reviews</h4><p>Edit testimonials and choose up to three featured reviews for the homepage. The Google rating in the hero is separate from this review library.</p><button type="button" className={styles.secondaryButton} onClick={onOpenReviews}>Manage customer reviews</button></div>;

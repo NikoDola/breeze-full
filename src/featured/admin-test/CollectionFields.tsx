@@ -70,21 +70,19 @@ export function ReviewsFields({ document, onChange, disabled, onBusyChange }: { 
 }
 
 export function GlobalFields({ document, onChange }: { document: GlobalDocument; onChange: (document: GlobalDocument) => void }) {
-  const [section, setSection] = useState<"contact" | "location" | "social" | "shared">("contact");
   const address = document.address ?? site.address;
   const addressFields: [keyof BusinessAddress, string, number][] = [["street", "Street address", 200], ["city", "City", 100], ["state", "State / region", 100], ["zip", "Postal code", 30], ["country", "Country", 100]];
   return <>
-    <div className={styles.sectionPicker} role="group" aria-label="Business details section">{([ ["contact", "Contact"], ["location", "Location"], ["social", "Social profiles"], ["shared", "Shared website text"] ] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={section === value} onClick={() => setSection(value)}>{label}</button>)}</div>
-    {section === "contact" && <>
-    <div className={styles.sectionIntro}><h3>Business contact details</h3><p>Publishing updates contact links throughout the website. Job application email is separate from the Housecall Pro service request form.</p></div>
+    <section className={styles.businessSection} aria-labelledby="global-contact-heading">
+    <div className={styles.sectionIntro}><div className={styles.businessSectionHeading}><h3 id="global-contact-heading">Contact information</h3><hr aria-hidden="true" /></div><p>Publishing updates contact links throughout the website. Job application email is separate from the Housecall Pro service request form.</p></div>
     <label className={styles.field}><span>Phone number</span><Input type="tel" value={document.phone} maxLength={40} onChange={event => onChange({ ...document, phone: event.target.value })} /><small>Include a country code for numbers outside the US.</small></label>
     <label className={styles.field}><span>Public email</span><Input type="email" value={document.email} maxLength={254} onChange={event => onChange({ ...document, formRecipientEmail: document.formRecipientEmail ?? document.email, email: event.target.value })} /><small>Displayed in website contact links and contact information.</small></label>
     <label className={styles.field}><span>Job application email</span><Input type="email" value={document.formRecipientEmail ?? document.email} maxLength={254} onChange={event => onChange({ ...document, formRecipientEmail: event.target.value })} /><small>Used by the Careers application. Visitors send their application through their email app.</small></label>
-    <div className={styles.externalSettings}><h3>Service request form</h3><p>Housecall Pro receives service leads. Open your Housecall Pro account to manage form fields, text preferences and lead notifications.</p><a href="https://pro.housecallpro.com/" target="_blank" rel="noopener noreferrer">Open Housecall Pro ↗</a></div>
-    <div className={styles.externalSettings}><h3>Website analytics</h3><p>Microsoft Clarity shows visits from the live public site after visitors allow analytics.</p><a href="https://clarity.microsoft.com/" target="_blank" rel="noopener noreferrer">Open Clarity ↗</a></div>
-    </>}
-    {section === "location" && <>
-    <div className={styles.sectionIntro}><h3>Business location</h3><p>The address updates Contact us and legal contact details. The map follows this address.</p></div>
+    <div className={styles.externalSettings}><h4>Service request form</h4><p>Housecall Pro receives service leads. Open your Housecall Pro account to manage form fields, text preferences and lead notifications.</p><a href="https://pro.housecallpro.com/" target="_blank" rel="noopener noreferrer">Open Housecall Pro ↗</a></div>
+    <div className={styles.externalSettings}><h4>Website analytics</h4><p>Microsoft Clarity shows visits from the live public site after visitors allow analytics.</p><a href="https://clarity.microsoft.com/" target="_blank" rel="noopener noreferrer">Open Clarity ↗</a></div>
+    </section>
+    <section className={styles.businessSection} aria-labelledby="global-location-heading">
+    <div className={styles.sectionIntro}><div className={styles.businessSectionHeading}><h3 id="global-location-heading">Location</h3><hr aria-hidden="true" /></div><p>The address updates Contact us and legal contact details. The map follows this address.</p></div>
     {addressFields.map(([key, label, max]) => <label className={styles.field} key={key}><span>{label}</span><Input value={address[key]} maxLength={max} onChange={event => {
       const next = { ...address, [key]: event.target.value };
       const mapsHref = !document.mapsHref || document.mapsHref === directionsLink(address) ? directionsLink(next) : document.mapsHref;
@@ -92,9 +90,9 @@ export function GlobalFields({ document, onChange }: { document: GlobalDocument;
     }} /></label>)}
     <label className={styles.field}><span>Google Maps directions link</span><Input type="url" value={document.mapsHref ?? directionsLink(address)} maxLength={2048} onChange={event => onChange({ ...document, address, mapsHref: event.target.value })} /><small>Paste the business's Google Maps link, or use the address to generate one.</small></label>
     <button type="button" className={styles.secondaryButton} onClick={() => onChange({ ...document, address, mapsHref: directionsLink(address) })}>Use address for directions</button>
-    </>}
-    {section === "social" && <>
-    <div className={styles.sectionIntro}><h3>Social media</h3><p>Choose a platform and paste the full HTTPS link to your business profile. Published links appear in the footer.</p></div>
+    </section>
+    <section className={styles.businessSection} aria-labelledby="global-social-heading">
+    <div className={styles.sectionIntro}><div className={styles.businessSectionHeading}><h3 id="global-social-heading">Social profiles</h3><hr aria-hidden="true" /></div><p>Choose a platform and paste the full HTTPS link to your business profile. Published links appear in the footer.</p></div>
     {document.socials.map((link, index) => <fieldset className={styles.repeatedItem} key={index}><legend>Social link {index + 1}</legend>
       <label className={styles.field}><span>Platform</span><select value={link.platform} onChange={event => onChange({ ...document, socials: document.socials.map((item, at) => at === index ? { platform: event.target.value as SocialPlatform, href: "" } : item) })}>
         {Object.entries(socialPlatforms).map(([platform, { label }]) => <option value={platform} key={platform} disabled={document.socials.some((item, at) => at !== index && item.platform === platform)}>{label}</option>)}
@@ -106,13 +104,13 @@ export function GlobalFields({ document, onChange }: { document: GlobalDocument;
       const platform = (Object.keys(socialPlatforms) as SocialPlatform[]).find(key => !document.socials.some(link => link.platform === key));
       if (platform) onChange({ ...document, socials: [...document.socials, { platform, href: "" }] });
     }}>+ Add social link</button>
-    </>}
-    {section === "shared" && <>
-    <div className={styles.sectionIntro}><h3>Shared page text</h3><p>The contact banner appears across the website. Service callouts appear on service pages.</p></div>
-    {Object.entries(document.sharedCopy ?? site.sharedCopy).map(([group, fields]) => <details className={styles.collectionItem} key={group}><summary>{group === "cta" ? "Contact banner" : "Service callouts"}</summary><div className={styles.collectionBody}>
+    </section>
+    <section className={styles.businessSection} aria-labelledby="global-shared-heading">
+    <div className={styles.sectionIntro}><div className={styles.businessSectionHeading}><h3 id="global-shared-heading">Shared website text</h3><hr aria-hidden="true" /></div><p>The contact banner appears across the website. Service callouts appear on service pages.</p></div>
+    {Object.entries(document.sharedCopy ?? site.sharedCopy).map(([group, fields]) => <div className={styles.sharedCopyGroup} key={group}><h4>{group === "cta" ? "Contact banner" : "Service callouts"}</h4>
       {Object.entries(fields).map(([key, value]) => <label className={styles.field} key={key}><span>{key.replace(/([A-Z])/g, " $1").replace(/^./, first => first.toUpperCase())}</span><Textarea rows={key.toLowerCase().includes("body") ? 3 : 1} maxLength={key.toLowerCase().includes("body") ? 3000 : 300} value={value} onChange={event => onChange({ ...document, sharedCopy: { ...(document.sharedCopy ?? site.sharedCopy), [group]: { ...fields, [key]: event.target.value } } as SharedCopy })} /></label>)}
-    </div></details>)}
-    </>}
+    </div>)}
+    </section>
   </>;
 }
 

@@ -159,6 +159,10 @@
   font-size: 17px;
 }
 
+.hero-title-line {
+  overflow-wrap: anywhere;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* This brand effect is explicitly requested, even when motion is reduced. */
   .hero-breeze-stroke {
@@ -173,7 +177,6 @@
 
   .hero-title-line {
     display: block;
-    white-space: nowrap;
   }
 
   .hero-photo::before {

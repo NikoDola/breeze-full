@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "siteId": "breeze",
+  "name": "Breeze Heating & Cooling",
+  "clientId": "breeze-client",
+  "projectPath": "breeze-web",
+  "localPort": 3000,
+  "publicUrl": "https://breeze-full.vercel.app",
+  "cmsUrl": "https://breeze-full.vercel.app/admin",
+  "capabilities": { "publicHealth": true, "cms": true, "cmsMonitoring": true },
+  "commands": { "dev": "npm run dev", "build": "npm run build", "check": "npm run cms:check" }
+}

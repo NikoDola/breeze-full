@@ -1,7 +1,8 @@
 import { InputError, exactKeys, record, text } from "./validation";
 import { HEADING_MAX_LENGTH, validateRichText, type RichText } from "./rich-text";
+import { editableHero, homeHeroSchema, homeHeroSeed, legacyHomeHeroSchema, type HeroContent, type LegacyHeroContent } from "./home-hero";
 
-export type TextField = { kind: "text"; label: string; max: number; multiline?: boolean; help?: string; format?: "maps-link" };
+export type TextField = { kind: "text"; label: string; max: number; multiline?: boolean; help?: string; format?: "maps-link" | "google-rating" | "review-count" };
 export type ArrayField = { kind: "array"; label: string; min: number; max: number; fields: Record<string, TextField>; fixedIds?: readonly string[]; help?: string };
 export type RichTextField = { kind: "rich-text"; label: string; max: number; help?: string };
 export type Field = TextField | ArrayField | RichTextField;
@@ -11,6 +12,7 @@ const paragraph = (label: string): TextField => ({ kind: "text", label, max: 300
 
 // This registry defines content and editor controls, never arbitrary layouts or markup.
 export const homeSectionRegistry = {
+  hero: homeHeroSchema,
   seasons: {
     type: "breeze.seasons", version: 1, label: "Heating & cooling",
     help: "The cooling and heating cards keep their icons, order, and service-request links.",
@@ -47,7 +49,8 @@ export const homeSectionRegistry = {
 } as const satisfies Record<string, SectionSchema>;
 
 export type HomeSlot = keyof typeof homeSectionRegistry;
-export const homeSlotOrder: readonly HomeSlot[] = ["seasons", "contact", "reviews", "area"];
+const legacyHomeSlotOrder = ["seasons", "contact", "reviews", "area"] as const;
+export const homeSlotOrder: readonly HomeSlot[] = ["hero", ...legacyHomeSlotOrder];
 export type LegacySeasonsContent = { headingLine1: string; headingLine2: string; headingAccent: string; intro: string; cards: { id: string; title: string; label: string; body: string; buttonText: string }[] };
 export type LegacyContactContent = { heading: string; headingAccent: string; intro: string; phonePrompt: string };
 export type LegacyReviewsContent = { heading: string; headingAccent: string; intro: string; items: { id: string; name: string; quote: string }[] };
@@ -76,10 +79,18 @@ export type RichHomeDocument = Omit<LegacyHomeDocument, "templateVersion" | "slo
     area: Slot<RichContent<LegacyAreaContent>, "breeze.area", 2>;
   };
 };
-export type HomeDocument = LegacyHomeDocument | RichHomeDocument;
+export type HeroHomeDocument = Omit<RichHomeDocument, "templateVersion" | "slots"> & {
+  templateVersion: 3;
+  slots: RichHomeDocument["slots"] & { hero: Slot<LegacyHeroContent, "breeze.hero"> | Slot<HeroContent, "breeze.hero", 2> };
+};
+export type EditableHomeDocument = Omit<HeroHomeDocument, "slots"> & {
+  slots: RichHomeDocument["slots"] & { hero: Slot<HeroContent, "breeze.hero", 2> };
+};
+export type HomeDocument = LegacyHomeDocument | RichHomeDocument | HeroHomeDocument;
 
 export const homeRichSectionRegistry = Object.fromEntries(homeSlotOrder.map(key => {
   const schema = homeSectionRegistry[key];
+  if (key === "hero") return [key, schema];
   const fields: Record<string, Field> = { heading: { kind: "rich-text", label: "Heading", max: HEADING_MAX_LENGTH,
     help: "Select words to format them. Enter adds a line break. Colors follow the website's design." } };
   for (const [name, field] of Object.entries(schema.fields)) if (!name.startsWith("heading")) fields[name] = field;
@@ -87,9 +98,11 @@ export const homeRichSectionRegistry = Object.fromEntries(homeSlotOrder.map(key 
 })) as Record<HomeSlot, SectionSchema>;
 
 // Pure conversion: reading/opening a document never writes D1 or modifies history.
-export function editableHome(doc: HomeDocument): RichHomeDocument {
-  if (doc.templateVersion === 2) return doc;
-  const slots = Object.fromEntries(homeSlotOrder.map(key => {
+export function editableHome(doc: HomeDocument): EditableHomeDocument {
+  if (doc.templateVersion === 3) return { ...doc, slots: { ...doc.slots,
+    hero: { type: "breeze.hero", version: 2, content: editableHero(doc.slots.hero.content) },
+  } };
+  const slots = doc.templateVersion === 2 ? doc.slots : Object.fromEntries(legacyHomeSlotOrder.map(key => {
     const section = doc.slots[key];
     const { headingLine1, headingLine2, headingAccent, heading, ...rest } = section.content as unknown as Record<string, string>;
     const content: RichText["content"] = key === "seasons"
@@ -99,11 +112,19 @@ export function editableHome(doc: HomeDocument): RichHomeDocument {
     content.push({ type: "text", text: headingAccent, color: "accent" });
     return [key, { type: section.type, version: 2, content: { heading: validateRichText({ version: 1, content }), ...rest } }];
   }));
-  return { ...doc, templateVersion: 2, slots } as RichHomeDocument;
+  return { ...doc, templateVersion: 3, slots: {
+    hero: { type: "breeze.hero", version: 2, content: structuredClone(homeHeroSeed) }, ...slots,
+  } } as EditableHomeDocument;
 }
 
 function parseText(value: unknown, field: TextField, path: string) {
   const result = text(value, path, field.max, true);
+  if (field.format === "google-rating" && !/^(?:[0-4](?:\.\d)?|5(?:\.0)?)$/.test(result)) {
+    throw new InputError("Use a Google rating from 0 to 5, with at most one decimal place.");
+  }
+  if (field.format === "review-count" && !/^(?:0|[1-9]\d{0,6})$/.test(result)) {
+    throw new InputError("Use a whole Google review count from 0 to 9999999, without commas.");
+  }
   if (field.format === "maps-link") {
     let valid = false;
     try {
@@ -141,11 +162,14 @@ function parseContent(value: unknown, fields: Record<string, Field>, path: strin
 export function validateHomeDocument(value: unknown): HomeDocument {
   const doc = record(value);
   exactKeys(doc, ["schemaVersion", "template", "templateVersion", "title", "slots"], "homepage");
-  if (doc.schemaVersion !== 2 || doc.template !== "breeze.home" || (doc.templateVersion !== 1 && doc.templateVersion !== 2)) throw new InputError("Unsupported homepage document version.");
+  if (doc.schemaVersion !== 2 || doc.template !== "breeze.home" || (doc.templateVersion !== 1 && doc.templateVersion !== 2 && doc.templateVersion !== 3)) throw new InputError("Unsupported homepage document version.");
   const source = record(doc.slots), slots: Record<string, unknown> = {};
-  exactKeys(source, homeSlotOrder, "homepage sections");
-  for (const key of homeSlotOrder) {
-    const schema = doc.templateVersion === 1 ? homeSectionRegistry[key] : homeRichSectionRegistry[key], section = record(source[key]);
+  const order = doc.templateVersion === 3 ? homeSlotOrder : legacyHomeSlotOrder;
+  exactKeys(source, order, "homepage sections");
+  for (const key of order) {
+    const section = record(source[key]);
+    const schema = key === "hero" && section.version === 1 ? legacyHomeHeroSchema
+      : doc.templateVersion === 1 ? homeSectionRegistry[key] : homeRichSectionRegistry[key];
     exactKeys(section, ["type", "version", "content"], schema.label);
     if (section.type !== schema.type || section.version !== schema.version) throw new InputError(`Unsupported ${schema.label} section.`);
     slots[key] = { type: schema.type, version: schema.version, content: parseContent(section.content, schema.fields, schema.label) };

@@ -47,7 +47,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
   const [tab, setTab] = useState<Tab>("content");
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [previewMode, setPreviewMode] = useState<"draft" | "published">("draft");
-  const [homeSlot, setHomeSlot] = useState<HomeSlot>("seasons");
+  const [homeSlot, setHomeSlot] = useState<HomeSlot>("hero");
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [mobilePane, setMobilePane] = useState<"edit" | "preview">("edit");
   const [message, setMessage] = useState("");
@@ -175,7 +175,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
     {!document ? <section className={styles.emptyState} aria-busy={busy}>
       <span className={styles.emptyIcon}><Icon name="grid" /></span><h2>{operation === "load" ? "Loading content…" : state ? "Content not initialized" : "Content could not load"}</h2>
-      <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero stay in place." : "Copy the existing website content into a draft. This does not publish or overwrite content." : "Load the saved content to start editing."}</p>
+      <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero image stay in place." : "Copy the existing website content into a draft. This does not publish or overwrite content." : "Load the saved content to start editing."}</p>
       {state && !state.draft ? <Button className={styles.primaryButton} disabled={busy} onClick={() => void act("import")}>{operation === "import" ? "Preparing content…" : "Copy existing content"}</Button> : !busy && <Button className={styles.secondaryButton} onClick={() => void load()}>Try again</Button>}
     </section> : <>
       <div className={styles.mobileWorkspaceTabs} role="group" aria-label="Editor view"><button type="button" aria-pressed={mobilePane === "edit"} onClick={() => setMobilePane("edit")}>Edit content</button><button type="button" aria-pressed={mobilePane === "preview"} onClick={() => setMobilePane("preview")}>Preview</button></div>

@@ -59,6 +59,12 @@ const paths: Record<string, React.ReactNode> = {
       <path d="m9 12 2 2 4-4" />
     </>
   ),
+  document: (
+    <>
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+      <path d="M14 3v6h6M8 13h8M8 17h6" />
+    </>
+  ),
   scales: (
     <>
       <path d="M12 3v18M8 21h8M3 7l9-3 9 3" />

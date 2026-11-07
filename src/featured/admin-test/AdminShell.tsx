@@ -18,6 +18,14 @@ const navigationItems: readonly NavigationItem[] = [
   { type: "group", label: "Legal", icon: "scales", ids: ["privacy-policy", "terms-and-conditions"] },
 ];
 
+const pageIcons: Partial<Record<PageId, string>> = {
+  home: "home",
+  reviews: "star",
+  global: "grid",
+  "privacy-policy": "shield",
+  "terms-and-conditions": "document",
+};
+
 function SupportContact() {
   return <div className={css.supportContact} aria-label="Admin support contact">
     <p>For any questions, you can reach out on</p>
@@ -78,7 +86,7 @@ export default function AdminShell({ pageId, onPageChange, onLeave, disabled, ch
     const groupMatches = (group: Extract<NavigationItem, { type: "group" }>) => group.label.toLowerCase().includes(query) || group.ids.some(matches);
     const pageButton = (id: PageId) => <button type="button" key={id} className={css.navItem}
       aria-current={pageId === id ? "page" : undefined} disabled={disabled}
-      onClick={() => selectPage(id)}><Icon name={id === "home" ? "home" : id === "reviews" ? "star" : id === "global" ? "grid" : contentDefinitions[id as ContentPageId]?.icon ?? "image"} /><span>{pages[id].label}</span></button>;
+      onClick={() => selectPage(id)}><Icon name={pageIcons[id] ?? contentDefinitions[id as ContentPageId]?.icon ?? "image"} /><span>{pages[id].label}</span></button>;
     return <nav className={css.navigation} aria-label="Admin pages">
       <label className={css.searchLabel}>Find a page<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search pages" /></label>
       {navigationItems.map(item => {
