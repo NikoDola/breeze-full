@@ -1,5 +1,6 @@
 // Real Next production server + workerd/D1 emulator; never deploys or writes to remote D1.
 import assert from "node:assert/strict";
+import { loadNext } from "./next-auth-helpers.mjs";
 import { createServer } from "node:http";
 import { once } from "node:events";
 import { spawn } from "node:child_process";
@@ -66,7 +67,7 @@ try {
   const workerOrigin = `http://127.0.0.1:${gateway.address().port}`;
   const password = randomBytes(32).toString("hex");
   const env = { ...process.env, CMS_LOCAL_PROOF_BUILD: "true", CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: origin,
-    CMS_WORKER_URL: workerOrigin, CMS_TEST_USERNAME: "local-proof", CMS_TEST_PASSWORD: password,
+    CMS_WORKER_URL: workerOrigin, CMS_AUTH_SECRET: password,
     CMS_WRITE_TOKEN: token, CMS_REVALIDATE_SECRET: revalidationSecret, VERCEL: "", VERCEL_ENV: "development" };
   console.log("Building Next.js in .next-cms-proof (build log: .local/cms-proof-build.log)…");
   const build = await capture(process.execPath, [nextBin, "build"], env);
@@ -79,8 +80,14 @@ try {
     try { await fetch(`${origin}/api/admin`); ready = true; break; } catch { await sleep(200); }
   }
   assert.ok(ready, "Next server did not start.");
-  const authorization = `Basic ${Buffer.from(`local-proof:${password}`).toString("base64")}`;
-  const headers = { authorization, origin, "Content-Type": "application/json", "x-cms-request": "editor" };
+  // Only this isolated proof process owns its generated session-signing secret.
+  const savedEnvironment = { ...process.env };
+  Object.assign(process.env, env);
+  const authentication = await loadNext("../../../src/lib/cms/access.ts");
+  const cookie = `${authentication.sessionCookieName()}=${authentication.createEditorSession("nikodola@gmail.com")}`;
+  for (const name of Object.keys(process.env)) if (!(name in savedEnvironment)) delete process.env[name];
+  Object.assign(process.env, savedEnvironment);
+  const headers = { cookie, origin, "Content-Type": "application/json", "x-cms-request": "editor" };
   const editor = async body => {
     const pageId = body?.pageId ?? "cms-proof";
     const response = await fetch(`${origin}/api/cms/editor?pageId=${pageId}`, { headers, method: body ? "POST" : "GET", body: body ? JSON.stringify({ ...body, pageId }) : undefined });
@@ -96,14 +103,14 @@ try {
   assert.equal((await fetch(`${origin}/api/cms/editor`, { method: "POST", headers: { ...headers, origin: "https://evil.example" }, body: "{}" })).status, 403);
   assert.equal((await fetch(`${origin}/api/admin`, { method: "POST", headers: { "x-admin-password": "breeze-admin" }, body: "{}" })).status, 410);
   assert.equal((await fetch(`${origin}/api/admin/upload`, { method: "POST" })).status, 410);
-  const adminPage = await fetch(`${origin}/admin-test`, { headers: { authorization } });
+  const adminPage = await fetch(`${origin}/admin-test`, { headers: { cookie } });
   assert.equal(adminPage.status, 200);
   const adminHtml = await adminPage.text();
   assert.ok(adminHtml.includes("Leave admin") && adminHtml.includes("Administration"));
   assert.ok(!adminHtml.includes('class="site-header') && !adminHtml.includes('class="site-footer'));
   assert.ok(!adminHtml.includes("Make it feel like Breeze") && !adminHtml.includes("Content studio"));
   assert.equal((await fetch(`${origin}/admin-test/preview`)).status, 401);
-  const frame = await fetch(`${origin}/admin-test/preview`, { headers: { authorization } });
+  const frame = await fetch(`${origin}/admin-test/preview`, { headers: { cookie } });
   assert.equal(frame.status, 200);
   assert.equal(frame.headers.get("content-security-policy"), "frame-ancestors 'self'");
   const frameHtml = await frame.text();

@@ -10,7 +10,8 @@ const identity = parseEnv(await readFile(new URL("cms-media-oidc.env",local),"ut
 const origin = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app", worker = "https://breeze-test-api.nikodola.workers.dev";
 assert.equal(config.CMS_TEST_ORIGIN,origin); assert.equal(config.CMS_WORKER_URL,worker);
 assert.ok(identity.VERCEL_OIDC_TOKEN?.length>32);
-const editorHeaders = {authorization:`Basic ${Buffer.from(`${config.CMS_TEST_USERNAME}:${config.CMS_TEST_PASSWORD}`).toString("base64")}`,origin,"x-cms-request":"editor","content-type":"application/json"};
+assert.ok(config.CMS_PROOF_SESSION_COOKIE, "A current verified-email Preview session is required.");
+const editorHeaders = {cookie:config.CMS_PROOF_SESSION_COOKIE,origin,"x-cms-request":"editor","content-type":"application/json"};
 // Binary-safe curl transport; credentials travel on stdin and are never logged.
 async function nextFetch(path, options={}) {
   assert.ok(path.startsWith("/") && !path.startsWith("//"));

@@ -13,10 +13,10 @@ const identity = parseEnv(await readFile(new URL("cms-home-oidc.env", local), "u
 const origin = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app";
 const worker = "https://breeze-test-api.nikodola.workers.dev";
 assert.equal(config.CMS_TEST_ORIGIN, origin); assert.equal(config.CMS_WORKER_URL, worker);
-for (const key of ["CMS_TEST_USERNAME", "CMS_TEST_PASSWORD"]) assert.ok(config[key]);
+assert.ok(config.CMS_PROOF_SESSION_COOKIE, "A current verified-email Preview session is required.");
 assert.ok(identity.VERCEL_OIDC_TOKEN?.length > 32);
 const oidc = { "x-vercel-trusted-oidc-idp-token": identity.VERCEL_OIDC_TOKEN };
-const auth = { ...oidc, authorization: `Basic ${Buffer.from(`${config.CMS_TEST_USERNAME}:${config.CMS_TEST_PASSWORD}`).toString("base64")}`,
+const auth = { ...oidc, cookie: config.CMS_PROOF_SESSION_COOKIE,
   origin, "x-cms-request": "editor", "content-type": "application/json" };
 const moduleText = await bundle(new URL("../../../cms/shared/home-seed.ts", import.meta.url));
 const { homeSeed } = await import(`data:text/javascript;base64,${Buffer.from(moduleText).toString("base64")}`);

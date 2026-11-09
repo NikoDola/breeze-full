@@ -14,6 +14,7 @@ import HomeFields from "./HomeFields";
 import ContentFields from "./ContentFields";
 import { ReviewsFields, GlobalFields } from "./CollectionFields";
 import HomePreviewFrame from "./HomePreviewFrame";
+import FullScreenPreview from "./FullScreenPreview";
 import { editorStatus, type Operation } from "./editor-state";
 import AdminShell from "./AdminShell";
 import type { HomeSlot } from "../../../cms/shared/home";
@@ -49,6 +50,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
   const [previewMode, setPreviewMode] = useState<"draft" | "published">("draft");
   const [homeSlot, setHomeSlot] = useState<HomeSlot>("hero");
   const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<"edit" | "preview">("edit");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -160,16 +162,24 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
     onPageChange(next); return true;
   }
 
+  function expandPreview() {
+    if (window.matchMedia("(max-width: 850px)").matches) setMobilePreviewOpen(true);
+    else setPreviewExpanded(value => !value);
+  }
+
+  function renderPreview(fullScreen = false) {
+    const previewViewport = fullScreen ? "mobile" : viewport;
+    return previewDocument && (previewDocument.schemaVersion === 2 || previewDocument.schemaVersion === 4 || previewDocument.schemaVersion === 5 || previewDocument.schemaVersion === 6)
+      ? <HomePreviewFrame document={previewDocument} viewport={previewViewport} sectionId={previewDocument.schemaVersion === 2 ? homeSlot : undefined} fillContainer={fullScreen} />
+      : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[previewViewport]}`}>
+        <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / {pageId}</span><Icon name="shield" /></div>
+        {previewDocument && <CmsProofContent document={previewDocument} preview />}
+      </div></div>;
+  }
+
   return <AdminShell pageId={pageId} proofEnabled={proofEnabled} disabled={busy} onPageChange={changePage} onLeave={() => !dirty || window.confirm("Sign out and discard your unsaved changes?")}>
     <div className={styles.workspace}><div className={styles.editor}>
     <header className={styles.header}><h1>{pages[pageId].label}</h1><p>Edit content, preview changes, and publish.</p></header>
-    <div className={styles.toolbar}>
-      <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{newerDraft ? "A newer draft exists. Load it before saving or publishing." : busy ? status.detail : saveHelp}</span></div></div>
-      <div className={styles.actions}>
-        {document && <><Button type="submit" form="cms-editor-form" className={styles.secondaryButton} disabled={saveDisabled}>{operation === "draft" ? "Saving draft…" : "Save draft"}</Button>
-        <Button className={styles.primaryButton} disabled={publishDisabled} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "Publish changes"}</Button></>}
-      </div>
-    </div>
     {error && <div className={`${styles.notice} ${styles.errorNotice}`} role="alert"><strong>We could not complete that action</strong><p>{error}</p><p>Check status before trying again. Your local edits will be kept.</p><Button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => void refresh()}><Icon name="clock" />Check status</Button></div>}
     {message && <p className={`${styles.notice} ${styles.successNotice}`} role="status"><Icon name="check" />{message}</p>}
     {newerDraft && <div className={`${styles.notice} ${styles.warningNotice}`} role="alert"><strong>A newer saved draft is available.</strong><p>Your edits are preserved. Copy any changes you want to keep, then load the latest draft.</p><Button className={styles.secondaryButton} disabled={busy} onClick={discardChanges}>Load latest draft</Button></div>}
@@ -178,7 +188,7 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
       <p>{state ? pageId === "home" ? "Copy the approved homepage content into a draft. The original design and hero image stay in place." : "Copy the existing website content into a draft. This does not publish or overwrite content." : "Load the saved content to start editing."}</p>
       {state && !state.draft ? <Button className={styles.primaryButton} disabled={busy} onClick={() => void act("import")}>{operation === "import" ? "Preparing content…" : "Copy existing content"}</Button> : !busy && <Button className={styles.secondaryButton} onClick={() => void load()}>Try again</Button>}
     </section> : <>
-      <div className={styles.mobileWorkspaceTabs} role="group" aria-label="Editor view"><button type="button" aria-pressed={mobilePane === "edit"} onClick={() => setMobilePane("edit")}>Edit content</button><button type="button" aria-pressed={mobilePane === "preview"} onClick={() => setMobilePane("preview")}>Preview</button></div>
+      <div className={styles.mobileWorkspaceTabs} role="group" aria-label="Editor view"><button type="button" aria-pressed={mobilePane === "edit"} onClick={() => setMobilePane("edit")}>Edit content</button><button type="button" aria-pressed={mobilePane === "preview"} onClick={() => setMobilePane("preview")}><Icon name="eye" />Preview</button></div>
       <div className={`${styles.grid}${previewExpanded ? ` ${styles.expandedGrid}` : ""}`} data-mobile-pane={mobilePane}>
         <section className={styles.editPanel} aria-label="Section editor">
           <div className={styles.panelHeading}><h2>Content</h2></div>
@@ -217,19 +227,17 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
           </form>
         </section>
         <section className={styles.previewPanel} aria-label="Section preview">
-          <div className={styles.previewHeading}><h2>Preview</h2><div className={styles.previewHeadingActions}><span className={styles.previewBadge}>{previewMode === "draft" ? "Draft preview" : "Published version"}</span><button type="button" className={styles.expandButton} onClick={() => setPreviewExpanded(value => !value)}>{previewExpanded ? "Close expanded view" : "Expand preview"}</button></div></div>
+          <div className={styles.previewHeading}><h2><Icon name="eye" />Preview</h2><div className={styles.previewHeadingActions}><span className={styles.previewBadge}>{previewMode === "draft" ? "Draft preview" : "Published version"}</span><button type="button" className={styles.expandButton} onClick={expandPreview}><Icon name="eye" /><span className={styles.desktopExpandLabel}>{previewExpanded ? "Close expanded view" : "Expand preview"}</span><span className={styles.mobileExpandLabel}>Expand preview</span></button></div></div>
           <div className={styles.previewControls}>
             <div className={styles.segmented} role="group" aria-label="Preview content"><button type="button" aria-pressed={previewMode === "draft"} onClick={() => setPreviewMode("draft")}>Your draft</button><button type="button" aria-pressed={previewMode === "published"} disabled={!state?.publication} onClick={() => setPreviewMode("published")}>Published</button></div>
             <div className={styles.segmented} role="group" aria-label="Preview screen size">{(["desktop", "tablet", "mobile"] as const).map(size => <button key={size} type="button" aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size[0].toUpperCase() + size.slice(1)}</button>)}</div>
           </div>
-          {previewDocument && (previewDocument.schemaVersion === 2 || previewDocument.schemaVersion === 4 || previewDocument.schemaVersion === 5 || previewDocument.schemaVersion === 6) ? <HomePreviewFrame document={previewDocument} viewport={viewport} sectionId={previewDocument.schemaVersion === 2 ? homeSlot : undefined} /> : <div className={styles.previewCanvas}><div className={`${styles.previewFrame} ${styles[viewport]}`}>
-            <div className={styles.browserBar}><span className={styles.browserDots}><i /><i /><i /></span><span>breeze / {pageId}</span><Icon name="shield" /></div>
-            {previewDocument && <CmsProofContent document={previewDocument} preview />}
-          </div></div>}
+          {renderPreview()}
           {!previewValid && <p className={styles.previewCaption}>Complete the required fields before saving. The homepage preview keeps its last valid content.</p>}
           <p className={styles.previewCaption}>{previewMode === "draft" ? dirty ? "Showing your unsaved changes. Save a draft before publishing." : "Showing your saved draft." : state?.delivery?.confirmed_at ? "Showing the publication confirmed on the website." : "Showing the saved publication. Website delivery is still pending."} Preview buttons do not navigate.</p>
         </section>
       </div>
+      {mobilePreviewOpen && <FullScreenPreview onClose={() => setMobilePreviewOpen(false)}>{renderPreview(true)}</FullScreenPreview>}
       <details className={styles.publishingPanel} aria-label="Publishing details"><summary>Publishing details</summary>
         <div className={styles.publishingHeading}><h2>Publication history</h2><a className={styles.publicLink} href={pages[pageId].path} target="_blank" rel="noreferrer">Open published page <span aria-hidden="true">↗</span></a></div>
         <div className={styles.steps}>
@@ -244,5 +252,12 @@ function DocumentEditor({ pageId, onPageChange, proofEnabled }: { pageId: PageId
         {dirty && <p className={styles.publishingNote}>Publish changes will save this draft first, then update the website.</p>}
       </details>
     </>}
+    <footer className={styles.toolbar} aria-label="Save and publish">
+      <div className={styles.currentStatus} aria-live="polite"><span className={`${styles.statusDot} ${styles[status.tone]}`} /><div><strong>{status.label}</strong><span>{newerDraft ? "A newer draft exists. Load it before saving or publishing." : busy ? status.detail : saveHelp}</span></div></div>
+      <div className={styles.actions}>
+        {document && <><Button type="submit" form="cms-editor-form" className={styles.secondaryButton} disabled={saveDisabled}>{operation === "draft" ? "Saving draft…" : "Save draft"}</Button>
+        <Button className={styles.primaryButton} disabled={publishDisabled} onClick={() => void act("publish")}><Icon name="check" />{operation === "publish" ? "Publishing…" : "Publish changes"}</Button></>}
+      </div>
+    </footer>
   </div></div></AdminShell>;
 }

@@ -1,8 +1,18 @@
 # CMS security hardening
 
+The current local authentication flow is documented in
+[CMS-EMAIL-LOGIN.md](CMS-EMAIL-LOGIN.md), introduced on 9 November 2026. Password
+and Basic access described in this historical audit no longer authenticate in
+the working source. Email codes use a fail-closed D1-backed gate and send budgets;
+the general native traffic limits and CSP described here still apply separately.
+
 Implemented on `cms-testing`, following the rich-text security audit. This keeps
 the existing Basic authentication, content contracts, immutable revisions and
-Next-owned delivery/retry workflow. No database migration or new secret is needed.
+Next-owned delivery/retry workflow. The original traffic-limiter work needed no
+database migration. As of 8 November 2026, password sign-in also has the separate
+[persistent five-failure / one-hour lockout](CMS-LOGIN-PROTECTION.md), which requires
+migration `0007_login_attempts.sql`. Its outage policy is fail-closed. The older
+general traffic limiter described below remains a separate, permissive layer.
 
 ## Clipboard bounds before parsing
 
@@ -14,7 +24,7 @@ Programmatic/fallback paste transformations also check size before parsing.
 Drops are rejected at the DOM event boundary. Existing schema sanitization,
 600-character heading limits and independent Next/Worker validation remain active.
 
-## Authentication throttling
+## General admin request throttling
 
 Use Cloudflare's native Workers Rate Limiting bindings, not process-local counters,
 content-table writes or a new Redis service. Counters are shared within a Cloudflare

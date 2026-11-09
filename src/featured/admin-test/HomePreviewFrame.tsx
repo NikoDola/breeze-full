@@ -9,13 +9,13 @@ import styles from "./editor.module.css";
 type PreviewDocument = HomeDocument | GlobalDocument | ContentDocument | ReviewsDocument;
 type Viewport = "desktop" | "tablet" | "mobile";
 
-export default function HomePreviewFrame({ document, viewport, sectionId }: { document: PreviewDocument; viewport: Viewport; sectionId?: HomeSlot }) {
+export default function HomePreviewFrame({ document, viewport, sectionId, fillContainer = false }: { document: PreviewDocument; viewport: Viewport; sectionId?: HomeSlot; fillContainer?: boolean }) {
   const frame = useRef<HTMLIFrameElement>(null), container = useRef<HTMLDivElement>(null);
-  const [available, setAvailable] = useState(640);
+  const [available, setAvailable] = useState({ width: 640, height: 720 });
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const width = { desktop: 1280, tablet: 768, mobile: 390 }[viewport];
-  const scale = Math.min(1, available / width);
+  const width = fillContainer ? available.width : { desktop: 1280, tablet: 768, mobile: 390 }[viewport];
+  const scale = Math.min(1, available.width / width);
   const src = document.schemaVersion === 4 ? "/admin-test/preview?pageId=reviews" : document.schemaVersion === 6 ? `/admin-test/preview?pageId=${document.pageId}` : document.schemaVersion === 5 ? "/admin-test/preview?pageId=global" : "/admin-test/preview";
   const send = useCallback(() => frame.current?.contentWindow?.postMessage({
     type: document.schemaVersion === 6 || document.schemaVersion === 4 ? "breeze.cms.content-preview" : document.schemaVersion === 5 ? "breeze.cms.global-preview" : "breeze.cms.home-preview", document,
@@ -26,7 +26,10 @@ export default function HomePreviewFrame({ document, viewport, sectionId }: { do
 
   useEffect(() => {
     if (!container.current) return;
-    const observer = new ResizeObserver(entries => setAvailable(Math.max(1, entries[0].contentRect.width)));
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      if (width > 0 && height > 0) setAvailable({ width, height });
+    });
     observer.observe(container.current); return () => observer.disconnect();
   }, []);
   useEffect(() => {
@@ -48,10 +51,10 @@ export default function HomePreviewFrame({ document, viewport, sectionId }: { do
   useEffect(() => { if (status === "ready") send(); }, [send, status]);
   useEffect(() => { if (status === "ready") focusSection(); }, [focusSection, status]);
 
-  return <div className={styles.homePreviewCanvas} ref={container}>
+  return <div className={`${styles.homePreviewCanvas}${fillContainer ? ` ${styles.fullScreenPreviewCanvas}` : ""}`} ref={container}>
     <iframe key={`${src}-${attempt}`} ref={frame} src={src}
       title={`${document.schemaVersion === 4 ? "Reviews" : document.schemaVersion === 6 ? document.title : document.schemaVersion === 5 ? "Contact areas" : "Homepage"} ${viewport} preview`} onLoad={send}
-      className={styles.homePreviewFrame} style={{ width, height: 720 / scale, transform: `scale(${scale})` }} />
+      className={styles.homePreviewFrame} style={{ width, height: available.height / scale, transform: `scale(${scale})` }} />
     {status !== "ready" && <div className={styles.previewLoading} role="status">
       <strong>{status === "loading" ? "Loading preview…" : "Preview could not load"}</strong>
       {status === "error" && <><p>Your edits are still here. Check the connection and try again.</p><button type="button" onClick={() => setAttempt(value => value + 1)}>Reload preview</button></>}

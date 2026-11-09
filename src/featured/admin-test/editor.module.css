@@ -34,13 +34,10 @@
 }
 
 .toolbar {
-  position: sticky;
-  top: calc(var(--admin-topbar-height) + 12px);
-  z-index: 20;
   justify-content: space-between;
   gap: 20px;
   padding: 14px 16px;
-  margin-bottom: 24px;
+  margin-top: 24px;
   border: 1px solid var(--admin-line);
   border-radius: 10px;
   background: var(--admin-card);
@@ -611,13 +608,25 @@
 
 .previewPanel {
   position: sticky;
-  top: calc(var(--admin-topbar-height) + 104px);
+  top: calc(var(--admin-topbar-height) + 16px);
 }
 
 .previewHeading {
   justify-content: space-between;
   gap: 18px;
   padding: 20px 22px;
+}
+
+.previewHeading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.previewHeading h2 svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
 }
 
 .previewHeadingActions {
@@ -639,12 +648,19 @@
 }
 
 .expandButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 0;
   background: transparent;
   color: var(--admin-accent);
   font-size: 12px;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.mobileExpandLabel {
+  display: none;
 }
 
 .previewControls {
@@ -712,6 +728,10 @@
   height: 720px;
   overflow: hidden;
   background: var(--navy);
+}
+
+.fullScreenPreviewCanvas {
+  height: 100%;
 }
 
 .previewLoading {
@@ -978,7 +998,7 @@
 }
 
 .fields input, .fields textarea, .fields button {
-  scroll-margin-block: 160px;
+  scroll-margin-block: calc(var(--admin-topbar-height) + 24px);
 }
 
 .srOnly {
@@ -1007,6 +1027,14 @@
 }
 
 @media (max-width: 850px) {
+  .desktopExpandLabel {
+    display: none;
+  }
+
+  .mobileExpandLabel {
+    display: inline;
+  }
+
   .mobileWorkspaceTabs {
     display: flex;
     gap: 8px;
@@ -1014,6 +1042,9 @@
   }
 
   .mobileWorkspaceTabs button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     padding: 10px 14px;
     border: 1px solid var(--admin-line-strong);
     border-radius: 7px;
@@ -1061,8 +1092,6 @@
   }
 
   .toolbar {
-    position: sticky;
-    top: calc(var(--admin-topbar-height) + 4px);
     flex-direction: column;
     gap: 10px;
     padding: 10px;
@@ -1128,9 +1157,6 @@
     padding-inline: 18px;
   }
 
-  .fields input, .fields textarea, .fields button {
-    scroll-margin-block-end: 130px;
-  }
 }
 
 .collectionItem {

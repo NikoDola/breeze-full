@@ -1,5 +1,11 @@
 # Breeze client CMS deployment
 
+**9 November 2026 local update:** email-code authentication now replaces the shared
+password login in the working source. Hosted rollout is pending. Follow
+[CMS-EMAIL-LOGIN.md](CMS-EMAIL-LOGIN.md) for the approved inboxes, Resend/domain
+setup, new secrets and migrations 0007/0008 before the next deployment. Older
+release evidence below describes what was deployed at that time.
+
 The 2026-10-15 remaining-page migration is now released to this client deployment.
 Migration 0004, the compatible live Worker and the `main` production reader are
 active. Release evidence and rollback references are recorded below.
@@ -59,8 +65,8 @@ Vercel **Production only**:
 
 - `CMS_LIVE_ENABLED`
 - `CMS_LIVE_ORIGIN`
-- `CMS_LIVE_USERNAME`
-- `CMS_LIVE_PASSWORD` — secret
+- `CMS_AUTH_SECRET` — Next-only, independent 64-hex-character secret
+- `RESEND_API_KEY` — Next-only, Sending access restricted to nikodola.com
 - `CMS_WORKER_URL`
 - `CMS_WRITE_TOKEN` — secret, unique to the live Worker
 - `CMS_REVALIDATE_SECRET` — separate Next-only secret
@@ -69,6 +75,10 @@ The live Worker has `CMS_ENVIRONMENT=live`, `CMS_UPLOAD_ORIGIN` set to the exact
 client origin, a deliberate `CMS_WRITES_ENABLED` override, and only
 `CMS_WRITE_TOKEN` as a secret. It receives no Vercel credentials. The existing
 Preview variables/secrets keep their original branch scope and values.
+
+The new email-login release does not use CMS_LIVE_USERNAME/PASSWORD or
+CMS_TEST_USERNAME/PASSWORD. The earlier password-based access description and
+historical release results in this document are retained as deployment history.
 
 Ignored `.local/cms-live.env` is the operator's recovery configuration.
 `.local/cms-client-access.txt` contains only the client editor URL and login;

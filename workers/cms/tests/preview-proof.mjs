@@ -10,9 +10,9 @@ const origin = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.ap
 const worker = "https://breeze-test-api.nikodola.workers.dev";
 assert.equal(process.env.CMS_TEST_ORIGIN, origin);
 assert.equal(process.env.CMS_WORKER_URL, worker);
-for (const name of ["CMS_TEST_PASSWORD", "CMS_WRITE_TOKEN", "CMS_REVALIDATE_SECRET", "VERCEL_OIDC_TOKEN"]) assert.ok(process.env[name]?.length >= 32, `${name} is missing`);
+for (const name of ["CMS_PROOF_SESSION_COOKIE", "CMS_WRITE_TOKEN", "CMS_REVALIDATE_SECRET", "VERCEL_OIDC_TOKEN"]) assert.ok(process.env[name]?.length >= 32, `${name} is missing; use a current verified-email session for preview proofs`);
 const oidc = { "x-vercel-trusted-oidc-idp-token": process.env.VERCEL_OIDC_TOKEN };
-const auth = { ...oidc, authorization: `Basic ${Buffer.from(`${process.env.CMS_TEST_USERNAME}:${process.env.CMS_TEST_PASSWORD}`).toString("base64")}`,
+const auth = { ...oidc, cookie: process.env.CMS_PROOF_SESSION_COOKIE,
   origin, "content-type": "application/json", "x-cms-request": "editor" };
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const resume = process.argv.includes("--resume-measurements");
@@ -44,7 +44,7 @@ async function request(url, init = {}) {
   const body = await response.text();
   if (response.status === 403) {
     let diagnostic = body.slice(0, 1200);
-    for (const name of ["CMS_TEST_PASSWORD", "CMS_WRITE_TOKEN", "CMS_REVALIDATE_SECRET", "VERCEL_OIDC_TOKEN"]) diagnostic = diagnostic.replaceAll(process.env[name], "[redacted]");
+    for (const name of ["CMS_PROOF_SESSION_COOKIE", "CMS_WRITE_TOKEN", "CMS_REVALIDATE_SECRET", "VERCEL_OIDC_TOKEN"]) diagnostic = diagnostic.replaceAll(process.env[name], "[redacted]");
     report.lastForbidden = { path: new URL(url).pathname, at: new Date().toISOString(), diagnostic,
       mitigation: response.headers.get("x-vercel-mitigated"), error: response.headers.get("x-vercel-error") };
   }

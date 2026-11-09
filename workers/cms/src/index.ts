@@ -10,6 +10,8 @@ import { mediaAdmin, mediaPublic, mediaUpload, validateDraftAssets, contentMedia
 import { environmentEnabled } from "./environment";
 import { consumeRate, limitWorkerSource } from "./throttle";
 import { monitorStatus } from "./monitor";
+import { recordLoginAttempt } from "./login";
+import { emailLoginAction } from "./email-login";
 
 export interface Env {
   DB: D1Database;
@@ -185,7 +187,26 @@ export default {
       }
       if (!path.startsWith("/api/admin/")) return json({ error: "Not found." }, 404);
       const throttleRequest = path === "/api/admin/auth/throttle" && request.method === "POST";
-      await authorize(request, env, throttleRequest || (["/api/admin/health", "/api/admin/media/health"].includes(path) && request.method === "GET"));
+      const loginRequest = path === "/api/admin/auth/login" && request.method === "POST";
+      const emailAction = /^\/api\/admin\/auth\/email\/(request|complete|verify)$/.exec(path)?.[1];
+      await authorize(request, env, throttleRequest || loginRequest || Boolean(emailAction) || (["/api/admin/health", "/api/admin/media/health"].includes(path) && request.method === "GET"));
+      if (emailAction) {
+        if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
+        if (request.headers.get("content-type") !== "application/json") throw new InputError("Expected JSON.");
+        let input: unknown;
+        try { input = JSON.parse(await readBody(request, 2048)); }
+        catch { throw new InputError("Invalid email sign-in request."); }
+        return json(await emailLoginAction(env.DB, env.CMS_ENVIRONMENT, emailAction, input));
+      }
+      if (loginRequest) {
+        if (request.headers.get("content-type") !== "application/json") throw new InputError("Expected JSON.");
+        let input: Record<string, unknown>;
+        try { input = record(JSON.parse(await readBody(request, 256))); }
+        catch (error) { if (error instanceof InputError) throw error; throw new InputError("Invalid JSON."); }
+        if (typeof input.key !== "string" || !/^[a-f0-9]{64}$/.test(input.key) ||
+            typeof input.valid !== "boolean" || Object.keys(input).length !== 2) throw new InputError("Invalid login attempt.");
+        return json(await recordLoginAttempt(env.DB, `${env.CMS_ENVIRONMENT}:${input.key}`, input.valid));
+      }
       if (throttleRequest) {
         if (request.headers.get("content-type") !== "application/json") throw new InputError("Expected JSON.");
         let input: Record<string, unknown>;
@@ -197,9 +218,11 @@ export default {
       if (path === "/api/admin/media" || path.startsWith("/api/admin/media/")) return await mediaAdmin(request, env);
       if (request.method === "GET" && path === "/api/admin/health") {
         const columns = await env.DB.prepare("PRAGMA table_info(cms_publish_outbox)").all<{ name: string }>();
+        const loginTables = await env.DB.prepare(`SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table'
+          AND name IN ('cms_login_attempts', 'cms_email_login_challenges', 'cms_email_login_send_limits')`).first<{ count: number }>();
         return json({ environment: env.CMS_ENVIRONMENT, writesEnabled: writesEnabled(env),
           schemaReady: columns.results.some(column => column.name === "lease_token") && await contentMediaReady(env) && await ogMediaReady(env) && await heroMediaReady(env), deliveryOwner: "nextjs", pages: Object.keys(pages),
-          throttlingReady: Boolean(env.AUTH_RATE_LIMITER && env.SERVICE_RATE_LIMITER) });
+          throttlingReady: Boolean(env.AUTH_RATE_LIMITER && env.SERVICE_RATE_LIMITER), emailLoginReady: loginTables?.count === 3 });
       }
       if (request.method === "GET" && path === "/api/admin/proof") return json(await editorState(env, pageDefinition(url.searchParams.get("pageId") ?? undefined).id));
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);

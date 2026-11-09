@@ -15,25 +15,25 @@ async function loadServerModule(url) {
 }
 
 test("Next editor gate fails closed in production, checks credentials and blocks CSRF", async () => {
-  const { authorized, editorEnabled, protectEditor } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+  const { authorized, editorEnabled, protectEditor, createEditorSession, sessionCookieName } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
   const { cmsOrigin } = await loadServerModule(new URL("../../../src/lib/cms/scope.ts", import.meta.url));
   const saved = { ...process.env };
   try {
     const password = randomBytes(32).toString("hex");
     Object.assign(process.env, { CMS_TEST_ENABLED: "false", CMS_TEST_ORIGIN: "http://localhost:3000", CMS_TEST_USERNAME: "editor",
-      CMS_TEST_PASSWORD: password, CMS_WRITE_TOKEN: randomBytes(32).toString("hex"), VERCEL: "", VERCEL_ENV: "development" });
+      CMS_AUTH_SECRET: password, CMS_WRITE_TOKEN: randomBytes(32).toString("hex"), VERCEL: "", VERCEL_ENV: "development" });
     assert.equal(editorEnabled(), false);
     process.env.CMS_TEST_ENABLED = "true";
     assert.equal(editorEnabled(), true);
-    const headers = new Headers({ host: "localhost:3000", authorization: `Basic ${Buffer.from(`editor:${password}`).toString("base64")}` });
+    const headers = new Headers({ host: "localhost:3000", cookie: `${sessionCookieName()}=${createEditorSession("nikodola@gmail.com")}` });
     assert.equal(authorized(headers), true);
     headers.set("host", "evil.example"); assert.equal(authorized(headers), false);
     headers.set("host", "localhost:3000");
     assert.equal(protectEditor(new Request("http://localhost:3000/api/cms/editor", { method: "POST", headers }))?.status, 403);
     headers.set("origin", "http://localhost:3000"); headers.set("x-cms-request", "editor");
     assert.equal(protectEditor(new Request("http://localhost:3000/api/cms/editor", { method: "POST", headers })), null);
-    process.env.CMS_TEST_PASSWORD = ""; assert.equal(editorEnabled(), false);
-    process.env.CMS_TEST_PASSWORD = password;
+    process.env.CMS_AUTH_SECRET = ""; assert.equal(editorEnabled(), false);
+    process.env.CMS_AUTH_SECRET = password;
     process.env.VERCEL_ENV = "production"; assert.equal(editorEnabled(), false); assert.equal(cmsOrigin(), null);
     Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing", CMS_TEST_ORIGIN: "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app" });
     assert.equal(editorEnabled(), true);
@@ -49,7 +49,7 @@ test("Next editor gate fails closed in production, checks credentials and blocks
 });
 
 test("client CMS requires explicit main/production scope, separate credentials and cache namespace", async () => {
-  const { authorized, editorEnabled, protectEditor } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+  const { authorized, editorEnabled, protectEditor, createEditorSession, sessionCookieName } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
   const { cmsScope, cmsCacheTag } = await loadServerModule(new URL("../../../src/lib/cms/scope.ts", import.meta.url));
   const { workerOrigin } = await loadServerModule(new URL("../../../src/lib/cms/worker.ts", import.meta.url));
   const saved = { ...process.env };
@@ -57,7 +57,7 @@ test("client CMS requires explicit main/production scope, separate credentials a
     const live = "https://breeze-full.vercel.app", preview = "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app";
     const password = randomBytes(32).toString("hex");
     Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "main",
-      CMS_LIVE_ENABLED: "true", CMS_LIVE_ORIGIN: live, CMS_LIVE_USERNAME: "client", CMS_LIVE_PASSWORD: password,
+      CMS_LIVE_ENABLED: "true", CMS_LIVE_ORIGIN: live, CMS_AUTH_SECRET: password,
       CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: preview, CMS_TEST_USERNAME: "tester", CMS_TEST_PASSWORD: randomBytes(32).toString("hex"),
       CMS_WRITE_TOKEN: randomBytes(32).toString("hex"), CMS_WORKER_URL: "https://breeze-live-api.nikodola.workers.dev" });
     assert.equal(editorEnabled(), true);
@@ -65,17 +65,18 @@ test("client CMS requires explicit main/production scope, separate credentials a
     assert.equal(cmsCacheTag("home"), "cms:live:breeze:page:home");
     assert.equal(workerOrigin(), process.env.CMS_WORKER_URL);
     const headers = new Headers({ host: "breeze-full.vercel.app", origin: live, "x-cms-request": "editor",
-      authorization: `Basic ${Buffer.from(`client:${password}`).toString("base64")}` });
+      cookie: `${sessionCookieName()}=${createEditorSession("breezehc@gmail.com")}` });
     assert.equal(authorized(headers), true);
     assert.equal(protectEditor(new Request(live + "/api/cms/editor", { method: "POST", headers })), null);
     headers.set("origin", preview);
     assert.equal(protectEditor(new Request(live + "/api/cms/editor", { method: "POST", headers })).status, 403);
+    headers.delete("cookie");
     headers.set("authorization", `Basic ${Buffer.from(`tester:${process.env.CMS_TEST_PASSWORD}`).toString("base64")}`);
     assert.equal(authorized(headers), false);
     const baseline = { ...process.env };
     for (const overrides of [
       { CMS_LIVE_ENABLED: "false" }, { CMS_LIVE_ORIGIN: preview },
-      { CMS_LIVE_PASSWORD: "" }, { CMS_WORKER_URL: "https://breeze-test-api.nikodola.workers.dev" },
+      { CMS_AUTH_SECRET: "" }, { CMS_WORKER_URL: "https://breeze-test-api.nikodola.workers.dev" },
       { VERCEL_ENV: "preview" }, { VERCEL_GIT_COMMIT_REF: "cms-testing" }, { VERCEL: "" },
     ]) {
       Object.assign(process.env, baseline, overrides);
@@ -129,8 +130,8 @@ test("webhook HMAC expires and covers timestamp plus exact body", async () => {
   assert.equal(await verify(secret, timestamp, body, "invalid"), false);
 });
 
-test("distributed editor gate limits before password comparison and survives outages without bypassing auth", async () => {
-  const { protectEditorRequest } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
+test("distributed traffic limiting and persistent login protection cannot bypass authentication", async () => {
+  const { protectEditorRequest, createEditorSession, sessionCookieName } = await loadServerModule(new URL("../../../src/lib/cms/access.ts", import.meta.url));
   const { throttleKey } = await loadServerModule(new URL("../../../src/lib/cms/throttle.ts", import.meta.url));
   const saved = { ...process.env }, originalFetch = globalThis.fetch, originalWarn = console.warn;
   const password = randomBytes(32).toString("hex");
@@ -138,32 +139,36 @@ test("distributed editor gate limits before password comparison and survives out
   try {
     Object.assign(process.env, { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cms-testing", CMS_LIVE_ENABLED: "false",
       CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: "https://breeze-full-git-cms-testing-nikodolas-projects.vercel.app",
-      CMS_WORKER_URL: "https://breeze-test-api.nikodola.workers.dev", CMS_TEST_USERNAME: "tester", CMS_TEST_PASSWORD: password,
+      CMS_WORKER_URL: "https://breeze-test-api.nikodola.workers.dev", CMS_AUTH_SECRET: password,
       CMS_WRITE_TOKEN: randomBytes(32).toString("hex") });
     console.warn = () => {};
     const origin = process.env.CMS_TEST_ORIGIN;
     const headers = { host: new URL(origin).host, origin, "x-cms-request": "editor", "x-vercel-forwarded-for": "203.0.113.5",
-      authorization: `Basic ${Buffer.from(`tester:${password}`).toString("base64")}` };
+      cookie: `${sessionCookieName()}=${createEditorSession("nikodola@gmail.com")}` };
     globalThis.fetch = async (url, init) => {
-      calls++; assert.equal(url, process.env.CMS_WORKER_URL + "/api/admin/auth/throttle");
+      calls++; assert.ok(["/api/admin/auth/throttle", "/api/admin/auth/login"].some(path => url === process.env.CMS_WORKER_URL + path));
       assert.equal(init.headers.Authorization, `Bearer ${process.env.CMS_WRITE_TOKEN}`);
       const body = JSON.parse(init.body); assert.match(body.key, /^[a-f0-9]{64}$/);
       assert.ok(!init.body.includes(password) && !init.body.includes("203.0.113.5"));
       if (outage) throw new Error("offline");
+      if (url.endsWith("/auth/login")) return Response.json({ allowed: body.valid, retryAfter: 0 });
       return Response.json({ success, degraded: false });
     };
     const request = extra => new Request(origin + "/api/cms/editor", { method: "POST", headers: { ...headers, ...extra } });
     assert.equal(await protectEditorRequest(request()), null);
-    assert.equal((await protectEditorRequest(request({ authorization: "Basic wrong" }))).status, 401);
+    assert.equal((await protectEditorRequest(request({ cookie: `${sessionCookieName()}=wrong` }))).status, 401);
     success = false;
     const blocked = await protectEditorRequest(request());
     assert.equal(blocked.status, 429); assert.equal(blocked.headers.get("retry-after"), "60");
     assert.equal((await protectEditorRequest(request({ authorization: "Basic another-guess" }))).status, 429);
     success = true; assert.equal(await protectEditorRequest(request()), null, "window recovery does not need account unlock");
     outage = true;
-    assert.equal(await protectEditorRequest(request()), null, "limiter outage cannot lock out valid admins");
-    assert.equal((await protectEditorRequest(request({ authorization: "Basic wrong" }))).status, 401);
+    assert.equal(await protectEditorRequest(request()), null, "existing sessions remain usable during a general limiter outage");
+    assert.equal((await protectEditorRequest(request({ cookie: `${sessionCookieName()}=wrong` }))).status, 401);
+    assert.equal(await protectEditorRequest(request({ cookie: `${sessionCookieName()}=${createEditorSession("nikodola@gmail.com")}` })), null,
+      "existing signed-in sessions remain usable during a limiter outage");
     assert.equal((await protectEditorRequest(request({ origin: "https://evil.example" }))).status, 403);
+    assert.equal((await protectEditorRequest(request({ origin: "https://evil.example", cookie: `${sessionCookieName()}=wrong` }))).status, 401);
     const before = calls;
     assert.equal((await protectEditorRequest(new Request(origin, { headers: { host: new URL(origin).host } }))).status, 401);
     assert.equal(calls, before, "normal Basic challenge is free");

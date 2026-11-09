@@ -132,6 +132,50 @@
   line-height: 1.6;
 }
 
+.notice {
+  margin: 18px 0 0;
+  padding: 11px 12px;
+  border: 1px solid #cddfd7;
+  border-radius: 7px;
+  background: #edf6f0;
+  color: #235742;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hint {
+  margin: 9px 0 0;
+  color: #647085;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.codeActions {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.codeActions button {
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: #1778b3;
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.codeActions button:disabled {
+  color: #647085;
+  text-decoration: none;
+  cursor: default;
+}
+
 .submit {
   display: block;
   width: 100%;
@@ -167,8 +211,9 @@
 }
 
 .support a {
-  color: #16637b;
+  color: #1778b3;
   font-weight: 600;
+  text-decoration: underline;
   text-underline-offset: 3px;
 }
 

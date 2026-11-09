@@ -17,6 +17,31 @@ Business details uses one continuous form with Contact information, Location,
 Social profiles and Shared website text headings followed by divider lines.
 Keep these fields and the shared-text subgroups visible without tabs or disclosures.
 
+At 850px and below, Expand preview opens a full-screen native dialog with a
+persistent top Cancel preview button. Its iframe fits the available screen width
+and height; closing restores the editor and preserves unsaved changes. Desktop
+expansion keeps the existing wider inline preview.
+
+Preview headings and controls use an eye icon. The status, Save draft and Publish
+changes bar is the last item below editing, preview and publishing details. Keep
+it in normal page flow rather than pinned above the form.
+
+## Login protection
+
+Login now uses a browser-bound, one-use ten-minute email code. Only
+nikodola@gmail.com, breezehc@gmail.com and ranahbeard@gmail.com are approved in
+the server-only `src/lib/cms/email-settings.ts` list. Resend sends from
+verification@nikodola.com. Configure Next-only RESEND_API_KEY and a separate
+64-hex-character CMS_AUTH_SECRET per environment; credentials never go to the
+browser or Worker. Shared passwords, Basic auth and old sessions no longer work.
+Five failed code attempts lock source and inbox for one hour from the fifth
+failure. Resends and retries do not reset or extend it; existing sessions consume
+no attempts. Sends have persistent 60-second, five/hour source/inbox and 50/day
+Worker-environment budgets. Missing delivery/protection fails closed. Apply
+migrations 0007 and 0008, deploy the matching Worker, then Next. This is local
+implementation pending owner Resend credentials and hosted rollout. See
+`docs/CMS-EMAIL-LOGIN.md` for exact setup, release order and testing boundaries.
+
 ## Mandatory CMS text controls
 
 One heading or sentence must use one editor field. If its design has colored

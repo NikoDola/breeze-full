@@ -14,27 +14,44 @@ capabilities, available content or internal details. See `codex.md`.
 ### Sign in
 
 `/admin` and `/admin-test` redirect signed-out visitors to `/admin-test/login`.
-The simple, centered sign-in form replaces the browser's Basic-auth dialog.
-It uses the existing environment's admin username/password, with inline errors,
-password visibility and a support link. The editor's top bar includes Sign out,
-which respects its existing unsaved-change and busy-state checks.
+The simple, centered form asks for an approved email and a six-digit code from
+that inbox. The exact access list, sender and owner setup steps are in
+[CMS-EMAIL-LOGIN.md](CMS-EMAIL-LOGIN.md). Inline errors, resend/change-email actions
+and the blue support email remain available. The editor's top bar includes Sign
+out, which respects its existing unsaved-change and busy-state checks.
 
 `POST /api/cms/session` checks the exact configured host/origin, the editor request
-header and the existing distributed limiter before checking credentials. It
-issues an eight-hour, signed HttpOnly cookie, SameSite=Strict and Path=/; HTTPS
-uses Secure and the `__Host-` cookie prefix. Signing keys are derived from the
-current credentials, write token and deployment scope, so credential rotation
-invalidates existing sessions. No new environment variables or SQL migrations
-are needed. Credentials are never stored in browser application storage.
+header and distributed limiter. Request-code reserves a persistent send budget,
+sends through Resend, and stores a browser-binding cookie. Verify-code consumes
+the matching delivered challenge once and issues an eight-hour signed HttpOnly
+session cookie, SameSite=Strict and Path=/; HTTPS uses Secure and the `__Host-`
+prefix. Codes expire in ten minutes. Five failures lock source and inbox for one
+hour; resends cannot reset failures. Next needs RESEND_API_KEY and a dedicated
+CMS_AUTH_SECRET, with migrations 0007/0008 deployed on the Worker first. Signing
+keys include the deployment scope and write token. No codes or signing secrets
+are stored in browser application storage; normal editing consumes no attempts.
 
-`DELETE /api/cms/session` sets an unauthenticated sign-out marker, preventing
-previously cached Basic credentials from overriding logout. Session cookies take
-precedence over legacy explicit Basic headers retained for existing proof tools.
+`DELETE /api/cms/session` clears both session and pending-challenge cookies.
+Shared passwords, Basic headers and old session versions no longer authenticate.
 API authentication failures return JSON without `WWW-Authenticate`; the protected
-preview still refuses unauthenticated access. Sessions are stateless: logout
-clears access in that browser; rotating credentials revokes all issued sessions.
+preview still refuses unauthenticated access. Sessions are stateless: logout clears
+access in that browser; rotating the auth secret or write token revokes all issued
+sessions. Removing an email from the server allowlist also rejects its sessions.
 
 ### Workspace
+
+On screens up to 850px wide, **Expand preview** opens a full-screen native dialog.
+The **Cancel preview** button stays at the top while the preview scrolls inside
+the remaining screen area. The iframe uses the available width and height,
+including changes from rotation or browser chrome, rather than scaling a desktop
+page down to phone size. Native modal focus and Escape dismissal apply; closing
+restores focus and background scrolling without changing unsaved content. Desktop
+expansion continues to widen the inline preview.
+
+Preview headings and entry controls include an eye icon. The publication status,
+Save draft and Publish changes bar appears at the bottom, after the editor,
+preview and publishing details. It follows the page flow so saving and publishing
+come after editing and reviewing the content.
 
 The editor now uses a compact, professional shell adapted from the existing
 Brzio admin UI in `Desktop/Junk code/brzio`. It has restrained typography,
