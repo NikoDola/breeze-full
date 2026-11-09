@@ -31,7 +31,11 @@ it in normal page flow rather than pinned above the form.
 Login now uses a browser-bound, one-use ten-minute email code. Only
 nikodola@gmail.com, breezehc@gmail.com and ranahbeard@gmail.com are approved in
 the server-only `src/lib/cms/email-settings.ts` list. Resend sends from
-verification@nikodola.com. Configure Next-only RESEND_API_KEY and a separate
+verification@nikodola.com. Emails use Resend's published admin-verification-code
+template with String CODE;
+optional RESEND_LOGIN_TEMPLATE_ID overrides its ID/alias. Template owns subject
+and content. Keep expiry wording at ten minutes. Configure Next-only
+RESEND_API_KEY and a separate
 64-hex-character CMS_AUTH_SECRET per environment; credentials never go to the
 browser or Worker. Shared passwords, Basic auth and old sessions no longer work.
 Five failed code attempts lock source and inbox for one hour from the fifth

@@ -28,8 +28,11 @@ async function setup(t) {
     if (url === "https://api.resend.com/emails") {
       const body = JSON.parse(init.body);
       assert.equal(body.from, "Breeze admin <verification@nikodola.com>");
+      assert.equal(body.template.id, process.env.RESEND_LOGIN_TEMPLATE_ID || "admin-verification-code");
+      assert.match(body.template.variables.CODE, /^\d{6}$/);
+      assert.equal(body.text, undefined); assert.equal(body.html, undefined); assert.equal(body.subject, undefined);
       assert.match(init.headers["Idempotency-Key"], /^breeze-login\/[a-f0-9]{32}$/);
-      emails.push({ ...body, code: body.text.match(/code is: (\d{6})/)[1] });
+      emails.push({ ...body, code: body.template.variables.CODE });
       if (state.delivery === "timeout") throw new Error("timeout with secret provider details");
       return state.delivery === "ok" ? Response.json({ id: randomBytes(16).toString("hex") }) : Response.json({ message: "private provider error" }, { status: 403 });
     }
@@ -74,6 +77,16 @@ test("approved inboxes receive one-use codes; only verification creates a secure
     for (const email of approved) assert.ok(!raw.includes(email));
     for (const sent of s.emails) assert.notEqual(row.code_hash, sent.code);
   }
+});
+
+test("a configured Resend template receives the real code that completes sign-in", async t => {
+  const s = await setup(t);
+  process.env.RESEND_LOGIN_TEMPLATE_ID = "custom-published-login";
+  const pending = await s.send();
+  assert.equal(pending.response.status, 200);
+  assert.equal(s.emails[0].template.id, "custom-published-login");
+  assert.deepEqual(Object.keys(s.emails[0].template.variables), ["CODE"]);
+  assert.equal((await s.verify(approved[0], s.emails[0].template.variables.CODE, pending.cookie)).status, 200);
 });
 
 test("unknown inboxes get a generic response and no email, and old passwords/Basic headers cannot authenticate", async t => {

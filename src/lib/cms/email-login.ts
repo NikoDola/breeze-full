@@ -5,7 +5,7 @@ import { loginDigest, loginEmailAllowed, normalizeLoginEmail } from "./email-set
 import { cmsOrigin } from "./scope";
 import { throttleKey } from "./throttle";
 import { workerOrigin } from "./worker";
-import { LOGIN_CODE_SECONDS, LOGIN_RESEND_SECONDS } from "../../../cms/shared/login-policy";
+import { LOGIN_RESEND_SECONDS } from "../../../cms/shared/login-policy";
 
 export class EmailLoginError extends Error {
   constructor(message: string, public status = 503, public retryAfter = 0) { super(message); }
@@ -68,13 +68,14 @@ export async function requestEmailCode(request: Request, suppliedEmail: string) 
     throw new Error("Invalid email reservation.");
   }
   if (!result.accepted) throw limited(retryAfter);
+  const templateId = process.env.RESEND_LOGIN_TEMPLATE_ID?.trim() || "admin-verification-code";
   try {
     const sent = await fetch("https://api.resend.com/emails", {
       method: "POST", redirect: "error", signal: AbortSignal.timeout(10000),
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "Idempotency-Key": `breeze-login/${id}` },
       body: JSON.stringify({ from: "Breeze admin <verification@nikodola.com>", to: [email], reply_to: "nikodola@gmail.com",
-        subject: "Your Breeze admin verification code",
-        text: `Your Breeze admin verification code is: ${code}\n\nThis code expires in ${LOGIN_CODE_SECONDS/60} minutes and can be used once. Enter it only in the browser where you requested it.\n\nIf you did not request this code, you can ignore this email.\n\nNeed help? Contact nikodola@gmail.com.`,
+        // Resend supplies the published template's subject and content.
+        template: { id: templateId, variables: { CODE: code } },
       }),
     });
     const delivery = await sent.json();

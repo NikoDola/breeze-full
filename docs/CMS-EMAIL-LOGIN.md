@@ -21,6 +21,26 @@ The sender is fixed to **Breeze admin <verification@nikodola.com>**, with replie
 going to nikodola@gmail.com. All three approved inboxes get the same Breeze CMS
 editing access. There is no user-management screen or separate permission roles.
 
+Verification emails use the Resend template alias **admin-verification-code**.
+Its **CODE** variable must be String type, and the template must be **Published**.
+The generated six-digit string is passed to that variable, preserving leading
+zeros. Resend supplies the template's subject and content; the app supplies its
+fixed sender, recipient and reply-to. No separate plain-text/HTML body overrides
+the design. If sending the template fails, the code is disabled as with other
+delivery failures; there is no automatic plain-text fallback.
+
+The alias is the default and needs no extra local/Vercel variable. To use another
+published template with the same CODE variable, set `RESEND_LOGIN_TEMPLATE_ID`
+in the corresponding Breeze environment and restart/redeploy it. Editing and
+publishing the template's design in Resend updates the content used for later
+sends. Make its expiry wording match the app's ten-minute code lifetime.
+
+At integration time, Resend returned this template as Draft with a String CODE
+variable and "Expires in 5 minutes" in its content. The owner must change that
+wording to ten minutes and publish it before template delivery can be verified.
+Template integration passed all ten focused session tests with mocked delivery
+and the isolated production build; no real template email was sent by those tests.
+
 ## What the owner needs to do
 
 1. In Resend, open **Domains**, add `nikodola.com`, and copy the DNS records Resend

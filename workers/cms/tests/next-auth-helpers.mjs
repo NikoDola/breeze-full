@@ -21,6 +21,7 @@ export function localAuthEnvironment() {
   Object.assign(process.env, { CMS_TEST_ENABLED: "true", CMS_TEST_ORIGIN: "http://localhost:3000",
     CMS_AUTH_SECRET: randomBytes(32).toString("hex"), CMS_WRITE_TOKEN: randomBytes(32).toString("hex"),
     RESEND_API_KEY: "re_"+randomBytes(24).toString("hex"), CMS_WORKER_URL: "http://127.0.0.1:8787",
+    RESEND_LOGIN_TEMPLATE_ID: "",
     CMS_LIVE_ENABLED: "false", VERCEL: "", VERCEL_ENV: "development" });
   return () => { for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key]; Object.assign(process.env, saved); };
 }
